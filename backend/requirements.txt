@@ -2,7 +2,7 @@ fastapi>=0.115
 uvicorn[standard]>=0.32
 pydantic>=2.9
 aiosqlite>=0.20
-watchfiles>=0.21
+watchfiles>=1.2.0
 # ed25519 signing for `haro gate --attest`/`haro verify` (usp-critique-round3.md Move A).
 cryptography>=42
 pytest>=8.3
