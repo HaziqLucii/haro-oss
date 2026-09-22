@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "haro-gate"
+version = "0.9.0"
+description = "haro — the merge gate for agent-written code. It produces proof, not a green tick."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "aiosqlite>=0.20",
+    "cryptography>=42",
+]
+
+# `uvx haro gate` / `pipx run haro gate` (usp-critique-plan.md idea 2): the headless
+# CLI is a thin client of the same gate + Gate Receipt modules the UI uses — see
+# haro/cli.py. `haro serve` (launching the full app) is intentionally not wired up
+# yet; `gate` is the only subcommand this earns right now.
+[project.scripts]
+haro = "haro.cli:main"
+
+[tool.pytest.ini_options]
+# Gate runs pytest from backend/ (the [gate] dir); pythonpath="." makes the
+# `haro` package importable without an install.
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["haro*"]
+
+# Non-.py runtime assets the gate/CLI need at runtime — a wheel built without these
+# has a `haro gate` that silently can't run vitest at all (the `--reporter` path
+# resolves to nothing, so the adapter reports 0 tests and the gate reads as a plain
+# RED rather than a clear "couldn't run" error). setuptools' default `packages.find`
+# above only collects `.py` files, so these need naming explicitly. See
+# `usp-critique-plan.md` round 10 of review — verify with `unzip -l` on a built
+# wheel, not just a successful `pip install`, since a missing file here doesn't
+# fail the build or the install.
+[tool.setuptools.package-data]
+haro = [
+    "adapters/test_runner/*.mjs",
+    "assets/*.sh",
+    "assets/firewall/*.sh",
+    "assets/quality/*.yaml",
+    "assets/nvim/*.lua",
+    "assets/nvim/*.json",
+    "assets/nvim/lua/config/*.lua",
+    "assets/nvim/lua/plugins/*.lua",
+    "assets/skills/*/*.md",
+    "assets/skills/*/reference/*.md",
+]
+# Deliberately NOT included: `assets/build_info.env` (round 11 of review). It's
+# generated at desktop-build time (desktop/rebuild.sh, read only by update.py's
+# self-update check — never on the `haro gate` CLI path) and stamps the BUILDER's
+# own git SHA + local filesystem source root. Bundling it into a `pip install haro`
+# wheel would leak that path to whoever installs it, for a feature they can't use
+# anyway. It's already gitignored; `test_packaging.py` excludes it explicitly too,
+# rather than adding a pattern that would just re-include it.

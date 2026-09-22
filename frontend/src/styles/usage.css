@@ -1,0 +1,162 @@
+/* Usage — Claude subscription rate-limit meters.
+   Two surfaces share these tokens: the full panel (Settings → Usage, a near-1:1
+   of Claude Desktop's Usage view) and the compact glance strip in the Dashboard
+   header. Bars are tinted by severity: green (normal) → amber (warning) → red
+   (critical / ≥100%). See components/Usage.tsx. */
+
+.usage-account {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 2px 0 16px;
+  font-size: 13px;
+}
+.usage-plan {
+  font-weight: 600;
+  color: var(--fg);
+}
+.usage-email {
+  font-size: 12px;
+}
+
+.usage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.usage-item,
+.usage-credits {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.usage-credits {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.usage-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+.usage-item-label {
+  font-size: 13px;
+  color: var(--fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.usage-active {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+  border: 1px solid color-mix(in srgb, var(--fg) 45%, transparent);
+  border-radius: var(--radius-md);
+  padding: 0 6px;
+  line-height: 1.5;
+}
+.usage-item-pct {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.usage-track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--fg) 9%, transparent);
+  overflow: hidden;
+}
+.usage-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-md);
+  transition: width var(--dur-2) var(--ease-out);
+}
+.usage-bar-green {
+  background: var(--ink-muted);
+}
+.usage-bar-amber {
+  background: var(--warn);
+}
+.usage-bar-red {
+  background: var(--danger);
+}
+
+.usage-reset {
+  font-size: 11px;
+}
+.usage-note {
+  line-height: 1.55;
+  max-width: 48ch;
+}
+
+.usage-spin {
+  display: inline-flex;
+  animation: spin var(--dur-spin) linear infinite;
+}
+
+/* ---- compact Dashboard strip ------------------------------------------- */
+/* keep the title left and cluster counts + strip on the right of dash-head */
+.dash-head .dash-title {
+  margin-right: auto;
+}
+.usage-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 11px;
+  transition: border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.usage-strip:hover {
+  border-color: var(--line-strong);
+  color: var(--fg);
+}
+.usage-strip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.usage-strip-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+}
+.usage-strip-track {
+  display: inline-block;
+  width: 46px;
+  height: 6px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  overflow: hidden;
+}
+.usage-strip-track .usage-fill {
+  height: 100%;
+}
+.usage-strip-pct {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg);
+  min-width: 30px;
+}
+
+@media (max-width: 720px) {
+  /* the strip's second (weekly) window is the least critical thing to keep on a
+     phone-width dash header — drop it before the layout wraps awkwardly */
+  .usage-strip .usage-strip-item + .usage-strip-item {
+    display: none;
+  }
+}

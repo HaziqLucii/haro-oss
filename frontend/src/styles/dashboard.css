@@ -1,0 +1,567 @@
+
+/* multi-agent dashboard (shown when no workspace is selected). .dash-body
+   (the label's sibling below .dash-head) owns its own scroll, so the
+   "workspaces" label + counts/select toggle stay in place instead of
+   scrolling away with the grid when there are more workspaces than fit.
+   .dash itself never lost its own scroll-container-ness in the process —
+   overflow-x:hidden alone forces overflow-y to compute to auto too (CSS
+   Overflow §3) — it just never needs to actually scroll in practice, since
+   .dash-body (flex:1 1 auto; min-height:0) never grows past what .dash
+   gives it. That's also why the decorative pseudo-elements below stay on
+   .dash, not .dash-body: an earlier pass moved them, on the mistaken belief
+   .dash no longer had a bounded box; moving them lost .dash's own 22px left
+   padding (so the vertical strip's left:0 landed at the cards' own left edge
+   and painted behind them) and made the box slightly shorter (closer to the
+   dossier strip's wrap threshold — the actual fix for that is the
+   white-space:nowrap below, restored here). */
+.dash {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 2px 4px 22px;
+  position: relative;
+  overflow-x: hidden;
+}
+.dash-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  /* explicit, not left to compute: an element with only one axis set to a
+     scrolling value has the OTHER axis silently computed to auto too (CSS
+     Overflow §3) — .dash-grid's cards otherwise register as horizontal
+     scrollable overflow the moment anything nudges a pixel past this box's
+     right edge. */
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* buffer for .dash-card:hover's translateY(-2px): without it, a hovered
+     card in the very first row (no attention banner/races above it to
+     supply the gap) pokes 2px above this box's own top edge. Harmless
+     breathing room either way. */
+  padding-top: 4px;
+}
+/* real content sits above the hero accent + dossier strip below (both z-index:0
+   inside .dash's own stacking context) — a blanket rule rather than naming every
+   direct child, so nothing added to the dashboard later silently renders under it. */
+.dash > * {
+  position: relative;
+  z-index: 1;
+}
+/* katakana corner peek (backlog/kuro-theme.md): a small word bled off the right
+   edge — mostly clipped by .dash's own overflow-x:hidden, only its leading
+   portion visible. Ghost-faint (3% opacity), the same weight the old bottom-
+   right kanji watermark (removed from dossier.css) used to carry, so it reads
+   as a texture in the ground rather than a label to read. GLOBAL TRIAGE ONLY —
+   ProjectDashboard renders this same
+   <Dashboard> inside .proj-dash-main, and the accent repeated on every
+   project's home would compete with its backlog rail instead of reading as a
+   one-off "front page" flourish. Scoped below via
+   `.proj-dash-main .dash::before { content: none }` rather than a modifier
+   class, since Dashboard.tsx stays untouched (CSS-only per the plan). */
+.dash::before {
+  content: "モノクローム";
+  position: absolute;
+  right: 0;
+  /* 14px, not 10px: this glyph's own line box runs ~2px taller than its
+     font-size implies, so at 10px it overflowed .dash's bottom edge by
+     ~2px — and since .dash is still technically an overflow-y:auto
+     container (overflow-x:hidden forces the pairing), that 2px registered
+     as real scrollable overflow, producing a second, redundant scrollbar
+     right next to .dash-body's actual one (a refuter pass caught this
+     live, empirically, pixel-scanning the rendered page). */
+  bottom: 14px;
+  transform: translateX(45%);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", "Songti SC",
+    var(--prose), serif;
+  font-size: 3.4rem;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--fg);
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+/* the rotated dossier strip — a vertical eyebrow label down the left edge,
+   the "system dossier" voice applied to the dashboard's own frame. Left as a
+   universal .dash accent (both triage variants): it's a typographic flourish,
+   not a competing image, so it doesn't need the same global-only guard as the
+   katakana peek above. The leading "//" reads as a code comment marker, in
+   keeping with the mono, technical-dossier voice. */
+.dash::after {
+  content: "// HARO · TEST GATE · MONOCHROME · LINUX-FIRST";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.34em;
+  font-size: 10px;
+  color: var(--ink-faint);
+  padding: 16px 0;
+  /* Without this, a box shorter than the string's rendered length wraps it
+     into a second column instead of just clipping/overflowing (a refuter
+     pass caught this live). The katakana peek pseudo already has this. */
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 0;
+}
+/* the project-home dashboard (ProjectDashboard → Dashboard, nested in
+   .proj-dash-main) keeps the dossier strip but drops the photo hero — see the
+   comment on .dash::before above. */
+.proj-dash-main .dash::before {
+  content: none;
+}
+.dash-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dash-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.dash-counts {
+  display: flex;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* first-class gate triage: the red gates that need you, across all workspaces */
+.dash-attention {
+  border: var(--border-w) solid color-mix(in srgb, var(--del) 45%, transparent);
+  background: color-mix(in srgb, var(--del) 8%, var(--panel));
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.dash-attention-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+.dash-attention-hint {
+  font-size: 12px;
+}
+.dash-attention-chips {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.dash-attention-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  border: var(--border-w) solid color-mix(in srgb, var(--del) 40%, transparent);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.dash-attention-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--del);
+}
+.dash-attention-chip-detail {
+  font-size: 11px;
+}
+/* green*-only attention: nothing is actually failing, so the banner drops to amber
+   (the tamper alarm's key) instead of crying red. backlog/tamper-alarm.md §3. */
+.dash-attention-star {
+  border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+  background: color-mix(in srgb, var(--amber) 8%, var(--panel));
+}
+.dash-attention-chip-star {
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
+}
+.dash-attention-chip-star:hover {
+  border-color: var(--amber);
+}
+/* The star on a green verdict — one glyph, amber, wherever green* renders. */
+.dash-star {
+  color: var(--amber);
+  font-weight: 600;
+}
+/* The green* reason line on a card ("3 removed · 2 skipped") — the compact note the
+   gate panel's chip shows in full, truncated to the card's width. */
+.dash-tamper {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-gate {
+  margin-left: 8px;
+  font-size: 11px;
+}
+.dash-card {
+  text-align: left;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out);
+  /* Grid items default to min-width:auto and will GROW past their track to fit
+     nowrap content (a long workspace name), so the card blows out instead of the
+     name truncating. min-width:0 caps the card at its grid track so the name/branch
+     truncate inside it. (Electron's Chromium didn't honor overflow's implicit
+     min-size=0 that let this work in a plain browser.) */
+  min-width: 0;
+}
+.dash-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+}
+.dash-gate_green {
+  border-left-color: var(--accent);
+}
+.dash-gate_red {
+  border-left-color: var(--del);
+}
+/* green* at card scale: keep the green rail (the tests DID pass) but break it — a
+   dashed green edge says "green, not solid" without borrowing amber's meaning
+   (amber solid = running, amber dashed = broken). */
+.dash-card-star {
+  border-left-style: dashed;
+}
+.dash-agent_running,
+.dash-tests_running {
+  border-left-color: var(--amber);
+}
+.dash-broken {
+  border-left-color: var(--amber);
+  border-left-style: dashed;
+}
+.dash-merged {
+  border-left-color: var(--merged);
+}
+.dash-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* width:100% pins this row to the card's content width. Without it the flex-column
+     child sizes to its OWN content (the long name) and overflows the card, so the
+     name never truncates. With it, .dash-name (flex:1,min-width:0) shrinks + ellipsizes. */
+  width: 100%;
+  min-width: 0;
+  /* the meta lines below (.dash-project/.dash-status/.dash-trust/.dash-branch)
+     are ledger rows now (hairline border-top instead of a flex gap — see item 6,
+     backlog/brand.md pass-3); this keeps the name row's own breathing room since
+     .dash-card dropped its gap in favor of those hairlines. */
+  margin-bottom: 4px;
+}
+.dash-name {
+  font-family: var(--mono);
+  font-weight: 600;
+  /* flex:1 + min-width:0 are REQUIRED for the ellipsis to trigger: .dash-name is a
+     flex item in .dash-card-top, and a flex item won't shrink below its content
+     unless min-width is 0. overflow:hidden alone (which sets the automatic minimum
+     to 0 per spec) is honored inconsistently across engines — Electron's Chromium
+     let the name grow and clip hard instead of ellipsizing. Match .side-ws-name. */
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Provenance pill — mirrors .side-ws-adopted (dim, not accent-green: green is the
+   gate's alone). Sits after the name in the card header; never shrinks. */
+.dash-adopted {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: var(--radius-md);
+  color: var(--dim);
+  background: color-mix(in srgb, var(--dim) 12%, transparent);
+  border: var(--border-w) solid color-mix(in srgb, var(--dim) 26%, transparent);
+}
+/* ledger-row treatment for the card's meta lines: a hairline instead of a gap
+   between each (project name / status / trust meter / branch), so a card reads
+   as a small dossier entry rather than a loosely-stacked list. */
+.dash-project {
+  font-size: 11px;
+  border-top: 1px solid var(--line);
+  padding: 4px 0;
+}
+.dash-status {
+  font-family: var(--mono);
+  font-size: 12px;
+  border-top: 1px solid var(--line);
+  padding: 4px 0;
+}
+.dash-gate_green .dash-status {
+  color: var(--accent);
+}
+.dash-gate_red .dash-status {
+  color: var(--del);
+}
+.dash-merged .dash-status {
+  color: var(--merged);
+}
+.dash-agent_running .dash-status,
+.dash-tests_running .dash-status {
+  color: var(--amber);
+}
+.dash-broken .dash-status {
+  color: var(--amber);
+}
+/* Autonomy-ladder trust meter (backlog/autonomy-ladder.md): a compact streak bar +
+   rung label, shown only when the project is on the ladder. The fill/rung colors
+   ride the shared .s-pass/.s-fail text-color classes via currentColor. */
+.dash-trust {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding: 4px 0;
+}
+.dash-trust-bar {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--border) 60%, transparent);
+  overflow: hidden;
+}
+.dash-trust-fill {
+  height: 100%;
+  background: currentColor;
+  border-radius: 2px;
+  transition: width var(--dur-2) var(--ease-out);
+}
+.dash-trust-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.dash-trust-rung {
+  text-transform: lowercase;
+}
+.dash-branch {
+  font-family: var(--mono);
+  font-size: 11px;
+  border-top: 1px solid var(--line);
+  padding: 4px 0;
+  /* same as .dash-card-top: pin to the card width so a long branch ellipsizes
+     instead of sizing to its content and overflowing the card. */
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The backlog item that seeded this workspace (backlog-v2.md Move 2) — same
+   ellipsis treatment as .dash-branch, no border since it sits right below it. */
+.dash-source {
+  font-size: 11px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- PROJECT DASHBOARD: the project home (no workspace selected) ----
+   Two halves of one decision: "what's happening?" (workspace triage, main) and
+   "what's next?" (the committed backlog, a fixed right rail). */
+/* project home = two stacked rows filling the space beside the sidebar:
+   UP = workspaces (title + remote + triage), DOWN = backlog. */
+.proj-dash {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.proj-dash-main {
+  min-width: 0;
+  min-height: 0;
+  flex: 0 1 auto; /* workspaces up top, sized to content; scrolls if many */
+  overflow-y: auto;
+  /* explicit, not left to compute: an unset axis silently becomes auto too
+     once the other is scrolling (CSS Overflow §3) — same footgun .dash-body
+     had, fixed defensively here even though nothing currently bleeds past
+     this box's horizontal edge. */
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.proj-dash-main .dash {
+  flex: 1 1 auto;
+}
+.proj-dash-title {
+  font-family: var(--display, var(--sans));
+  font-size: 18px;
+  font-weight: 600;
+  padding: 2px 2px 0;
+}
+/* project-level git remote control (link / unlink origin) on the project home */
+.proj-remote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 2px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+}
+.proj-remote-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--dim);
+}
+.proj-remote-url {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+}
+/* remote-bar keycaps — a plain <button>, so it INHERITS the base keycap (1.5px
+   bordered top face + `0 3px 0` bottom edge + the pop-on-hover / press-flat animation),
+   exactly like the ship-mode `.chip` scope buttons. We only override size/font/shape —
+   NOT the box-shadow or press, so the depth + motion stay identical to those buttons.
+   Same near-sharp radius as everything else now (Kuro flattened the "moderate"
+   distinction this comment used to describe). */
+.proj-remote-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+.proj-remote-key svg {
+  display: block;
+}
+/* sync — GitHub fetch blue. Tint only (color/border/background), like `.chip-on`;
+   leave the box-shadow to the base keycap so hover/press match every other button
+   instead of fighting it on specificity. */
+.proj-remote-key.pull {
+  color: var(--gh-pull);
+  border-color: color-mix(in srgb, var(--gh-pull) 55%, var(--border));
+  background: color-mix(in srgb, var(--gh-pull) 12%, var(--panel-2));
+}
+.proj-remote-key.pull:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--gh-pull) 75%, var(--border));
+  background: color-mix(in srgb, var(--gh-pull) 20%, var(--panel-2));
+}
+.proj-remote-err {
+  color: var(--del);
+  font-size: 11px;
+}
+/* project-home empty state — the repo IS registered, so this reads as
+   "nothing running yet, start one" with a real CTA (not the global empty text) */
+.proj-empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 32px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+.proj-empty-title {
+  font-family: var(--display, var(--sans));
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.proj-empty-sub {
+  max-width: 42ch;
+  line-height: 1.5;
+  font-size: 13px;
+}
+.proj-empty-cta {
+  margin-top: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid color-mix(in srgb, var(--action) 45%, var(--border));
+  background: color-mix(in srgb, var(--action) 14%, transparent);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 13px;
+  cursor: pointer;
+}
+.proj-empty-cta:hover {
+  background: color-mix(in srgb, var(--action) 24%, transparent);
+  border-color: var(--action);
+}
+/* inline `code` inside a backlog line (renderInline) */
+.side-todo-code {
+  font-family: var(--code, var(--mono));
+  font-size: 0.92em;
+  padding: 0 3px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+/* the backlog as a standalone card in the right rail (vs. its sidebar variant) */
+.backlog-panel {
+  flex: 1 1 auto; /* backlog fills the lower row beneath the workspaces */
+  min-height: 180px;
+  /* .backlog-panel is a sibling of .proj-dash-main, not nested inside .dash,
+     so it never inherited .dash's own 22px left padding (the gutter the
+     vertical "//" dossier strip sits in) — its left edge bled further left
+     than the workspace cards above it. This lines the two up. */
+  margin-left: 22px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+  border-top: var(--border-w) solid var(--border);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* empty content state */
+.empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+.empty-inner {
+  text-align: center;
+  max-width: 380px;
+}
+.empty-title {
+  font-family: var(--mono);
+  font-size: 16px;
+  margin-bottom: 8px;
+}

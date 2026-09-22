@@ -1,0 +1,69 @@
+/* haro brand theme — entry barrel.
+   The stylesheet was split out of one 7.5k-line file into topic partials under
+   ./styles/ so each surface's CSS is small enough to find and edit (and cheap
+   for an agent to read) without loading the whole sheet. These @import lines
+   are inlined by Vite at build time IN THIS ORDER — the cascade is identical to
+   the old single file, so order here is load-bearing: keep base first (tokens +
+   reset) and mobile last (overrides). Add a new partial where its cascade slot
+   belongs, not just at the end. */
+
+/* tokens, @font-face, reset, <body> — must load first (everything below uses the vars) */
+@import "./styles/base.css";
+
+/* motion tokens + primitives — right after base so every partial below can use them */
+@import "./styles/motion.css";
+
+/* app frame + chrome */
+@import "./styles/appbar.css";
+@import "./styles/toasts.css";
+@import "./styles/forms.css";
+@import "./styles/buttons.css";
+
+/* left spine */
+@import "./styles/sidebar.css";
+@import "./styles/backlog.css";
+
+/* home / triage */
+@import "./styles/dashboard.css";
+/* after dashboard: the race scorecard is rendered inside .dash/.pdash grids and its
+   card overrides some of their spacing (backlog/winner-fanout.md) */
+@import "./styles/race.css";
+
+/* main stage: bento layout + the task-flow surfaces */
+@import "./styles/bento.css";
+@import "./styles/editor.css";
+@import "./styles/command-palette.css";
+@import "./styles/runbook.css";
+@import "./styles/modals.css";
+/* after modals + dashboard: the bulk-archive panel is a .modal and its select mode
+   decorates .dash-card (backlog/bulk-archive.md) */
+@import "./styles/archive-queue.css";
+@import "./styles/composer.css";
+@import "./styles/stream.css";
+@import "./styles/agent-markdown.css";
+@import "./styles/loader.css";
+
+/* the gate + its instruments */
+@import "./styles/diff.css";
+@import "./styles/gate.css";
+@import "./styles/test-grid.css";
+
+@import "./styles/typography.css";
+
+/* ship + git/PR panel, settings */
+@import "./styles/git-ship.css";
+@import "./styles/settings.css";
+@import "./styles/usage.css";
+
+/* alternate theme grounds — each defines the full token contract under
+   :root[data-theme="<id>"] (the warm-dark default lives in base.css). Loaded
+   after the partials; the [data-theme] selector outweighs base's :root, so the
+   active theme's vars win. Registry: frontend/src/themes.ts */
+@import "./styles/themes/haro.css";
+
+/* dossier flourishes — the kanji watermark + film grain texture layers (fixed
+   pseudo-layers on <body>, layered by z-index not import order) */
+@import "./styles/dossier.css";
+
+/* phone overrides — must load last */
+@import "./styles/mobile.css";

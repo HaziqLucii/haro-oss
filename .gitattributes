@@ -1,0 +1,8 @@
+# CHANGELOG is append-only and every change adds an entry at the SAME anchor (the top of
+# `## [Unreleased]`), so two parallel agents conflict on it essentially every time. `union`
+# tells git to keep BOTH sides of a conflicting hunk instead of stopping, which is exactly
+# the right semantics here and removes a hand-resolution step from every parallel merge.
+# Tradeoff, accepted knowingly: it never conflicts, so two genuinely overlapping entries can
+# interleave or duplicate. That surfaces at review, where it is cheap, instead of at merge,
+# where it blocks.
+CHANGELOG.md merge=union

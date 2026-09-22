@@ -1,0 +1,397 @@
+
+/* ---- BENTO CONTENT (right of sidebar) ---- */
+.bento {
+  min-height: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.85fr) minmax(340px, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "strip strip"
+    "main  side";
+}
+.area-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+.area-main .stream-card {
+  flex: 1;
+  min-height: 0;
+}
+/* main-column view switcher (agent · code · preview) */
+.main-switch {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.seg {
+  background: transparent;
+  border: var(--border-w) solid var(--border);
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: 5px 14px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--dim);
+}
+.seg:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+}
+.seg-on {
+  background: var(--panel);
+  color: var(--fg);
+  border-color: var(--fg);
+}
+/* task flow — agent › code › preview › ship as a connected stepper (not a wizard;
+   every step stays clickable). The badges carry live state; the flow resolves to
+   the green gate at "ship". */
+.task-flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+/* Merged workspace: a quiet purple frame round the whole grid — the same signal
+   as the ship view's "Merged" badge, visible from any step. box-border keeps it
+   layout-neutral (base.css sets box-sizing: border-box globally). */
+.bento-merged {
+  border: 3px solid var(--merged);
+  border-radius: var(--radius-lg);
+  padding: 6px;
+}
+/* Post-merge shortcut living at the end of the steps row (pushed right). Reuses
+   the merged purple so it reads as the natural "what next" after a merge. */
+.flow-continue {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 11.5px;
+  color: var(--merged-ink);
+  background: var(--merged);
+  border: var(--border-w) solid color-mix(in srgb, var(--merged) 62%, var(--shade));
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--merged) 55%, var(--shade));
+}
+.flow-continue:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.flow-continue:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: var(--border-w) solid transparent;
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: 3px 9px 3px 5px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 11.5px;
+  color: var(--dim);
+}
+.flow-step:hover:not(:disabled):not(.flow-viewed) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+.flow-step:hover:not(:disabled).flow-viewed {
+  transform: none;
+  color: var(--fg);
+  /* Re-asserted, not inherited: the generic `button:hover` reset (buttons.css)
+     also sets box-shadow, and its (0,2,1) specificity beats plain .flow-viewed
+     (0,1,0) for that property even though this rule's own (0,4,0) wins overall
+     — a rule only overrides the properties it actually declares. */
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+/* clicking a step shouldn't leave the keycap's dark focus box-shadow (the
+   generic button reset's `box-shadow: var(--shadow-key)`); keyboard focus
+   still gets a clean accent ring via :focus-visible below. MUST exclude
+   .flow-viewed: a real click leaves the button focused indefinitely (nothing
+   blurs it afterward), so an unconditional `box-shadow: none` here silently
+   ate the "you are here" ring below for every step, permanently, the moment
+   you clicked it — the exact bug a user caught live. :hover has the same
+   trap for the same reason (hovering the step you're currently viewing). */
+.flow-step:focus:not(.flow-viewed) {
+  outline: none;
+  box-shadow: none;
+}
+.flow-step:focus-visible {
+  outline: 2px solid var(--line-strong);
+  outline-offset: 1px;
+}
+/* "you are here" — a panel fill + a neutral inset ring mark the step currently
+   on-screen. Deliberately separate from the truth states below: viewing a step
+   doesn't make it complete, so this uses box-shadow (not border-color) — the
+   truth-state rules below set border-color per step, and since both classes
+   land on the same element, a border-color here would just lose the cascade
+   to whichever truth state also applies (e.g. a "done" step's faint 42%-mix
+   border would silently win over an attempted "viewed" border). box-shadow is
+   an independent property, so the ring shows regardless of how quiet (or
+   loud) that step's real state color is — otherwise, on a near-black theme
+   where --panel is only barely lifted off --bg, a "done"-state step you're
+   actively viewing can look visually identical to one you aren't. */
+.flow-viewed {
+  background: var(--panel);
+  color: var(--fg);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+/* TRUTH STATES — the border + number chip tell you what's *actually* true.
+   done = bone (gh-push), ready = bone action (the actionable end — invite the
+   click), active = amber (in progress), blocked = red (gate failed), todo =
+   quiet (default .flow-step dim). Only step ③ itself is the real gate verdict
+   (see gate.css); this stepper spans all four steps, so it stays off accent
+   green entirely rather than implying every "done" step passed the gate. */
+.flow-done,
+.flow-ready {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--gh-push) 42%, transparent);
+}
+.flow-ready {
+  border-color: var(--action); /* the actionable end — invite the click */
+}
+.flow-active {
+  color: var(--fg);
+  border-color: var(--amber);
+}
+.flow-blocked {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--del) 55%, transparent);
+}
+.flow-num {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--dim);
+  background: color-mix(in srgb, var(--dim) 16%, transparent);
+}
+.flow-ready .flow-num {
+  color: var(--action-ink);
+  background: var(--action);
+}
+.flow-done .flow-num {
+  color: var(--gh-push);
+  background: color-mix(in srgb, var(--gh-push) 20%, transparent);
+}
+.flow-active .flow-num {
+  color: var(--accent-ink);
+  background: var(--amber);
+}
+.flow-blocked .flow-num {
+  color: var(--del);
+  background: color-mix(in srgb, var(--del) 18%, transparent);
+}
+.flow-done .flow-label {
+  color: color-mix(in srgb, var(--gh-push) 85%, var(--fg));
+}
+.flow-ready .flow-label {
+  color: color-mix(in srgb, var(--action) 85%, var(--fg));
+}
+.flow-blocked .flow-label {
+  color: color-mix(in srgb, var(--del) 85%, var(--fg));
+}
+.flow-label {
+  letter-spacing: 0.01em;
+}
+.flow-badge {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+}
+.flow-badge.tone-ok {
+  color: var(--gh-push);
+  background: color-mix(in srgb, var(--gh-push) 14%, transparent);
+}
+.flow-badge.tone-warn {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+.flow-badge.tone-bad {
+  color: var(--del);
+  background: color-mix(in srgb, var(--del) 14%, transparent);
+}
+.flow-badge.tone-run {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+/* the connector line between steps — fills bone up to the current step */
+.flow-conn {
+  flex: 0 0 12px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--dim) 32%, transparent);
+  transition: background var(--dur-2) var(--ease-out);
+}
+.flow-conn-done {
+  background: color-mix(in srgb, var(--gh-push) 55%, transparent);
+}
+/* ---- MAIN STAGE — one grid for every step ----
+   The whole main column is a single bordered surface. A shared steps band sits at
+   the top; the active step's body fills the rest. Switching steps swaps only the
+   body, so the stepper reads as a seamless top band of one continuous grid rather
+   than a bar floating above separate per-step cards. */
+.main-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+/* top band: the task-flow stepper, divided from the body by a hairline (same
+   treatment as the console's inter-section dividers, so it reads as one surface) */
+.stage-steps {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+/* Scrolls (rather than wraps) when the steps + the post-merge "continue on a
+   new branch" button don't all fit at once, but stays scrollbar-less like
+   .stream-sessions/.term-tabs — a visible scrollbar this close to the flow
+   buttons read as a stray control, and hovering right at that boundary made
+   the browser's own scrollbar hit-area fight the button's hover transition. */
+.stage-steps .task-flow {
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stage-steps .task-flow::-webkit-scrollbar {
+  display: none;
+}
+/* body: holds the active .main-view; each step fills it */
+.stage-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+/* Inside the stage, each step's own card chrome is stripped so the surface reads
+   as one grid — the stage owns the border/radius/shadow. Fullscreen cards
+   (.card--full / .pane--full float above everything) keep their own chrome. */
+.stage-body .agent-console:not(.card--full),
+.stage-body .card:not(.card--full),
+.stage-body .pane:not(.pane--full) {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.main-view {
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+.main-view .stream-card {
+  flex: 1;
+  min-height: 0;
+}
+/* Unified agent console: stream, review, prompt as ONE bordered surface,
+   sectioned by hairline dividers instead of three separate floating cards
+   (minimalist). overflow stays VISIBLE so the composer's ⌘/@ autocomplete
+   (.ac-menu, pops upward) can float over the stream section above it. */
+.agent-console {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: visible;
+}
+/* each direct child is a section; a hairline separates adjacent sections */
+.console-sec {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.agent-console > * + * {
+  border-top: var(--border-w) solid var(--border);
+}
+.agent-console > .stream-card {
+  flex: 1;
+}
+/* the review panel, folded in as a middle section: drop its standalone box
+   (border + radius) so it reads as part of the surface, keep the accent tint. */
+.agent-console > .review {
+  border: none;
+  border-top: var(--border-w) solid var(--border);
+  border-radius: 0;
+}
+.code-card {
+  flex: 1;
+  min-height: 0;
+}
+/* gate is now a main-column step (③); its .pane fills the view. Exclude the
+   fullscreen pane: when it's position:fixed, width:100% = 100vw and, combined
+   with the inset:16px left edge, would push it 16px past the right screen edge
+   (the inset alone must govern its width — same as .card--full). */
+.main-gate > .pane:not(.pane--full) {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* fullscreen "focus mode" — a card floats above everything (editor + preview) */
+.full-btn {
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 9px;
+}
+.card-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  backdrop-filter: blur(2px);
+  animation: resolve var(--dur-2) var(--ease-out);
+}
+.card--full,
+.pane--full {
+  position: fixed;
+  inset: 16px;
+  z-index: 61;
+  margin: 0;
+  box-shadow: 0 0 0 1px var(--line-strong);
+  animation: resolve var(--dur-2) var(--ease-out);
+}
+/* Fullscreen agent console: the whole grid (stream + review + prompt) floats as
+   one card. .agent-console already owns panel chrome, but keeps overflow:visible so
+   the composer's ⌘/@ autocomplete can pop over the stream — that's still what we
+   want at fullscreen, so no override is needed beyond keeping its chrome (see the
+   .stage-body chrome-strip rule, which excludes .card--full). */
+

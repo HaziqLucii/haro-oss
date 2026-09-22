@@ -1,0 +1,25 @@
+# haro project config — managed by the in-app scripts editor.
+# settings.toml is committed (shared with the team); settings.local.toml is personal (gitignored).
+
+[scripts]
+setup = "npm install --prefix frontend"
+run = "npm --prefix frontend run dev"
+run_mode = "concurrent"
+login_shell = true
+
+[ports]
+range = [4500, 4599]
+
+[gate]
+dir = "frontend"
+
+[agent]
+adapter = "local"
+local_model = "qwen3.5:9b"
+
+[roles]
+plan = "fable:xhigh"
+build = "sonnet:high"
+review = "opus:high"
+scout = "haiku"
+enabled = true

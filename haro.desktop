@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=haro
+GenericName=AI Coding-Agent Orchestrator
+Comment=Run AI coding agents in isolated worktrees behind a live test gate
+# EDIT this path to wherever you cloned haro before installing this file
+# (e.g. into ~/.local/share/applications/haro.desktop) — .desktop Exec lines
+# don't expand $HOME or shell variables, so it must be a literal absolute path:
+Exec=/home/CHANGEME/Projects/haro/run.sh
+Icon=applications-development
+Terminal=false
+Categories=Development;
+StartupWMClass=haro

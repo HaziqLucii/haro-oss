@@ -1,0 +1,53 @@
+# Dependency update PRs. Dependabot itself costs no Actions minutes (GitHub computes the
+# updates on its own infrastructure); only the CI run on each resulting PR does. So the
+# settings here are tuned to keep that volume near zero:
+#
+#   interval: monthly     not daily/weekly. A solo project does not need a PR every day.
+#   groups                one PR per ecosystem instead of one per package, so a month of
+#                         npm bumps is a single ~3 minute CI run.
+#   open-pull-requests-limit  a hard ceiling on how many can be open at once.
+#
+# Net cost: roughly three PRs a month, so under 10 CI minutes out of the 2,000 included.
+# Safe to delete this file entirely if the PRs are noise; you keep Dependabot security
+# ALERTS either way, since those are a repo setting and not driven by this config.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      # Patch/minor together; a major gets its own PR so a breaking change is never
+      # bundled with routine bumps.
+      frontend-minor:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      backend-minor:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Keeps the pinned action versions in .github/workflows current, including the security
+  # patches that matter most here since actions run with repo credentials.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(ci)"
