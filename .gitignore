@@ -1,0 +1,53 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+
+# Node / Vite
+node_modules
+frontend/dist/
+
+# Desktop app build artifacts (Electron package + PyInstaller freeze).
+# Source lives in desktop/ + backend/desktop_app.py + backend/haro-backend.spec;
+# regenerate these with desktop/rebuild.sh.
+/dist-desktop/
+/backend/build/
+/backend/dist/
+# `python -m build` / `pip install -e` byproduct (usp-critique-plan.md idea 2, the
+# `haro gate` CLI packaging) — fully regenerable, never meant to be committed.
+/backend/haro.egg-info/
+# One-off root-owned leftover from the old Docker frontend build.
+/frontend/dist_root_old/
+
+# Generated at build time by desktop/rebuild.sh (git SHA + source root stamp).
+/backend/haro/assets/build_info.env
+
+# haro local state
+.haro/settings.local.toml
+# `haro gate --attest` / `haro verify` (usp-critique-round3.md Move A) — signed
+# statements are local scratch data, regenerable from a green gate at any time.
+.haro/attestations/
+
+# Local env overrides (machine-specific; never committed)
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+
+# Dev artifacts (root-level screenshots, Playwright output)
+/*.png
+/*.jpg
+/*.jpeg
+/screenshots/
+.playwright-mcp/
+
+# Local agent/editor settings
+.claude/settings.local.json*
+
+# Local project config override
+.haro/settings.local.toml
+
+# TypeScript build cache
+*.tsbuildinfo
+.synthesis/

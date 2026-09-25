@@ -1,0 +1,360 @@
+/* diff — structured, file-grouped view */
+.diff {
+  overflow: auto;
+  padding: 8px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* toolbar: total stat line above the file blocks */
+.diff-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 4px;
+  color: var(--dim);
+  font-size: 11.5px;
+}
+.diff-toolbar-stat b {
+  color: var(--fg);
+  font-weight: 600;
+}
+.diff-stat-add {
+  color: var(--add);
+  font-weight: 600;
+  font-family: var(--mono);
+}
+.diff-stat-del {
+  color: var(--del);
+  font-weight: 600;
+  font-family: var(--mono);
+}
+.diff-collapse-all {
+  margin-left: auto;
+}
+
+/* unified/split view mode toggle */
+.diff-mode-toggle {
+  display: flex;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.diff-mode-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--sans);
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+}
+.diff-mode-btn + .diff-mode-btn {
+  border-left: var(--border-w) solid var(--border);
+}
+.diff-mode-btn.is-active {
+  background: var(--panel-2);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* untested-first sort toggle — sits beside Unified/Split, reusing the shared .switch
+   control from forms.css rather than inventing a third toggle look */
+.diff-sort-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Verified Hunks (backlog/verified-hunks.md §3) — the proof line above the file blocks.
+   Quiet by design: this is evidence, not a verdict, so it reads as a note rather than a
+   banner. Green-led when there's proof, amber-keyed when the tree has moved under it. */
+.diff-proof {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 5px 9px;
+  border: var(--border-w) solid color-mix(in srgb, var(--add) 30%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--add) 7%, transparent);
+  font-size: 11.5px;
+  color: var(--dim);
+}
+.diff-proof.is-stale {
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+}
+.diff-proof-note {
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.diff-proof-stale {
+  color: var(--warn);
+  font-weight: 600;
+}
+.diff-proof-send {
+  margin-left: auto;
+}
+
+/* the badge itself — on a file header and on each hunk header. Three tones only:
+   `hit` (everything coverable ran), `cold` (a residue nothing executed), `flat`
+   (nothing to claim: not executable, or evidence that no longer lines up). */
+.diff-proof-badge {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 7px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid var(--border);
+  color: var(--dim);
+  white-space: nowrap;
+  font-family: var(--sans);
+}
+.diff-proof-badge.tone-hit {
+  color: var(--add);
+  border-color: color-mix(in srgb, var(--add) 40%, transparent);
+  background: color-mix(in srgb, var(--add) 12%, transparent);
+}
+.diff-proof-badge.tone-cold {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 40%, transparent);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
+}
+
+/* per-line gutter dot: filled = executed, hollow = coverable and never executed, and
+   deliberately EMPTY for a non-coverable line — a dot is a claim, and there is no claim
+   to make about a blank line or a closing brace. The column keeps its width either way so
+   the code stays aligned down the file. */
+.diff-dot {
+  flex-shrink: 0;
+  width: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.diff-dot::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.diff-dot.dot-hit::before {
+  background: color-mix(in srgb, var(--add) 70%, transparent);
+}
+.diff-dot.dot-cold::before {
+  border: 1.5px solid var(--warn);
+}
+
+/* a hunk header becomes a fold control once it carries proof */
+.diff-hunk-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 8px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.diff-hunk-toggle .diff-hunk-label {
+  padding: 0;
+}
+
+/* per-file block — GitHub "Files changed" aesthetic: a flat bordered card (no
+   lift, no shadow) with a quiet static header bar. No hover fills or color
+   transitions — the header is a plain toggle, so a long file list reads clean
+   and calm rather than reactive. */
+.diff-file-block {
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--panel);
+}
+.diff-file-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--panel-2);
+  border: none;
+  border-bottom: var(--border-w) solid var(--border);
+  color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+.diff-file-block.is-collapsed .diff-file-header {
+  border-bottom: none;
+}
+.diff-file-path {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+/* dir ellipsizes; the filename stays fully visible */
+.diff-file-dir {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--dim);
+  font-weight: 400;
+}
+.diff-file-name {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--fg);
+}
+.diff-file-path.is-rename {
+  display: block;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+.diff-file-tag {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid var(--border);
+  color: var(--dim);
+}
+/* item 8 (brand pass-3): a free-text label (new/deleted/renamed), not a
+   gate-verdict chip — bracketed-mono per the plan's "tags/chips" treatment. */
+.diff-file-tag::before {
+  content: "[";
+}
+.diff-file-tag::after {
+  content: "]";
+}
+.tag-new {
+  color: var(--add);
+  border-color: color-mix(in srgb, var(--add) 40%, transparent);
+  background: color-mix(in srgb, var(--add) 12%, transparent);
+}
+.tag-deleted {
+  color: var(--del);
+  border-color: color-mix(in srgb, var(--del) 40%, transparent);
+  background: color-mix(in srgb, var(--del) 12%, transparent);
+}
+.tag-renamed {
+  color: var(--blue);
+  border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+}
+.diff-file-counts {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+/* hunks + rows */
+.diff-hunks {
+  font-family: var(--mono);
+  line-height: 1.55;
+}
+.diff-hunk-block + .diff-hunk-block {
+  border-top: var(--border-w) solid var(--border);
+}
+.diff-hunk-header {
+  display: flex;
+  align-items: center;
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+  color: var(--blue);
+  font-size: 11px;
+}
+.diff-hunk-label {
+  padding: 2px 8px;
+  white-space: pre;
+  opacity: 0.8;
+}
+.diff-row {
+  display: flex;
+  white-space: pre;
+}
+.diff-gutter {
+  flex-shrink: 0;
+  width: 38px;
+  padding: 0 6px;
+  text-align: right;
+  color: var(--dim);
+  opacity: 0.6;
+  user-select: none;
+  border-right: var(--border-w) solid var(--border);
+  font-size: 11px;
+}
+.diff-mark {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  user-select: none;
+  color: var(--dim);
+}
+.diff-code {
+  flex: 1;
+  padding-right: 12px;
+  min-width: 0;
+}
+.diff-row.diff-add {
+  background: color-mix(in srgb, var(--add) 12%, transparent);
+}
+.diff-row.diff-add .diff-mark,
+.diff-row.diff-add .diff-code {
+  color: var(--add);
+}
+.diff-row.diff-del {
+  background: color-mix(in srgb, var(--del) 12%, transparent);
+}
+.diff-row.diff-del .diff-mark,
+.diff-row.diff-del .diff-code {
+  color: var(--del);
+}
+.diff-binary {
+  padding: 10px 12px;
+  color: var(--dim);
+  font-style: italic;
+}
+
+/* split (side-by-side) view — same hunk data as unified, laid out in two
+   columns so old vs new reads at a glance without scanning +/- gutters. */
+.diff-hunk-header.split {
+  padding: 2px 8px;
+}
+.diff-split-row {
+  display: flex;
+}
+.diff-split-side {
+  flex: 1;
+  min-width: 0;
+}
+.diff-split-side + .diff-split-side {
+  border-left: var(--border-w) solid var(--border);
+}
+.diff-split-side .diff-gutter {
+  width: 34px;
+}
+.diff-split-empty {
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+}
+

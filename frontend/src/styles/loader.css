@@ -1,0 +1,78 @@
+/* ---- agent "Thinking…" loader ----
+   A one-liner: a small monochrome meter (three hairline bars breathing) on the left
+   + a rotating verb on the right. Sits at the top while spinning up, and as a footer
+   under the output on follow-ups — seamless, like Claude Code. Bone-on-ground, no
+   accent: green stays reserved for the gate (the old green banter-cube loader was
+   retired with the single-theme redesign, along with its per-family variants). */
+.thinking {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 2px;
+}
+.thinking-word {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--dim);
+  letter-spacing: 0.02em;
+}
+/* the meter — three hairline bars that breathe out of phase. Echoes haro's own stat
+   meters (session / context) rather than a generic spinner, and reads as "the system
+   is working" in the dossier voice. Bone, not accent. */
+.hloader {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 15px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.hloader i {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: var(--fg);
+  transform-origin: bottom;
+  animation: hloader-bar var(--dur-breath) var(--ease-in-out) infinite;
+}
+/* staggered at 1/6 and 1/3 of the loop (not --dur-1/--dur-2, which bunched the
+   3 bars close to in-phase on a 1.4s cycle) so they keep breathing evenly
+   out of phase regardless of what --dur-breath is tuned to. */
+.hloader i:nth-child(2) {
+  animation-delay: calc(var(--dur-breath) / 6);
+}
+.hloader i:nth-child(3) {
+  animation-delay: calc(var(--dur-breath) / 3);
+}
+@keyframes hloader-bar {
+  0%,
+  100% {
+    transform: scaleY(0.32);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 0.85;
+  }
+}
+/* static (but still legible) when the viewer prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hloader i {
+    animation: none;
+    transform: scaleY(0.7);
+    opacity: 0.7;
+  }
+}
+
+.ev-done {
+  color: var(--fg);
+  margin: 8px 0;
+  animation: resolve var(--dur-2) var(--ease-out) 1;
+}
+.ev-error {
+  color: var(--del);
+  margin: 8px 0;
+  white-space: pre-wrap;
+  animation: resolve var(--dur-2) var(--ease-out) 1;
+}

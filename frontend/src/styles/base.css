@@ -1,0 +1,319 @@
+/* haro brand theme — the trademark (see brand/haro-brand-board.html).
+   A single committed dark look: ryoku-inspired warm-monochrome (bone/parchment
+   ink on near-black), hierarchy from ink opacity plus hairline rules, near-sharp
+   2px corners, shadowless. Green is the ONE reserved accent: the gate signal, the
+   only colour on the page (red stays only for failure/deletions). No light mode,
+   no competing hues. Type: IBM Plex Sans (UI), IBM Plex Mono (code/data). */
+@font-face {
+  font-family: "Open Runde";
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/OpenRunde-600.woff2") format("woff2");
+}
+/* Pixelify Sans — 8-bit / pixel-art wordmark font, used ONLY for the .brand logo
+   (a pixel font is unreadable as UI/body text). Variable weight 400–700, OFL. */
+@font-face {
+  font-family: "Pixelify Sans";
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/PixelifySans.ttf") format("truetype");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/PlexSans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/PlexSans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/PlexMono-500.woff2") format("woff2");
+}
+/* JetBrains Mono — the code editor's typeface. Purpose-built for reading code,
+   the perennial favourite in developer font surveys; open-source (SIL OFL). */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+/* Mono-picker alternates — bundled so the choice is guaranteed offline, not
+   dependent on a system install. Fira Code (SIL OFL) + Ubuntu Mono (Ubuntu FL). */
+@font-face {
+  font-family: "Fira Code";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/FiraCode-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Ubuntu Mono";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/UbuntuMono-Regular.woff2") format("woff2");
+}
+/* Anthropic Sans / Serif — the agent-stream reading voices: Sans for the prompt
+   the user types (input + its stream echo), Serif for the agent's prose output.
+   "Text" optical cut (body size, not Display). Serif ships four weights so
+   markdown emphasis renders with real glyphs (no synthetic bold/oblique):
+   400/700 × upright/italic → strong, em, headings, bold-italic. */
+@font-face {
+  font-family: "Anthropic Sans";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/AnthropicSans-Text-Regular.otf") format("opentype");
+}
+@font-face {
+  font-family: "Anthropic Sans";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/AnthropicSans-Text-Medium.otf") format("opentype");
+}
+@font-face {
+  font-family: "Anthropic Sans";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/AnthropicSans-Text-Semibold.otf") format("opentype");
+}
+@font-face {
+  font-family: "Anthropic Sans";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/AnthropicSans-Text-Bold.otf") format("opentype");
+}
+@font-face {
+  font-family: "Anthropic Serif";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/AnthropicSerif-Text-Regular.otf") format("opentype");
+}
+@font-face {
+  font-family: "Anthropic Serif";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/AnthropicSerif-Text-Bold.otf") format("opentype");
+}
+@font-face {
+  font-family: "Anthropic Serif";
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/AnthropicSerif-Text-Italic.otf") format("opentype");
+}
+@font-face {
+  font-family: "Anthropic Serif";
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/AnthropicSerif-Text-BoldItalic.otf") format("opentype");
+}
+/* Kuro type stack — the ryoku Obsidian theme's actual faces (see brand/fetch_fonts.sh
+   for the fetch/subset commands). Fraunces leads the display/wordmark role, Space
+   Grotesk the UI/prose role, Space Mono the mono/prompt role; all three are
+   variable/static self-hosted woff2, OFL-licensed (see the OFL-*.txt files alongside). */
+@font-face {
+  font-family: "Fraunces";
+  font-weight: 300 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/Fraunces-Variable.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Space Grotesk";
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/SpaceGrotesk-Variable.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Space Mono";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/SpaceMono-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Space Mono";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/SpaceMono-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Space Mono";
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/SpaceMono-Italic.woff2") format("woff2");
+}
+/* Kanji glyph subset — 門黒集, a few KB instead of the multi-MB full Noto
+   Serif CJK JP face, so a kanji watermark stays crisp on Linux boxes with no
+   CJK system font, without bundling a whole CJK family. unicode-range means
+   the browser only ever fetches this file if one of those 3 code points is
+   actually laid out on the page. Currently unused (the 門 watermark it backed
+   was removed) — kept on the shelf in case a kanji flourish comes back. */
+@font-face {
+  font-family: "Kanji";
+  src: url("/fonts/NotoSerifJP-kanji.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+9580, U+9ED2, U+96C6; /* 門 黒 集 */
+}
+
+:root {
+  /* single committed dark look: ryoku warm-monochrome ground */
+  color-scheme: dark;
+  --bg: #0b0a09; /* near-black warm ground */
+  --panel: #131210; /* barely-lifted surface */
+  --panel-2: #1b1915; /* a step further up */
+  --border: var(--line); /* hairline rule: the only divider */
+  --fg: #d8d0c5; /* bone / parchment ink */
+  --dim: var(--ink-muted); /* dim bone: secondary text (hierarchy from ink opacity) */
+  /* Kuro ink ramp — hierarchy from opacity of one bone ink, not from separate
+     hex values. --ink-rgb is the shared channel triple; every other ink/line/
+     tint token below is an opacity step off it so the ramp stays coherent if
+     the base ink ever shifts. --border and --dim above are re-pointed onto
+     this ramp (line / ink-muted) rather than kept as independent hex values. */
+  --ink-rgb: 205 196 186;
+  --ink-dim: rgb(var(--ink-rgb) / .86);
+  --ink-muted: rgb(var(--ink-rgb) / .66); /* .60 measured below 4.5:1 AA on --panel-2 at --dim's 9-12px sizes; .66 restores it */
+  --ink-faint: rgb(var(--ink-rgb) / .40);
+  --line: rgb(var(--ink-rgb) / .20);
+  --line-soft: rgb(var(--ink-rgb) / .10);
+  --line-strong: rgb(var(--ink-rgb) / .42);
+  --tint: rgb(var(--ink-rgb) / .05);
+  --tint-2: rgb(var(--ink-rgb) / .10);
+  /* the flat "action" keycap: bone fill / near-black ink, not the gate green
+     (green stays reserved for the gate itself — see --btn-gate in buttons.css) */
+  --action: var(--fg);
+  --action-ink: var(--bg);
+  --action-hover: var(--ink-dim);
+  --accent: #41d183; /* gate green: the ONE reserved accent, the signal */
+  --accent-ink: #04160c; /* text on an accent fill */
+  --add: #41d183; /* diff add: the same green (mergeable) */
+  --del: #e0685e; /* diff del / failure: warm red, the only other hue */
+  /* Decorative hues collapse to warm bone so nothing competes with the gate
+     green. The names stay so every partial keeps resolving; only values change. */
+  --coral: #c2b3a0;
+  --blue: #b3ab9d;
+  --marker: #cabf9f;
+  --amber: #c9b78f;
+  --merged: #b3a0d6; /* "merged" status: muted lilac (git-panel chrome) */
+  --merged-ink: #120a1c; /* text on a merged fill */
+  --gh-pull: #8fb0d8; /* fetch/pull status: muted steel */
+  --gh-push: var(--ink-dim); /* push/open/clean status: bone, not the gate green
+     (green is reserved for haro's own gate verdict, not GitHub's PR state) */
+  --shadow: none; /* ryoku is shadowless: hierarchy from hairline rules, not lift */
+  --edge: rgba(0, 0, 0, 0.55); /* offset under primary actions */
+  /* neutral marks tokenized so the partials never hardcode them. */
+  --danger: #e0685e; /* destructive / error: the same warm red as --del */
+  --warn: #c9b78f; /* warning: muted bone-amber (no loud hue) */
+  --on-fill: #fff; /* ink/glyph on a colored status fill (badges, merge btn) */
+  --knob: #fff; /* toggle-switch knob */
+  --shade: #000; /* darkening anchor for color-mix() button edges */
+  --shadow-rgb: 0 0 0; /* black channel for surface drop-shadows */
+  --shadow-key: none; /* keycaps flattened: ryoku is shadowless */
+  --shadow-pop: none; /* modal / overlay lift now comes from a hairline border
+     (var(--line-strong)) at the call site, not a drop-shadow — see modals.css */
+  /* near-sharp corners (ryoku 2px), hairline borders */
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --border-w: 1px;
+  /* Kuro type stack: Fraunces leads display/wordmark, Space Grotesk leads UI/prose,
+     Space Mono leads mono/prompt — the old Anthropic/Plex faces stay appended as
+     fallbacks (never deleted; the mono-font picker still references them
+     directly). */
+  --font-display: "Fraunces", "Anthropic Sans", "Open Runde", "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --font-ui: "Space Grotesk", "Anthropic Sans", "IBM Plex Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* --display / --sans are the historical role names; kept as aliases so a theme
+     overriding --font-display / --font-ui flows through every existing partial */
+  --display: var(--font-display);
+  --sans: var(--font-ui);
+  --mono: "Space Mono", "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+  --pixel: "Pixelify Sans", var(--mono); /* 8-bit wordmark (.brand only) */
+  /* the code editor's face — JetBrains Mono leads, Plex Mono / system mono fall back
+     (user-picker controlled; left untouched by the Kuro type-stack remap) */
+  --code: "JetBrains Mono", "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* agent-stream reading voices (theme-independent) — Space Mono for what the user
+     types, Space Grotesk for the agent's prose reply; both fall back to the old faces */
+  --prompt: "Space Mono", "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+  --prose: "Space Grotesk", "Anthropic Sans", sans-serif;
+  /* the .brand wordmark — the ryoku "system dossier" logotype's display serif, now
+     bundled (see brand/fetch_fonts.sh); falls back to Anthropic Serif if it fails. */
+  --wordmark: "Fraunces", "Anthropic Serif", "Times New Roman", ui-serif, Georgia, serif;
+}
+/* Alternate theme grounds (light, …) live as their own token files in
+   styles/themes/ and are @import-ed by the styles.css barrel after the partials;
+   `:root[data-theme="<id>"]` outweighs this `:root` default regardless of order.
+   See frontend/src/themes.ts for the registry. */
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 14px;
+  /* macOS-only: switch text from subpixel-AA (which fattens glyphs and makes our
+     600/synthetic-700 weights read thick + blurry on Retina) to grayscale-AA, so
+     the mac renders the way Linux/FreeType already does. Both properties are inert
+     on Linux + Windows Chromium, so Linux rendering is untouched. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Firefox only: thin hairline-colored scrollbars everywhere, matching the
+   WebKit rule below. Scoped surfaces that need a DIFFERENT scrollbar
+   treatment (hidden, or a bespoke thumb color) still override this per-
+   element. MUST be excluded from Chromium/WebKit (the @supports guard):
+   scrollbar-width/scrollbar-color are standard properties Chromium also
+   recognizes, but merely SETTING them switches Chromium to its own
+   "standard" scrollbar mode, which ignores every ::-webkit-scrollbar* rule
+   below entirely and falls back to the platform's native scrollbar chrome
+   (GTK on this box, arrow buttons and all) — a refuter pass caught this
+   live: the app's whole custom scrollbar had been silently dead in every
+   Chromium surface, which is what every "stray arrow" report in this app
+   traced back to, not any one component. */
+@supports not selector(::-webkit-scrollbar) {
+  body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+}
+/* WebKit: same thin hairline scrollbar as the global default above. */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--radius-md);
+}
+/* Without this, some Linux/GTK Chromium builds still draw the classic
+   up/down (or left/right) arrow buttons at each end of the track even on a
+   custom-styled scrollbar — the exact "stray arrows" a user mistook for a
+   broken button control. One rule kills them everywhere. */
+*::-webkit-scrollbar-button {
+  display: none;
+}

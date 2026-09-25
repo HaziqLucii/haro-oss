@@ -1,0 +1,482 @@
+/* ============================================================================
+   MOBILE / PHONE  (Tailscale-from-your-phone use — Oppo Find X9 Pro etc.)
+   The desktop bento is a 2–3 column workspace that can't fit a ~420px screen.
+   On a phone we turn it into a single-surface app: the sidebar becomes a
+   slide-in drawer, and a fixed bottom tab bar (.mobile-nav) switches which
+   surface fills the screen (agent / code / gate / ship / preview / terminal).
+   These affordances are chrome that only exists on the phone.
+   ========================================================================== */
+.drawer-backdrop {
+  display: none;
+}
+.mobile-nav {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  /* ship view: stack the merge box so the button row isn't cramped */
+  .gh-merge-body {
+    flex-wrap: wrap;
+  }
+  .gh-merge-actions {
+    width: 100%;
+    margin-left: 42px;
+  }
+  .gh-merge-actions .gh-btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .gh-title {
+    font-size: 18px;
+  }
+
+  /* ---- app frame: use dynamic vh (survives the mobile URL bar) + safe areas,
+     and reserve the bottom for the fixed tab bar ---- */
+  .app {
+    height: 100dvh;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 10px
+      calc(58px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+  }
+
+  /* ---- appbar: drop the desktop tagline, shrink the crumb, fatten taps ---- */
+  .appbar {
+    gap: 10px;
+  }
+  .north-star {
+    display: none;
+  }
+  .brand {
+    font-size: 16px;
+  }
+  /* keep the appbar on one row down to ~320px: let the right group + crumb
+     shrink (min-width:0) so the workspace name ellipsizes instead of pushing
+     the theme/settings/archive controls off-screen */
+  .appbar {
+    min-width: 0;
+    gap: 10px;
+  }
+  .appbar-right {
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .ws-crumb {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: none;
+    justify-content: flex-end;
+  }
+  .ws-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* the appbar controls fold into the drawer footer on mobile, leaving just
+     ☰ + brand + the workspace name up top */
+  .appbar .theme-toggle,
+  .ws-crumb .ghost {
+    display: none;
+  }
+
+  /* drawer footer: a tidy row of the relocated appbar controls, pinned to the
+     bottom of the drawer above the safe-area inset */
+  .side-foot {
+    display: flex;
+    gap: 8px;
+    padding: 10px calc(6px + env(safe-area-inset-left, 0px)) calc(10px + env(safe-area-inset-bottom, 0px));
+    border-top: var(--border-w) solid var(--border);
+    flex-wrap: wrap;
+  }
+  .side-foot-btn {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    font-family: var(--mono);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .side-foot-glyph {
+    font-size: 14px;
+    line-height: 1;
+  }
+  .side-foot-archive:hover:not(:disabled) {
+    color: var(--del);
+    border-color: var(--del);
+  }
+
+  /* stats strip lives in the Gate pane on mobile; the gate glyph in the tab bar
+     carries the at-a-glance status instead (see .mnav-glyph tones below).
+     This IS the real gate verdict (mirrors .dash-gate_green/.dash-gate_red in
+     dashboard.css), so it keeps the reserved accent green, not bone. */
+  .stats-strip {
+    display: none;
+  }
+  .mnav-glyph-green {
+    color: var(--accent);
+  }
+  .mnav-glyph-red {
+    color: var(--del);
+  }
+  /* keep the status color even when the gate tab is the active one */
+  .mnav-on .mnav-glyph-green {
+    color: var(--accent);
+  }
+  .mnav-on .mnav-glyph-red {
+    color: var(--del);
+  }
+  .side-toggle,
+  .theme-toggle {
+    min-width: 40px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ws-crumb {
+    font-size: 11px;
+    gap: 6px;
+    min-width: 0;
+    max-width: 46vw;
+  }
+  .ws-crumb .dim {
+    display: none; /* hide the ▸ and " · branch" — name + archive are enough */
+  }
+  .ws-crumb > span:not(.dim) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cost-warn-banner,
+  .broken-banner {
+    font-size: 11px;
+  }
+
+  /* ---- shell: single column; sidebar leaves the flow (it's a drawer) ---- */
+  .shell,
+  .shell-collapsed {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    grid-template-columns: none;
+  }
+  .shell > :not(.sidebar):not(.drawer-backdrop) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* ---- sidebar → slide-in drawer over a dimmed backdrop ---- */
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    background: color-mix(in srgb, var(--bg) 52%, transparent);
+    backdrop-filter: blur(2px);
+    animation: resolve var(--dur-2) var(--ease-out);
+  }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(86vw, 330px);
+    z-index: 66;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    box-shadow: 0 0 50px rgb(var(--shadow-rgb) / 0.55);
+    animation: drawer-in var(--dur-2) var(--ease-out);
+  }
+  .side-ws-row,
+  .side-project-head {
+    min-height: 40px; /* comfortable touch rows */
+  }
+
+  /* ---- bento → a vertical stack of full-height single panes ---- */
+  .bento {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .stats-strip {
+    flex: 0 0 auto;
+    gap: 12px;
+    padding: 7px 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* horizontal scroll strips (stats bar, settings rail): thin, subtle track
+     instead of the chunky desktop scrollbar. Android Chrome already uses
+     overlay bars, but this keeps it clean in every rendering path.
+     scrollbar-width/-color are Firefox-only here (same @supports guard as
+     base.css's body rule): setting them in Chromium switches it to the
+     "standard" scrollbar mode, which would silently ignore the bespoke
+     ::-webkit-scrollbar overrides right below. */
+  @supports not selector(::-webkit-scrollbar) {
+    .stats-strip,
+    .settings-rail {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--fg) 20%, transparent) transparent;
+    }
+  }
+  .stats-strip::-webkit-scrollbar,
+  .settings-rail::-webkit-scrollbar {
+    height: 4px;
+  }
+  .stats-strip::-webkit-scrollbar-thumb,
+  .settings-rail::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--fg) 20%, transparent);
+    border-radius: var(--radius-md);
+  }
+  /* touch has no hover, so the code-block copy button never reaches full
+     opacity — pin it opaque so it reads as a deliberate chip, not a ghost
+     smeared over the first line of code */
+  .copy-btn {
+    opacity: 1;
+  }
+  /* the desktop stepper is redundant with the bottom tab bar + stats strip;
+     hide the whole steps band so it doesn't leave an empty top strip on the stage */
+  .task-flow,
+  .stage-steps {
+    display: none;
+  }
+  .area-main {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .area-side {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  /* mobile shows one full-height pane at a time, so undo the tablet band's fixed
+     stream-card height — let it fill the pane again. */
+  .area-main .stream-card {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+
+  /* Pane switching — the bottom nav sets which surface is on screen.
+     flow = the agent/code/gate/ship column; terminal = the side rail. There's no
+     "preview" pane any more (backlog/live-gate.md): the app opens in the phone's own
+     browser, so the rail is app strip + live gate + shell, shown together. */
+  .bento-pane-flow .area-side {
+    display: none;
+  }
+  .bento-pane-terminal .area-main {
+    display: none;
+  }
+  /* On a phone the rail is one scrolling column: the strip and the look-at chip stay a
+     line each, and the shell absorbs the rest. */
+  .area-side > .app-strip {
+    flex: 0 0 auto;
+  }
+  .area-side > .look-at-chip {
+    flex: 0 0 auto;
+  }
+  .term-card {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* ---- code editor → master-detail, not a cramped desktop split ----
+     A 424px screen can't host a 200px tree AND a usable editor. So the tree
+     fills the pane; tapping a file swaps to a full-width editor with a
+     "‹ files" back button. `.code--file-open` (set when a file is selected)
+     is the toggle. */
+  .code {
+    position: relative;
+  }
+  .ft {
+    width: 100%;
+    border-right: none;
+  }
+  .ft-resize {
+    display: none;
+  }
+  .code--file-open .ft {
+    display: none;
+  }
+  .code:not(.code--file-open) .ed {
+    display: none;
+  }
+  .ed-back {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-height: 34px;
+    font-family: var(--mono);
+  }
+  .ed-head {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* card heads carry several actions (run/reload/open/scripts/fullscreen) —
+     let them wrap instead of overflowing off-screen */
+  .card-head {
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    row-gap: 6px;
+  }
+  .ph-actions {
+    flex-wrap: wrap;
+  }
+
+  /* The composer must stay fully above the fixed tab bar on a short phone
+     viewport (Chrome's URL bar + Android's 3-button nav both eat height).
+     Keep the textarea compact so the whole card fits… */
+  .composer textarea,
+  .composer-ta-wrap > .composer-ta {
+    min-height: 56px;
+    max-height: 26vh; /* long tasks scroll inside the textarea, not the page */
+  }
+  /* …and a safety net: if it still can't fit (landscape, on-screen keyboard),
+     the agent column scrolls so the "run agent" button is always reachable.
+     The stream keeps a usable floor before that scroll kicks in. */
+  .main-agent {
+    overflow-y: auto;
+  }
+  .main-agent .stream-card {
+    min-height: 160px;
+  }
+
+  /* composer: controls stack full-width and stay tappable */
+  .composer-config-row,
+  .composer-io-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .composer-opt {
+    flex: 1 1 46%;
+    min-height: 40px;
+  }
+  .composer-spacer {
+    display: none;
+  }
+  .composer-actions button {
+    min-height: 42px;
+    flex: 1 1 auto;
+  }
+  /* 16px avoids the focus-zoom some mobile browsers force on <16px inputs */
+  .composer textarea,
+  .cmdk-input,
+  .side-add input,
+  .nwm-field input {
+    font-size: 16px;
+  }
+
+  /* landing dashboards → one card per row, easy to thumb */
+  .dash {
+    overflow-y: auto;
+  }
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+  .dash-card {
+    padding: 14px 16px;
+  }
+
+  /* modals fill more of the small screen and clear the safe areas */
+  .modal {
+    width: 94vw;
+    max-height: 88vh;
+  }
+  .settings-modal {
+    width: 96vw;
+    height: 90dvh;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .settings-rail {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: var(--border-w) solid var(--border);
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .settings-rail-head {
+    display: none;
+  }
+  .settings-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .settings-tab-on::before {
+    display: none; /* the desktop left-edge marker doesn't fit a horizontal rail */
+  }
+
+  /* ---- the bottom tab bar itself ---- */
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--panel) 94%, transparent);
+    border-top: var(--border-w) solid var(--border);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -8px 24px rgb(var(--shadow-rgb) / 0.28);
+  }
+  .mnav-btn {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 2px;
+    min-height: 48px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: var(--radius-md);
+    color: var(--dim);
+    font-family: var(--mono);
+  }
+  .mnav-btn:hover,
+  .mnav-btn:active {
+    transform: none;
+    box-shadow: none;
+    background: color-mix(in srgb, var(--fg) 5%, transparent);
+  }
+  .mnav-glyph {
+    font-size: 15px;
+    line-height: 1;
+  }
+  .mnav-label {
+    font-size: 10px;
+    letter-spacing: 0.02em;
+  }
+  .mnav-on {
+    color: var(--fg);
+    background: color-mix(in srgb, var(--fg) 12%, transparent);
+  }
+
+  /* fullscreen "focus mode" overlays already float above everything; keep them
+     clear of the tab bar and notch */
+  .card--full,
+  .pane--full {
+    inset: calc(8px + env(safe-area-inset-top, 0px)) 8px
+      calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}

@@ -1,0 +1,996 @@
+/* ---- BACKLOG: the bottom of the spine — the repo's committed TODO.md ---- */
+/* Read-only. The rest of the UI shows "what's happening?"; this shows "what's
+   next?". A todo flips to done when an agent's branch merges the tick to main. */
+.side-backlog {
+  flex: 0 0 auto;
+  height: 42%;
+  min-height: 152px;
+  display: flex;
+  flex-direction: column;
+  border-top: var(--border-w) solid var(--border);
+  background: var(--panel-2);
+}
+.side-backlog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.side-backlog-head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.side-backlog-count {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+/* Fullscreen: .card--full fixes inset:16px on all sides, but .side-backlog hard-codes
+   height:42% which would otherwise win over the bottom inset — release it so the
+   insets govern the floated height (same as the workspace cards). */
+.side-backlog.card--full {
+  height: auto;
+}
+/* The ⌘K "Backlog" command's overlay, reachable from inside a workspace where the
+   panel otherwise has no home (it's normally only inline on the project home).
+   Bounded (not edge-to-edge like .card--full) since .side-backlog already has its
+   own internal fullscreen toggle for going bigger. */
+.backlog-overlay-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  margin: 48px auto;
+  width: min(720px, calc(100vw - 32px));
+  height: calc(100vh - 96px);
+  display: flex;
+  animation: resolve var(--dur-2) var(--ease-out);
+}
+.backlog-overlay-panel .backlog-panel {
+  margin-left: 0;
+  width: 100%;
+}
+.backlog-overlay-close {
+  position: absolute;
+  top: -34px;
+  right: 0;
+  z-index: 1;
+}
+.side-backlog-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 6px 8px;
+  border-top: var(--border-w) solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* ── backlog source tabs ────────────────────────────────────────────────
+   The two backlog sources (committed todo-*.md files · GitHub Issues) as a
+   top-level segmented switch, so issues aren't mixed into the todo file rail.
+   Flat theme pills (keycap edge reset in buttons.css alongside .settings-tab);
+   active reads with the accent-green tint. */
+.backlog-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+}
+.backlog-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: var(--border-w) solid transparent;
+  padding: 4px 11px;
+  border-radius: var(--radius-md);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.backlog-tab:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  color: var(--fg);
+}
+.backlog-tab-on,
+.backlog-tab-on:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 14%, var(--panel-2) 86%);
+  border-color: color-mix(in srgb, var(--fg) 32%, transparent);
+  color: var(--fg);
+}
+/* the GitHub source tab tints blue when active, matching the issue accents below */
+.backlog-tab-issues.backlog-tab-on,
+.backlog-tab-issues.backlog-tab-on:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue) 14%, var(--panel-2) 86%);
+  border-color: color-mix(in srgb, var(--blue) 32%, transparent);
+  color: var(--blue);
+}
+.backlog-tab-n {
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+.side-backlog-empty {
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.side-backlog-empty code {
+  font-size: 10px;
+}
+.side-backlog-group {
+  padding: 8px 8px 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+.side-todo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg);
+}
+.side-todo-box {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+}
+.side-todo-text {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+/* a pending todo is clickable → seeds a workspace from it. Reset the base button
+   keycap (border/shadow/press/weight) so it reads like the rest of the list, and
+   reveal a ＋ on hover to signal the action. */
+.side-todo-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  color: inherit;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+}
+.side-todo-btn:hover:not(:disabled),
+.side-todo-btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: var(--tint-2);
+}
+.side-todo-go {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 6px;
+  color: var(--fg);
+  font-family: var(--mono);
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-out);
+}
+.side-todo-btn:hover .side-todo-go,
+.side-todo-btn:focus-visible .side-todo-go {
+  opacity: 1;
+}
+.side-todo-done .side-todo-box {
+  color: var(--fg);
+}
+.side-todo-done .side-todo-text {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+/* an item already seeded into a live workspace → "in progress" (amber, matching
+   the backlog's active category). Clicking jumps to that workspace rather than
+   starting a duplicate; the ○ box becomes a half-filled ◐. */
+.side-todo-wip-row .side-todo-box,
+.side-todo-wip-btn .side-todo-box {
+  color: var(--amber);
+}
+.side-todo-wip {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--amber);
+}
+.side-todo-wip-btn:hover:not(:disabled),
+.side-todo-wip-btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+}
+
+/* ── backlog master-detail ──────────────────────────────────────────────
+   A narrow searchable file rail (left) + the selected file's checklist (right).
+   Replaces the wrapping tab strip, which spilled onto multiple lines once a repo
+   had more than a few todo files. Files are grouped by lifecycle category, each
+   with its own signature colour (amber = in progress, dim = untouched, green =
+   done) so the backlog reads at a glance. */
+.backlog-split {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  border-top: var(--border-w) solid var(--border);
+}
+.backlog-rail {
+  flex: 0 0 26%;
+  min-width: 148px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: var(--border-w) solid var(--border);
+  background: var(--panel-2);
+}
+.backlog-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.backlog-search-icon {
+  flex-shrink: 0;
+  color: var(--dim);
+}
+.backlog-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 5px 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--fg);
+}
+.backlog-search-input:focus {
+  outline: none;
+  border-color: var(--line-strong);
+}
+.backlog-search-input::placeholder {
+  color: var(--dim);
+}
+.backlog-search-clear {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 5px;
+}
+.backlog-search-clear:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+}
+.backlog-files {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 6px 6px 10px;
+}
+.backlog-cat {
+  margin-top: 9px;
+}
+.backlog-cat:first-child {
+  margin-top: 2px;
+}
+/* category colour is set on the head; label/count/dot inherit via currentColor */
+.backlog-cat-active {
+  color: var(--amber);
+}
+.backlog-cat-todo {
+  color: var(--dim);
+}
+.backlog-cat-done {
+  color: var(--fg);
+}
+.backlog-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.backlog-cat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.backlog-cat-label {
+  flex: 1 1 auto;
+}
+.backlog-cat-n {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+.backlog-file {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  background: transparent;
+  border: var(--border-w) solid transparent;
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: 5px 8px;
+  margin-top: 1px;
+  cursor: pointer;
+  color: var(--fg);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 12px;
+}
+.backlog-file:hover:not(:disabled),
+.backlog-file:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+.backlog-file-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.backlog-file-active .backlog-file-dot {
+  background: var(--amber);
+}
+.backlog-file-todo .backlog-file-dot {
+  background: transparent;
+  border: 1.5px solid var(--dim);
+}
+.backlog-file-done .backlog-file-dot {
+  background: var(--fg);
+}
+.backlog-file-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.backlog-file-count {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.backlog-file-on,
+.backlog-file-on:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 13%, var(--panel-2) 87%);
+  border-color: color-mix(in srgb, var(--fg) 30%, transparent);
+}
+.backlog-noresult {
+  padding: 12px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.backlog-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.backlog-detail-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px 8px;
+}
+.backlog-detail-name {
+  font-family: var(--display, var(--sans));
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.backlog-detail-count {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: currentColor; /* category tint from .backlog-cat-* on the head */
+  font-variant-numeric: tabular-nums;
+}
+.backlog-progress {
+  height: 4px;
+  margin: 0 14px 2px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+  overflow: hidden;
+}
+.backlog-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: currentColor; /* category tint from .backlog-cat-* */
+  transition: width var(--dur-2) var(--ease-out);
+}
+.backlog-items {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* ── GitHub Issues tab ──────────────────────────────────────────────────
+   A second backlog source rendered live from `gh`. The rail entry + rows reuse
+   the todo master-detail chrome; these rules add the GitHub-specific accents
+   (blue category tint, issue number/label chips, the closed badge, the ⟳). */
+.backlog-cat-issues {
+  color: var(--blue);
+}
+.backlog-file-issues .backlog-file-dot {
+  background: var(--blue);
+}
+.backlog-refresh {
+  flex-shrink: 0;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0 4px;
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 14px;
+  line-height: 1;
+}
+.backlog-refresh:hover:not(:disabled) {
+  color: var(--fg);
+  transform: none;
+  box-shadow: none;
+}
+.backlog-refresh:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.backlog-refresh-spin {
+  display: inline-block;
+  animation: spin var(--dur-spin) linear infinite;
+}
+.backlog-asof {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+/* when both the stamp and ⟳ show, the stamp keeps margin-left:auto and the button
+   sits flush after it */
+.backlog-asof + .backlog-refresh {
+  margin-left: 8px;
+}
+.issue-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+.issue-labels {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.issue-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  border-radius: var(--radius-md);
+  color: var(--dim);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  border: var(--border-w) solid var(--border);
+}
+.issue-closed-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gh-push);
+}
+/* a closed issue is dimmed but still clickable (backtrack), so — unlike a done
+   todo — it keeps a hover affordance and its ✔ box reads as "resolved", not locked */
+.side-todo-closed-btn .side-todo-box {
+  color: var(--gh-push);
+}
+.side-todo-closed-btn .side-todo-text {
+  color: var(--dim);
+}
+
+/* the issues tab has no file rail — the live list fills the whole split */
+.backlog-split-issues {
+  display: block;
+}
+.backlog-issues-detail {
+  height: 100%;
+}
+
+/* GitHub-style Open / Closed / All state filter. Open is the default (the working
+   queue); each button carries its live count so an empty group stays discoverable. */
+.issue-filter {
+  display: flex;
+  gap: 4px;
+  padding: 2px 14px 8px;
+}
+.issue-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: var(--border-w) solid var(--border);
+  padding: 3px 10px;
+  border-radius: var(--radius-md);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.issue-filter-btn:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--fg) 24%, var(--border));
+}
+.issue-filter-on,
+.issue-filter-on:hover:not(:disabled) {
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+}
+.issue-filter-n {
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* ── issues display polish: search + group toggle + label-filter chips ───────
+   Client-side filters over the live `gh` fetch (no refetch). The search row reuses
+   .backlog-search but drops its rail border/padding to sit inline with the toggle. */
+.issue-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 8px;
+}
+.issue-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border-bottom: none;
+}
+.issue-search .backlog-search-input {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+.issue-group-toggle {
+  flex-shrink: 0;
+  background: transparent;
+  border: var(--border-w) solid var(--border);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.issue-group-toggle:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--fg) 24%, var(--border));
+}
+.issue-group-on,
+.issue-group-on:hover:not(:disabled) {
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  border-color: color-mix(in srgb, var(--blue) 40%, transparent);
+}
+
+/* the label-filter chip bar: clickable siblings of the read-only row chips */
+.issue-labels-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 14px 8px;
+}
+.issue-label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  border: var(--border-w) solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.issue-label-chip:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--fg) 24%, var(--border));
+}
+.issue-label-chip-on,
+.issue-label-chip-on:hover:not(:disabled) {
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  border-color: color-mix(in srgb, var(--blue) 45%, transparent);
+}
+.issue-label-chip-n {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+.issue-label-chip-clear {
+  color: var(--dim);
+  border-style: dashed;
+}
+.issue-label-chip-clear svg {
+  width: 9px;
+  height: 9px;
+}
+/* the matching read-only chip on a row, when its label is the active filter */
+.issue-label-active {
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  border-color: color-mix(in srgb, var(--blue) 45%, transparent);
+}
+/* per-group count in a group-by-label heading */
+.issue-group-n {
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+/* ── expandable issue rows (detail on demand) ───────────────────────────────
+   The seed row (side-todo) and a small expand chevron sit side by side; clicking
+   the chevron opens the read-only <IssueDetail> (body + comments) inline below,
+   so a dev reads the issue without leaving haro. The chevron is a separate
+   control from the click-to-seed row so reading and acting never collide. */
+.issue-row {
+  display: flex;
+  align-items: flex-start;
+}
+.issue-row > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.issue-expand {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--dim);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease-out);
+}
+.issue-expand:hover:not(:disabled),
+.issue-expand:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+}
+
+.issue-detail {
+  margin: 2px 8px 10px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--border);
+  background: color-mix(in srgb, var(--fg) 3%, transparent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+.issue-detail-msg {
+  font-family: var(--sans);
+  font-size: 12px;
+}
+/* Issue bodies / comments are prose with author-authored line breaks; preserve
+   them (pre-wrap) but keep long words from overflowing the narrow rail. */
+.issue-detail-text {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--fg);
+}
+.issue-detail-empty {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-style: italic;
+}
+.issue-detail-comments {
+  margin-top: 12px;
+  border-top: var(--border-w) solid var(--border);
+  padding-top: 10px;
+}
+.issue-detail-comments-head {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.issue-comment + .issue-comment {
+  margin-top: 12px;
+}
+.issue-comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+.issue-comment-author {
+  font-family: var(--mono);
+  color: var(--fg);
+}
+.issue-comment-when {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.issue-detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--blue);
+  text-decoration: none;
+}
+.issue-detail-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Backlog editing (in-app create/edit) ──────────────────────────────────── */
+/* Rail top row: search + a compact "New file" button share one line. */
+.backlog-rail-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.backlog-rail-top .backlog-search {
+  flex: 1 1 auto;
+  /* Without this the wrapper keeps min-width:auto (min-content) and refuses to
+     shrink, shoving the ＋ button out of the narrow rail and over the detail
+     pane. min-width:0 on the input alone isn't enough — it must be on the flex
+     item itself. */
+  min-width: 0;
+  border-bottom: none;
+}
+.backlog-new-btn {
+  flex-shrink: 0;
+  margin-right: 8px;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 5px 9px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--fg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.backlog-new-btn:hover {
+  border-color: var(--action);
+  color: var(--action);
+}
+/* In the narrow file rail the New button is icon-only (＋) so the search input
+   keeps usable width — a lone ＋ next to a full-text label doesn't fit ~148px.
+   The empty-state button below stays full-text (it has the whole pane). */
+.backlog-new-btn-icon {
+  padding: 5px 8px;
+  font-size: 14px;
+  line-height: 1;
+}
+.backlog-empty-actions {
+  margin-top: 12px;
+}
+.backlog-empty-actions .backlog-new-btn {
+  margin-right: 0;
+}
+
+/* "Start next N" multi-select (backlog/backlog-v2.md Move 3). */
+.backlog-select-on {
+  border-color: var(--action);
+  color: var(--action);
+}
+.backlog-select-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: var(--border-w) solid var(--border);
+  font-size: 11px;
+}
+.backlog-select-bar .backlog-new-btn {
+  margin-right: 0;
+  padding: 3px 10px;
+}
+.side-todo-pick {
+  color: var(--dim);
+}
+.side-todo-picked .side-todo-pick {
+  color: var(--action);
+}
+.side-todo-picked {
+  background: color-mix(in srgb, var(--action) 8%, transparent);
+}
+
+/* Edit button sits at the far right of the detail head (after the count, or on its
+ * own when a file has no items). */
+.backlog-edit-btn {
+  margin-left: auto;
+  align-self: center;
+  background: transparent;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 9px;
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--dim);
+  cursor: pointer;
+}
+.backlog-detail-count + .backlog-edit-btn {
+  margin-left: 8px;
+}
+.backlog-edit-btn:hover {
+  border-color: var(--action);
+  color: var(--action);
+}
+
+/* Note blocks: read-only markdown context rendered between the clickable items.
+ * Tone the shared .md-file heading/margins down so notes sit calmly beside tasks. */
+.backlog-note {
+  padding: 2px 14px 6px;
+}
+.backlog-note .md-file {
+  font-size: 12.5px;
+  color: var(--fg-2, var(--fg));
+}
+.backlog-note .md-file :first-child {
+  margin-top: 0;
+}
+.backlog-note .md-file h1,
+.backlog-note .md-file h2,
+.backlog-note .md-file h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  margin: 8px 0 4px;
+}
+
+/* The raw-markdown editor (Edit + New file). */
+.backlog-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.backlog-newpath {
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 9px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+}
+.backlog-editor-area {
+  flex: 1 1 auto;
+  min-height: 220px;
+  resize: vertical;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg);
+  tab-size: 2;
+}
+.backlog-newpath:focus,
+.backlog-editor-area:focus {
+  outline: none;
+  border-color: var(--line-strong);
+}
+.backlog-editor-hint {
+  font-size: 11px;
+}
+.backlog-editor-hint code {
+  font-family: var(--mono);
+}
+.backlog-editor-err {
+  font-size: 11.5px;
+  color: var(--danger);
+}
+.backlog-editor-actions {
+  display: flex;
+  gap: 8px;
+}
+.backlog-editor-save {
+  background: var(--action);
+  border: var(--border-w) solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--action-ink);
+  cursor: pointer;
+}
+.backlog-editor-save:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.backlog-editor-cancel {
+  background: transparent;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--dim);
+  cursor: pointer;
+}
+.backlog-editor-cancel:hover:not(:disabled) {
+  color: var(--fg);
+}

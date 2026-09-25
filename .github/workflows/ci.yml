@@ -1,0 +1,149 @@
+name: ci
+
+# haro's real gate is LOCAL and pre-merge. That is the product's whole thesis: no work is
+# mergeable until the suite is green, and you watch it happen. So this workflow is not the
+# gate, it is the backstop: it re-runs both suites on anything that reaches main or a PR,
+# which catches a push made outside haro (a hotfix from another machine, a web edit, a
+# teammate without the app). Treat a red run here as "the local gate was bypassed".
+#
+# COST NOTE, because this repo is PRIVATE and therefore metered (public repos get
+# unlimited standard runners; private repos on the Free plan include 2,000 Linux
+# minutes/month). Every choice below keeps one run at roughly two to three minutes and
+# makes a runaway bill impossible:
+#
+#   ubuntu-latest only   Linux bills at 1x. Windows is 2x and macOS is 10x, so a
+#                        three-OS matrix would cost 13x for no signal we need: haro is
+#                        Linux-first by design.
+#   timeout-minutes      THE important one. GitHub's default job timeout is 6 hours, so a
+#                        single hung process could eat 18% of the monthly allowance. Ours
+#                        die at 10 minutes.
+#   concurrency          A rapid second push cancels the superseded run instead of paying
+#                        for both.
+#   paths-ignore         This repo churns markdown (CHANGELOG, backlog/, notes/). A
+#                        docs-only commit skips CI entirely.
+#   dependency caching   npm and pip resolve from cache instead of the network.
+#   no artifact uploads  Artifact/package storage is the one thing that CAN bill on the
+#                        Free plan (500 MB included). We upload nothing, so it cannot.
+#   no schedule/cron     Nothing burns minutes while you sleep.
+#
+# You also cannot be charged by accident: a GitHub account's Actions spending limit
+# defaults to $0, which means running out of included minutes BLOCKS further runs rather
+# than billing you. Worth confirming once at
+# https://github.com/settings/billing (Spending limits), and leaving at $0.
+#
+# CAVEAT on paths-ignore: if you later turn on branch protection with a REQUIRED status
+# check, a PR touching only markdown will never produce that check and will sit blocked
+# forever. If you go that route, either drop the paths-ignore block or add a companion
+# job that always succeeds for the ignored paths.
+#
+# ACTION VERSIONS: pinned to majors whose own runtime is node24 (checkout@v7,
+# setup-python@v7, setup-node@v7). GitHub deprecated node20 for action runtimes, and a
+# node20 action emits an annotation on every run. Dependabot (.github/dependabot.yml,
+# github-actions ecosystem, monthly) keeps these current from here.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "notes/**"
+      - "backlog/**"
+      - "brand/**"
+      - "screenshots/**"
+      - ".gitignore"
+      - "LICENSE"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "notes/**"
+      - "backlog/**"
+      - "brand/**"
+      - "screenshots/**"
+      - ".gitignore"
+      - "LICENSE"
+
+# One live run per branch. github.ref is the branch for a push and the PR ref for a PR,
+# so a push and its PR do not cancel each other.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: nothing here writes to the repo, comments, or publishes.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: backend · pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          # Matches the version ./run.sh's venv is built against, so CI and the real
+          # runtime cannot drift. pyproject allows >=3.11 if you ever want a matrix,
+          # but that multiplies the minutes, so pin the one version we actually ship on.
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        # requirements.txt is the honest install surface: it is exactly what
+        # run.sh's venv installs, so a green CI proves the shipped app can boot.
+        # (The suite needs no database: db.py uses aiosqlite, and the tests construct
+        # store/models in memory.)
+        run: pip install -r requirements.txt
+
+      - name: Run the gate (pytest)
+        # No PYTHONPATH needed: pyproject sets `pythonpath = ["."]`, which is how the
+        # `haro` package imports without being installed.
+        run: python -m pytest -q
+
+  frontend:
+    name: frontend · vitest + tsc + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # Read from frontend/.nvmrc so CI and your machine can never drift, rather than
+          # CI guessing a version. That drift is not theoretical: the first run of this
+          # workflow guessed Node 22 (npm 10) and `npm ci` failed with "Missing:
+          # esbuild@0.28.1 from lock file", because package.json declared vite ^5 while
+          # vitest 4 requires vite ^6/^7/^8, so npm had nested a newer vite under vitest/
+          # whose optional esbuild peer was absent from the lockfile. npm 12 tolerated it,
+          # npm 10 refused. That root cause is now fixed (the graph is aligned on vite 8),
+          # but the pin stays: reproducing the dev toolchain is CI's job, not a workaround.
+          #
+          # NOTE, since this trips people up: this is the Node that runs YOUR BUILD. It is
+          # unrelated to the Node that runs the ACTIONS themselves (`runs.using` in each
+          # action's own action.yml), which is why a "Node.js 20 is deprecated" warning is
+          # fixed by bumping the `actions/*` versions above, never by editing .nvmrc.
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        # `npm ci` (not `npm install`) so the lockfile is authoritative and CI can never
+        # silently resolve a different tree than your machine.
+        run: npm ci
+
+      - name: Run the gate (vitest)
+        # Tests first because they finish in under a second, so a real failure costs a
+        # fraction of a minute instead of waiting on the build.
+        run: npm test
+
+      - name: Typecheck and build
+        # `npm run build` is `tsc -b && vite build`, so this is the typecheck AND proof
+        # the bundle still compiles. Nothing is uploaded: we only care that it builds.
+        run: npm run build

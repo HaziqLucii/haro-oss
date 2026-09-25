@@ -1,0 +1,75 @@
+{
+  "name": "haro-desktop",
+  "version": "0.1.0",
+  "description": "haro desktop app — an Electron shell over the FastAPI backend + built SPA",
+  "main": "main.js",
+  "author": "meekco",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:dir": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "asia.meekco.haro",
+    "productName": "haro",
+    "executableName": "haro",
+    "directories": {
+      "output": "../dist-desktop",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "loader.html",
+      "assets/**"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend/dist/haro-backend",
+        "to": "backend/haro-backend"
+      },
+      {
+        "from": "../frontend/dist",
+        "to": "frontend-dist"
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "pacman"
+      ],
+      "icon": "build/icon.png",
+      "category": "Development",
+      "synopsis": "AI coding-agent orchestrator with a live test gate",
+      "desktop": {
+        "entry": {
+          "Name": "haro",
+          "GenericName": "AI Coding-Agent Orchestrator",
+          "StartupWMClass": "haro"
+        }
+      }
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": "arm64"
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.developer-tools",
+      "darkModeSupport": true,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    }
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}
