@@ -1,0 +1,859 @@
+/* compact one-line telemetry strip (TOP) */
+.stats-strip {
+  grid-area: strip;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+}
+/* workspace identity lead — the desktop home of the crumb (name · branch) */
+.strip-ws {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.strip-ws .ws-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* rename + archive — pushed to the far right of the strip as a group */
+.strip-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.strip-archive:hover {
+  color: var(--del);
+  border-color: var(--del);
+}
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+.stat-k {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.stat-v {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+/* Ledger-tile typography (item 5, brand pass-3): mono/uppercase/wide-tracked
+   label vs. a UI-font value, matching the stat tiles elsewhere in the plan.
+   Compound selectors (`.stat .stat-k`/`.stat .stat-v`) — not just `.stat-k`/
+   `.stat-v` — so this wins the cascade over typography.css's shared eyebrow-mono
+   rule (imported AFTER composer.css and sets its own letter-spacing on .stat-k).
+   NOTE: this is the only .stat-k/.stat-v in the app (the "deps" chip in the
+   workspace stats-strip) — there's no separate big-numeral KPI tile elsewhere,
+   so .stat-v here keeps a modest size (a one-line strip, not a hero stat) rather
+   than the plan's literal 2.6rem, which would blow out this compact strip. */
+.stat .stat-k {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  color: var(--ink-muted);
+}
+.stat .stat-v {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1;
+}
+.stat-dot {
+  margin-right: 4px;
+}
+/* deps (setup) chip — the gate's precondition, not the gate verdict itself,
+   so it reads as a clean/ready status (bone) rather than the gate's own green */
+.setup-ok .stat-v {
+  color: var(--gh-push);
+}
+.setup-ok .stat-dot {
+  color: var(--gh-push);
+}
+.setup-failed .stat-v {
+  color: var(--del);
+}
+.setup-failed .stat-dot {
+  color: var(--del);
+}
+.setup-running .stat-v {
+  color: var(--amber);
+  animation: breathe var(--dur-breath) var(--ease-in-out) infinite;
+}
+.stat-setup.clickable {
+  cursor: pointer;
+}
+.stat-setup.clickable:hover .stat-v {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.stat-div {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 2px 0;
+}
+
+/* shared card shell (LEFT/RIGHT cells + GatePanel .pane + composer) */
+.card,
+.pane {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.card-head,
+.pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: var(--border-w) solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+/* right cluster of a card-head — meta label sits alongside the running pulse */
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* "running model · effort" label — confirms your pick actually took effect.
+   Dimmed while it's just the requested pick; accented once the session reports
+   the model it's genuinely running (see StreamMeta). */
+.stream-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 8px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.stream-meta-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+.stream-meta-model {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stream-meta-effort {
+  color: var(--dim);
+  opacity: 0.85;
+}
+.stream-meta-effort::before {
+  content: "· ";
+}
+/* Which loop step (plan/build) this run is — only set when `[roles] enabled`. */
+.stream-meta-role {
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.stream-meta-role::after {
+  content: " ·";
+  margin-right: 6px;
+  opacity: 0.5;
+}
+/* confirmed by the live session — a "this value is live, not pending" status,
+   not the test gate, so bone rather than accent */
+.stream-meta-live {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--gh-push) 45%, var(--border));
+}
+.stream-meta-live .stream-meta-dot {
+  background: var(--gh-push);
+}
+.stream-meta-live .stream-meta-effort {
+  color: var(--gh-push);
+  opacity: 1;
+}
+
+/* composer (roomy multi-line prompt, in the middle column) */
+.composer {
+  flex-shrink: 0;
+  /* A query container so the action row can size its controls (and, past a point,
+     reflow) off the COLUMN's width, not the viewport's. The middle column narrows
+     independently of the window (side rail growing, window resize), which viewport
+     media queries miss. See the @container tiers at the end of this file. */
+  container-type: inline-size;
+  container-name: composer;
+}
+/* The prompt is an INSET rounded box within the unified agent-console — not flush to
+   its border — so the shared focus glow (.composer-seeded / .composer-flash) renders
+   outward on all four sides, matching the terminal card. The margin gap replaces the
+   hairline divider to the stream above. Higher specificity than `.agent-console > * + *`
+   so this uniform border wins over that rule's border-top. */
+.composer.console-sec {
+  margin: 10px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.composer textarea {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  resize: vertical;
+  min-height: 96px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.composer textarea:focus {
+  outline: none;
+}
+/* Paste-to-file attachment chips, above the composer textarea */
+.composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px 0;
+}
+/* Paste-to-file attachment: reuses the agent-stream `.file-chip` look (icon ·
+   name · line-count) so composer attachments and streamed file capsules read as
+   one language. Adds a transparent open-button + a divider-separated remove ×. */
+.attach-chip {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.attach-chip:hover {
+  border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+/* Both inner buttons are flat chip parts, NOT keycaps — reset the base
+   button's edge shadow, radius, display font, and press animation. */
+.attach-open,
+.attach-x {
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--mono);
+  font-weight: 400;
+}
+.attach-open:hover:not(:disabled),
+.attach-x:hover:not(:disabled),
+.attach-open:active:not(:disabled),
+.attach-x:active:not(:disabled) {
+  box-shadow: none;
+  transform: none;
+}
+.attach-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px 7px 2px 5px;
+  background: transparent;
+  border: none;
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.attach-open:hover .file-chip-name {
+  color: var(--fg);
+}
+.attach-lines {
+  color: var(--dim);
+}
+.attach-x {
+  padding: 2px 7px;
+  background: transparent;
+  border: none;
+  border-left: var(--border-w) solid var(--border);
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.attach-x:hover {
+  color: var(--danger);
+}
+/* Image attachment: a little thumbnail in place of the file-type icon, so a
+   pasted screenshot is recognisable at a glance (click opens it in the code step). */
+.attach-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+  border: var(--border-w) solid var(--border);
+}
+
+.composer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: var(--border-w) solid var(--border);
+}
+/* Two rows inside the same bar: the config row (how this run is set up —
+   model/roles, plan/fast, race) sits above a hairline, the io row (attach,
+   dictate, budget, go) below it. Splitting them stops eight controls of
+   different intent from reading as one flat, undifferentiated cluster. */
+.composer-config-row,
+.composer-io-row {
+  display: flex;
+  flex-wrap: wrap; /* controls reflow onto more rows instead of clipping when the column is narrow */
+  align-items: center;
+  gap: 8px;
+}
+.composer-config-row {
+  justify-content: flex-start;
+  padding-bottom: 6px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.composer-io-row {
+  justify-content: flex-end;
+}
+.composer-actions button {
+  padding: 8px 22px;
+}
+.composer-spacer {
+  flex: 1;
+}
+/* Model / effort selectors sit at the left of the composer actions bar. Muted
+   until hovered so they read as secondary to the run button. */
+.composer-opt {
+  padding: 6px 8px;
+  background: var(--bg-inset, var(--bg));
+  color: var(--fg-dim, var(--fg));
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+.composer-opt:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+/* "Plan first" toggle — a composer-opt that lights up (accent) when armed, so you
+   can tell at a glance the next run will plan-then-approve rather than auto-edit.
+   Needs the specificity to beat `.composer-actions button`'s wide padding. */
+.composer-actions .composer-plan {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+}
+.composer-plan-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  opacity: 0.55;
+}
+.composer-plan.composer-plan-on {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+  border-color: var(--fg);
+}
+.composer-plan-on .composer-plan-dot {
+  background: var(--fg);
+  border-color: var(--fg);
+  opacity: 1;
+}
+
+/* "Fast" toggle — mirrors the plan toggle but lights up amber ("speed", not the
+   green gate accent) so the two mutually-exclusive modes read distinctly at a glance. */
+.composer-actions .composer-fast {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+}
+.composer-fast-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  opacity: 0.55;
+}
+.composer-fast.composer-fast-on {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+  border-color: var(--amber);
+}
+.composer-fast-on .composer-fast-dot {
+  background: var(--amber);
+  border-color: var(--amber);
+  opacity: 1;
+}
+
+/* Role strip (notes/workflow-roles-plan.md): replaces the model/effort .composer-opt
+   pickers when `[roles] enabled` — plan › build › review, each labeled with its
+   configured model/effort, the step this submit will run picked out in bone. Click
+   opens the Roles tab (same "click to edit" affordance as the stat-setup chip). */
+.composer-role-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+}
+.role-strip-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.55;
+}
+.role-strip-step-active {
+  opacity: 1;
+  color: var(--fg);
+  font-weight: 600;
+}
+.role-strip-sep {
+  margin: 0 2px;
+  opacity: 0.4;
+}
+.role-strip-label {
+  color: var(--fg-dim, var(--fg));
+  opacity: 0.8;
+}
+.role-strip-step-active .role-strip-label {
+  color: inherit;
+  opacity: 1;
+}
+
+/* Plan approval bar — a finished plan run is a review checkpoint before any file
+   edit (a user decision point, not the Vitest test gate). Bone-tinted so "action
+   needed" reads without shouting. Wraps its actions below the copy on a narrow
+   console. */
+.plan-approve {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--action) 8%, transparent);
+  border-top: var(--border-w) solid var(--border);
+}
+.plan-approve-lead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.plan-approve-badge {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  background: var(--action);
+  color: var(--action-ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.plan-approve-text {
+  color: var(--dim);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.plan-approve-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+.plan-approve-actions button {
+  padding: 8px 16px;
+}
+/* Paperclip attach button — an icon-only composer-opt. Overrides the wide
+   `.composer-actions button` padding so it stays a tidy square on the left. */
+.composer-actions .composer-clip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+}
+.composer-clip svg {
+  display: block;
+}
+/* Voice-dictate mic — an icon-only composer-opt beside the paperclip. Voice
+   dictation itself is OS-level (see TaskComposer's DICTATION_HINT); this button
+   just focuses the composer and surfaces the OS shortcut as a tooltip, so there's
+   no "recording" state to render. */
+.composer-actions .composer-mic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+}
+.composer-mic svg {
+  display: block;
+}
+/* Context-usage gauge (sits between the effort picker and the run button): a
+   vertical two-tone bar filling bottom-up — input tokens under output tokens —
+   over a muted track that represents the model's remaining context headroom. */
+.ctx-meter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: default;
+}
+.ctx-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 8px;
+  height: 26px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  border: var(--border-w) solid var(--border);
+  overflow: hidden;
+}
+.ctx-fill-cached,
+.ctx-fill-fresh {
+  display: block;
+  width: 100%;
+  transition: height var(--dur-2) var(--ease-out);
+}
+.ctx-fill-cached {
+  background: var(--fg);
+}
+.ctx-fill-fresh {
+  background: var(--ink-muted);
+}
+.ctx-pct {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  min-width: 2.4ch;
+  text-align: right;
+}
+/* warn tint once the last run crossed 80% of the window */
+.ctx-meter-hot .ctx-fill-cached {
+  background: var(--warn);
+}
+.ctx-meter-hot .ctx-fill-fresh {
+  background: color-mix(in srgb, var(--warn) 45%, transparent);
+}
+.ctx-meter-hot .ctx-pct {
+  color: var(--warn);
+}
+
+/* Inline autocomplete for the composer (/ commands · @ files). The menu is
+   anchored above the textarea (the composer sits low in the layout). */
+.composer-input {
+  position: relative;
+  /* stretch the textarea to the full composer width (it can't rely on flex:1
+     from the section anymore now that it's wrapped in this anchor div). */
+  display: flex;
+  flex-direction: column;
+}
+/* Backlog-seeded composer: the task card was prefilled from a clicked todo and
+   hasn't been run yet. A faint bone focus glow (never sharp) draws the dev's eye
+   so they notice the prompt is ready to tweak → "run agent". A slow, gentle pulse
+   catches attention without nagging; cleared on first submit. Bone, not accent:
+   this is an attention cue, not a gate verdict. */
+.composer-seeded {
+  animation: composer-seeded-glow var(--dur-breath) var(--ease-in-out) infinite;
+}
+/* Resting value, not just the keyframe's 0%/100%: reduced motion collapses the
+   loop to one ~0.01ms cycle, and without this the cue would revert to the
+   plain composer border and vanish for those viewers entirely. Needs the
+   compound selector: the element always also carries .composer.console-sec
+   (composer.css, (0,2,0)), which sets border-color via the border shorthand
+   and otherwise wins the cascade over a bare .composer-seeded at (0,1,0). */
+.composer.composer-seeded {
+  border-color: color-mix(in srgb, var(--line-strong) 22%, var(--border));
+}
+/* Faint-border breathe — SHARED by the seeded pulse, the ⌘I composer flash, and the
+   Ctrl+` terminal flash (they intentionally use one visual). A hairline border, not
+   a bloom: Kuro is shadowless, so attention comes from the border-color breathing,
+   not an expanding box-shadow. Renders on all four sides because the prompt is an
+   inset rounded box (see .composer.console-sec) with a margin gap all around — like
+   the terminal card — so the border reads clearly on every edge. */
+@keyframes composer-seeded-glow {
+  0%,
+  100% {
+    border-color: color-mix(in srgb, var(--line-strong) 22%, var(--border));
+  }
+  50% {
+    border-color: color-mix(in srgb, var(--line-strong) 55%, var(--border));
+  }
+}
+/* One-shot cousin of .composer-seeded: fired when ⌘I focuses the composer, so the
+   border settles from full ink down to the resting hairline to confirm where focus
+   landed. Same palette family as the seeded breathe, but a single settle rather than
+   a loop (the seed nags until run; a focus jump just needs a glance). Cleared after
+   the animation by a timer in App.tsx so re-pressing ⌘I can replay it. */
+.composer-flash,
+/* same one-shot glow on the terminal card when Ctrl+` jumps to the shell */
+.term-flash {
+  animation: composer-flash-glow var(--dur-3) var(--ease-out) 1;
+}
+@keyframes composer-flash-glow {
+  from {
+    border-color: var(--fg);
+  }
+  to {
+    border-color: var(--line);
+  }
+}
+/* highlight overlay for the composer: the textarea's own text is transparent and
+   this div (behind it) renders the same text with /command + @file tokens colored.
+   Both MUST share identical box + typography so glyphs line up 1:1 with the caret. */
+.composer-ta-wrap {
+  position: relative;
+  display: block;
+}
+.composer-hl,
+.composer-ta-wrap > .composer-ta {
+  margin: 0;
+  padding: 8px 10px;
+  border: none;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  box-sizing: border-box;
+}
+.composer-hl {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--fg);
+  z-index: 0;
+}
+.composer-ta-wrap > .composer-ta {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  background: transparent;
+  color: transparent; /* hide real text; the overlay shows it (with token colors) */
+  caret-color: var(--fg); /* but keep the caret visible */
+}
+.composer-ta-wrap > .composer-ta::placeholder {
+  color: var(--dim);
+}
+/* token chips — WIDTH-SAFE: color + background only (no padding/weight/spacing) */
+.ctok {
+  border-radius: 3px;
+  color: var(--action);
+  background: color-mix(in srgb, var(--action) 15%, transparent);
+}
+.ctok-cmd {
+  text-decoration: underline; /* distinguishes /command from @file (width-safe) */
+}
+/* PR/issue reference inline token. WIDTH-SAFE (color + dotted underline only, no
+   padding/weight) so the overlay stays glyph-aligned with the textarea caret —
+   the clickable, padded badge lives in the .composer-pr-chips strip below. */
+.ctok-pr {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+/* Clickable PR-reference chips under the composer: the actual navigation surface
+   (the inline token can't be clicked without fighting the textarea caret). */
+.composer-pr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.composer-pr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid color-mix(in srgb, var(--action) 35%, transparent);
+  background: color-mix(in srgb, var(--action) 12%, transparent);
+  color: var(--action);
+  font-size: 12px;
+  line-height: 1.6;
+  text-decoration: none;
+  cursor: pointer;
+}
+.composer-pr-chip:hover {
+  background: color-mix(in srgb, var(--action) 20%, transparent);
+  border-color: color-mix(in srgb, var(--action) 55%, transparent);
+}
+.composer-pr-chip-num {
+  font-family: var(--mono, monospace);
+  font-weight: 500;
+}
+.composer-pr-chip svg {
+  opacity: 0.85;
+}
+/* One overlay row per source line. Block-level + full width so a code row's
+   background spans the whole line (not just its glyphs). WIDTH-SAFE: no padding,
+   margin, border, or letter-spacing — only background/color — so each row wraps
+   at the same column as the transparent textarea and the caret stays aligned.
+   min-height keeps an empty line a full line tall. */
+.hlrow {
+  min-height: 1.5em;
+}
+/* Slack-style ``` code fence: a full-width tint. Consecutive code rows abut into
+   one seamless block; only the block's outer corners round (first/last code row,
+   detected with :has), giving a clean rectangle instead of per-line boxes. */
+.hlrow-code {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+.hlrow-code:first-child,
+.hlrow:not(.hlrow-code) + .hlrow-code {
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+}
+.hlrow-code:last-child,
+.hlrow-code:has(+ .hlrow:not(.hlrow-code)) {
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+.hlrow-code-fence {
+  color: var(--dim); /* the ``` markers read as chrome, not code */
+}
+.ac-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  /* ~6 suggestions tall, then scroll — keep it from swallowing the pane above. */
+  max-height: 208px;
+  overflow-y: auto;
+  padding: 6px;
+  z-index: 40;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgb(var(--shadow-rgb) / 0.35);
+}
+.ac-empty {
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.ac-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: 7px 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--fg);
+}
+.ac-item:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+.ac-sel {
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+}
+.ac-label {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ac-hint {
+  font-size: 11.5px;
+  flex-shrink: 0;
+}
+
+.pulse {
+  color: var(--fg);
+  animation: breathe var(--dur-breath) var(--ease-in-out) infinite;
+}
+
+/* ── Responsive composer action row ─────────────────────────────────────────
+   Keyed on the .composer container's width (the middle column), so it reacts to
+   the column narrowing even when the viewport is wide. Two stages:
+     1. SHRINK — tighten gaps, padding and type so the controls stay on as few
+        rows as possible before anything has to move.
+     2. REFLOW — once shrinking further would be unreadable, drop the flex-end
+        spacer, left-align the cluster, and let the run button become a single
+        full-width bar (clean + tappable) rather than one more crowded chip.
+   Phones (viewport ≤720px) keep their own layout in mobile.css. */
+@container composer (max-width: 780px) {
+  .composer-config-row,
+  .composer-io-row {
+    gap: 6px;
+  }
+  .composer-actions button {
+    padding: 7px 14px;
+  }
+  .composer-opt {
+    padding: 6px 7px;
+    font-size: 11.5px;
+  }
+  .composer-actions .composer-plan,
+  .composer-actions .composer-fast,
+  .composer-config-row .composer-race {
+    padding: 6px 8px;
+  }
+}
+@container composer (max-width: 520px) {
+  .composer-io-row {
+    justify-content: flex-start;
+  }
+  .composer-config-row,
+  .composer-io-row {
+    gap: 5px;
+  }
+  .composer-spacer {
+    display: none;
+  }
+  .composer-actions button {
+    padding: 7px 10px;
+    font-size: 11.5px;
+  }
+  .composer-opt {
+    font-size: 11px;
+  }
+  /* past this width the run button reads better as its own full-width bar than as
+     one more chip crowding the wrapped cluster */
+  .composer-actions .primary {
+    flex: 1 1 100%;
+    margin-top: 2px;
+  }
+}
+

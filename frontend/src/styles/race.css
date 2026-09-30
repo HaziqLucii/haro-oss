@@ -1,0 +1,191 @@
+/* Winner-only fan-out — the scorecard (backlog/winner-fanout.md §3).
+   Visual rule: the WINNER is the only loud thing on the card. Losers stay legible but
+   recede, because the whole promise is "you review exactly one candidate" — a layout
+   that gives four lanes equal weight rebuilds the review bottleneck it removes. */
+
+.race-card {
+  border: var(--border-w) solid var(--border);
+  border-left: 3px solid var(--border);
+  background: var(--panel);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* The left rail is the verdict at a glance: bone won, amber tie, dim nothing.
+   "won" is the race's PICK among policy criteria (first_green/cheapest_green/
+   best_coverage_delta/merge_clean) — not a raw per-lane gate readout (several
+   lanes can all be gate_green; only one is chosen) — so it stays bone, not
+   var(--accent), which race.css does not carry on the accent-allowed list. */
+.race-card-won { border-left-color: var(--gh-push); }
+.race-card-tie { border-left-color: var(--amber); }
+.race-card-running { border-left-color: var(--blue); }
+.race-card-none { border-left-color: var(--dim); }
+
+.race-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.race-spacer { flex: 1; }
+.race-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--blue) 16%, transparent);
+  color: var(--blue);
+}
+.race-task {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 46ch;
+}
+.race-spend { font-family: var(--mono); font-size: 11px; }
+.race-stop { font-size: 11px; padding: 2px 8px; }
+
+.race-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.race-headline-glyph { font-family: var(--mono); }
+.race-headline-won { color: var(--gh-push); }
+.race-headline-tie { color: var(--amber); }
+.race-headline-running { color: var(--blue); }
+.race-headline-none { color: var(--dim); }
+
+/* The winner card: the one affordance the ceremony wants clicked. */
+.race-winner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid color-mix(in srgb, var(--gh-push) 45%, transparent);
+  background: color-mix(in srgb, var(--gh-push) 9%, var(--panel-2));
+  color: var(--fg);
+  cursor: pointer;
+}
+.race-winner:hover { background: color-mix(in srgb, var(--gh-push) 15%, var(--panel-2)); }
+.race-winner-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--action-ink);
+  background: var(--action);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+}
+.race-winner-name { font-weight: 600; }
+.race-winner-model { font-family: var(--mono); font-size: 11px; }
+.race-winner-open { color: var(--gh-push); font-size: 12px; }
+
+/* Lane rows — every lane, winner included. Losers are compact, never censored:
+   a scorecard you can't second-guess is just another opinion. */
+.race-lanes { display: flex; flex-direction: column; gap: 6px; }
+.race-lane {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  font-size: 12px;
+}
+.race-lane-win { box-shadow: inset 2px 0 0 var(--gh-push); }
+.race-lane-tie { box-shadow: inset 2px 0 0 var(--amber); }
+.race-lane-out { opacity: 0.62; }
+.race-lane-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 14ch;
+}
+.race-lane-name:hover { color: var(--fg); }
+.race-rank { color: var(--dim); }
+.race-lane-archived { font-size: 10px; }
+.race-lane-out-why,
+.race-lane-note {
+  flex-basis: 100%;
+  font-size: 11px;
+  padding-left: 2px;
+}
+
+/* One criterion cell. `won` reads as a fact, `decisive` marks the axis the race was
+   actually decided on — so the card says WHY it won, not just that it ticked boxes. */
+.race-crit { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.race-cell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  border: var(--border-w) solid transparent;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.race-cell-won { color: var(--gh-push); background: color-mix(in srgb, var(--gh-push) 11%, transparent); }
+.race-cell-lost { color: var(--dim); }
+.race-cell-decisive { border-color: color-mix(in srgb, var(--gh-push) 55%, transparent); }
+.race-cell-label { font-size: 10px; }
+
+.race-progress,
+.race-compact,
+.race-actions-note { font-size: 11px; }
+.race-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.race-purge {
+  font-size: 11px;
+  padding: 2px 8px;
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+/* Sidebar / card chip for surfaces with no room for the whole scorecard. */
+.race-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  color: var(--blue);
+}
+.race-chip-won { background: color-mix(in srgb, var(--gh-push) 14%, transparent); color: var(--gh-push); }
+.race-chip-tie { background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber); }
+.race-chip-none { background: color-mix(in srgb, var(--dim) 16%, transparent); color: var(--dim); }
+
+/* The composer's race button — sits in .composer-config-row beside plan/fast,
+   sized to match those pills rather than the wide .composer-actions button default. */
+.composer-config-row .composer-race {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+}
+.composer-race[disabled] { opacity: 0.45; cursor: not-allowed; }
+.composer-race-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  display: inline-block;
+  margin-right: 5px;
+}
