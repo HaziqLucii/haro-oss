@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Regular.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Bold.woff2) format('woff2');font-weight:700}
+@font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk-Variable.woff2) format('woff2');font-weight:300 700}
+@font-face{font-family:'Fraunces';src:url(fonts/Fraunces-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:'Kanji';src:url(fonts/NotoSerifJP-kanji.woff2) format('woff2')}
+html,body{margin:0;background:#050404;color:#d8d0c5;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#d8d0c5}a:hover{color:#fff}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+@keyframes haroFade{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:24px max(16px,2vw) 40px;display:flex;flex-direction:column;gap:16px">
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding:14px 18px;border:1px solid rgba(216,208,197,.16);border-radius:2px;background:#131210;max-width:1440px;width:100%;margin:0 auto">
+    <div style="min-width:0">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:rgba(216,208,197,.42)">手 MANUAL MODE · A REAL TASK · {{ stepNo }} / {{ stepCount }}</span>
+        <span style="display:flex;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:2px;gap:2px">
+          <sc-for list="{{ scTabs }}" as="sx" hint-placeholder-count="2"><button onClick="{{ sx.pick }}" style="height:22px;padding:0 9px;border-radius:1px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;background:{{ sx.bg }};color:{{ sx.c }}">{{ sx.l }}</button></sc-for>
+        </span><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:rgba(216,208,197,.66)">{{ clock }}</span></div>
+      <div style="font-size:17px;font-weight:500;margin-top:5px">{{ cap }}</div>
+      <div style="font-size:14px;color:rgba(216,208,197,.66);margin-top:3px;line-height:1.45">{{ sub }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;gap:3px"><sc-for list="{{ dots }}" as="d" hint-placeholder-count="15"><button onClick="{{ d.go }}" title="{{ d.t }}" style="width:12px;height:4px;background:{{ d.c }}"></button></sc-for></div>
+      <button onClick="{{ prev }}" style="height:32px;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:13px">◂</button>
+      <button onClick="{{ togglePlay }}" style="height:32px;padding:0 12px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;min-width:74px">{{ playLabel }}</button>
+      <button onClick="{{ next }}" style="height:32px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500;white-space:nowrap">{{ nextLabel }}</button>
+    </div>
+  </div>
+
+  <div ref="{{ wrapRef }}" style="max-width:1440px;width:100%;margin:0 auto;height:{{ wrapH }}">
+  <div style="width:1440px;height:860px;transform:scale({{ scale }});transform-origin:0 0;border:1px solid rgba(216,208,197,.2);border-radius:2px;overflow:hidden;background:#0b0a09;position:relative;display:grid;grid-template-rows:46px minmax(0,1fr)">
+
+    <div style="display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid rgba(216,208,197,.12)">
+      <span style="font-family:'Fraunces',serif;font-size:20px;font-weight:500">haro.</span>
+      <span style="width:1px;height:16px;background:rgba(216,208,197,.14)"></span>
+      <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(216,208,197,.42);white-space:nowrap">{{ crumb }}</span>
+      <span style="flex:1"></span>
+      <sc-if value="{{ inWs }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;color:rgba(216,208,197,.42)">THIS WORKSPACE</span>
+          <div style="display:flex;border:1px solid rgba(216,208,197,.25);border-radius:2px;padding:2px;gap:2px">
+            <button onClick="{{ toAgent }}" style="height:24px;padding:0 10px;display:flex;align-items:center;gap:6px;border-radius:1px;background:{{ mA.bg }};color:{{ mA.c }}"><span style="font-family:'Kanji',serif;font-size:13px">使</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em">AGENT</span></button>
+            <button onClick="{{ toManual }}" style="height:24px;padding:0 10px;display:flex;align-items:center;gap:6px;border-radius:1px;background:{{ mM.bg }};color:{{ mM.c }}"><span style="font-family:'Kanji',serif;font-size:13px">手</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em">MANUAL</span></button>
+          </div></div>
+      </sc-if>
+      <span style="display:flex;align-items:center;justify-content:space-between;gap:24px;height:28px;padding:0 8px 0 12px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.42);min-width:230px"><span>Search or run a command</span><span style="font-family:'Space Mono',monospace;font-size:10px">⌘K</span></span>
+      <span style="display:flex;align-items:center;gap:8px;height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.08em"><span style="width:7px;height:7px;background:#e0685e"></span>{{ needTxt }}</span>
+    </div>
+
+    <sc-if value="{{ isBoot }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;background:#0b0a09;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:haroFade .5s ease">
+        <div style="font-family:'Kanji',serif;font-size:120px;line-height:1;color:rgba(216,208,197,.9)">門</div>
+        <div style="font-family:'Fraunces',serif;font-size:44px;font-weight:500;margin-top:18px">haro.</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:40px;width:420px">
+          <sc-for list="{{ bootLines }}" as="bl" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;font-family:'Space Mono',monospace;font-size:12px;opacity:{{ bl.op }}">
+              <span style="color:{{ bl.mc }}">{{ bl.m }}</span><span style="color:rgba(216,208,197,.66)">{{ bl.t }}</span><span>{{ bl.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="display:grid;grid-template-columns:220px minmax(0,1fr);min-height:0">
+      <aside style="border-right:1px solid rgba(216,208,197,.12);padding:14px 8px;display:flex;flex-direction:column;gap:18px;min-height:0;overflow:hidden">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 10px;border-radius:2px;font-size:13.5px;background:{{ navTriBg }}"><span>Triage</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">9</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 10px;border-radius:2px;font-size:13.5px;background:{{ navBackBg }}"><span>Backlog</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">31 open</span></div>
+        </div>
+        <sc-for list="{{ side }}" as="p" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:1px">
+            <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42);padding:0 10px 5px">{{ p.name }}</div>
+            <sc-for list="{{ p.items }}" as="w" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:9px;height:28px;padding:0 10px;border-radius:2px;background:{{ w.bg }}">
+                <span style="width:7px;height:7px;flex:none;background:{{ w.fill }};border:1px solid {{ w.c }}"></span>
+                <span style="font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.n }}</span>
+                <span style="font-family:'Space Mono',monospace;font-size:9.5px;color:{{ w.c }}">{{ w.s }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div style="flex:1"></div>
+        <div style="padding:12px 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Kanji',serif;font-size:15px">手</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">{{ rank.k }} {{ rank.name }}</span></div>
+          <div style="display:flex;gap:2px;margin-top:10px"><sc-for list="{{ streak }}" as="s" hint-placeholder-count="14"><span style="flex:1;height:12px;background:{{ s.c }}"></span></sc-for></div>
+          <div style="font-family:'Space Mono',monospace;font-size:10.5px;margin-top:8px;display:flex;justify-content:space-between"><span>{{ streakN }}-day streak</span><span style="color:rgba(216,208,197,.42)">{{ xpShort }}</span></div>
+        </div>
+      </aside>
+
+      <div style="position:relative;min-height:0;min-width:0">
+
+        <sc-if value="{{ isTriage }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;inset:0;overflow:auto;padding:40px 56px;animation:haroFade .3s ease">
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ tri.kicker }}</div>
+            <div style="font-size:34px;font-weight:500;letter-spacing:-.02em;margin-top:12px">{{ tri.head }}</div>
+            <div style="font-size:15px;color:rgba(216,208,197,.66);margin-top:8px;max-width:640px;line-height:1.5">{{ tri.sub }}</div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;margin-top:32px;align-items:start">
+              <div>
+                <sc-for list="{{ tri.groups }}" as="gp" hint-placeholder-count="3">
+                  <div style="margin-bottom:30px">
+                    <div style="display:flex;gap:12px;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(216,208,197,.2)"><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase">{{ gp.t }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ gp.n }}</span></div>
+                    <sc-for list="{{ gp.rows }}" as="r" hint-placeholder-count="2">
+                      <div style="display:grid;grid-template-columns:80px minmax(0,1fr) minmax(0,1fr) auto;gap:16px;align-items:center;min-height:56px;padding:8px 0;border-bottom:1px solid rgba(216,208,197,.08);background:{{ r.bg }}">
+                        <span style="display:flex;align-items:center;gap:7px;padding-left:8px"><span style="width:8px;height:8px;background:{{ r.fill }};border:1px solid {{ r.c }}"></span><span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;color:{{ r.c }}">{{ r.l }}</span></span>
+                        <div style="min-width:0"><div style="font-size:14.5px;font-weight:500;display:flex;gap:8px;align-items:center"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.n }}</span><sc-if value="{{ r.man }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Kanji',serif;font-size:12px;padding:0 4px;border:1px solid rgba(216,208,197,.3);border-radius:2px">手</span></sc-if></div><div style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42);margin-top:3px">{{ r.p }}</div></div>
+                        <div style="font-size:13px;color:rgba(216,208,197,.66)">{{ r.d }}</div>
+                        <span style="height:26px;display:flex;align-items:center;padding:0 10px;border-radius:2px;font-size:12.5px;white-space:nowrap;border:1px solid rgba(216,208,197,.2)">{{ r.a }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:20px;position:relative;overflow:hidden">
+                <div style="position:absolute;right:-8px;top:-24px;font-family:'Kanji',serif;font-size:140px;line-height:1;color:rgba(216,208,197,.04)">手</div>
+                <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(216,208,197,.42)">{{ tri.cardKicker }}</div>
+                <div style="font-size:19px;font-weight:500;margin-top:10px;line-height:1.3">{{ tri.cardHead }}</div>
+                <div style="font-size:13.5px;color:rgba(216,208,197,.66);margin-top:6px;line-height:1.5">{{ tri.cardSub }}</div>
+                <div style="display:flex;flex-direction:column;margin-top:14px;border-top:1px solid rgba(216,208,197,.12)">
+                  <sc-for list="{{ tri.picks }}" as="pk" hint-placeholder-count="3">
+                    <div style="padding:11px 8px;border-bottom:1px solid rgba(216,208,197,.08);background:{{ pk.bg }};display:flex;flex-direction:column;gap:3px">
+                      <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;color:rgba(216,208,197,.42)"><span>{{ pk.src }}</span><span>{{ pk.tag }}</span></div>
+                      <div style="font-size:13.5px">{{ pk.t }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px;gap:8px">
+                  <sc-for list="{{ tri.stats }}" as="ts" hint-placeholder-count="3"><div><div style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:rgba(216,208,197,.42)">{{ ts.l }}</div><div style="font-size:16px;font-weight:500;margin-top:3px">{{ ts.v }}</div></div></sc-for>
+                </div>
+              </div>
+            </div>
+            <sc-if value="{{ tri.toast }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;right:24px;bottom:24px;width:360px;padding:16px 18px;background:#131210;border:1px solid rgba(216,208,197,.3);border-radius:2px;display:flex;gap:14px;align-items:center;animation:haroFade .4s ease">
+                <span style="width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center;background:#d8d0c5;color:#0b0a09;border-radius:2px;font-family:'Kanji',serif;font-size:22px">探</span>
+                <div><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.42)">BADGE · +225 XP</div><div style="font-size:15px;font-weight:500;margin-top:2px">Regression hunter</div><div style="font-size:12.5px;color:rgba(216,208,197,.66);margin-top:2px">Found the cause in git history before fixing it.</div></div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isIssue }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;background:rgba(8,7,6,.82);display:flex;align-items:flex-start;justify-content:center;padding-top:48px;animation:haroFade .25s ease">
+            <div style="width:760px;background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px">
+              <div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(216,208,197,.12)"><span style="font-size:17px;font-weight:500">Backlog</span><span style="font-size:13px;padding:3px 9px;border-radius:2px;color:rgba(216,208,197,.66)">Todo files 9</span><span style="font-size:13px;padding:3px 9px;border-radius:2px;background:#1b1915">GitHub issues 22</span><span style="flex:1"></span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">tessera/tessera-api</span></div>
+              <div style="padding:24px 28px 26px">
+                <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">#412 · opened 2 days ago by mira-support · 3 comments</div>
+                <div style="font-size:26px;font-weight:500;letter-spacing:-.015em;margin-top:8px;line-height:1.2">Customers credited twice when Stripe retries invoice.paid</div>
+                <div style="display:flex;gap:6px;margin-top:12px"><span style="font-family:'Space Mono',monospace;font-size:10.5px;padding:2px 7px;border:1px solid rgba(224,104,94,.6);color:#e0685e;border-radius:2px">bug</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;padding:2px 7px;border:1px solid rgba(216,208,197,.2);border-radius:2px">billing</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;padding:2px 7px;border:1px solid rgba(216,208,197,.2);border-radius:2px">P1</span></div>
+                <div style="font-size:14.5px;line-height:1.65;color:rgba(216,208,197,.86);margin-top:16px">Three Pro-plan customers got two ledger credits for a single payment on Sept 26 (Brightline, Okafor Legal, Nomad Studio). In the Stripe dashboard, invoice.paid was delivered twice for each one. The first delivery shows “timed out” and the retry succeeded. Finance has reversed the extra credits by hand.</div>
+                <div style="margin-top:14px;padding:12px 14px;border-left:1px solid rgba(216,208,197,.3);font-size:13.5px;line-height:1.55;color:rgba(216,208,197,.66)"><b style="font-weight:500;color:#d8d0c5">aina.r</b> · Could be related to #388? That’s when we moved the receipt email into the webhook.</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(216,208,197,.12)">
+                  <span style="font-size:12.5px;color:rgba(216,208,197,.42)">Linked to Linear BIL-219 · assigned to you</span>
+                  <div style="display:flex;gap:8px"><span style="height:34px;display:flex;align-items:center;padding:0 12px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:13.5px">Open on GitHub ↗</span><span style="height:34px;display:flex;align-items:center;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">Start as workspace</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isNew }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;background:rgba(8,7,6,.82);display:flex;align-items:flex-start;justify-content:center;padding-top:64px;animation:haroFade .25s ease">
+            <div style="width:600px;background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px">
+              <div style="padding:24px 28px 0">
+                <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">New workspace · tessera-api · from issue #412</div>
+                <div style="font-size:22px;font-weight:500;letter-spacing:-.01em;margin-top:14px;padding-bottom:12px;border-bottom:1px solid rgba(216,208,197,.3)">Stop double credits when Stripe retries invoice.paid</div>
+                <div style="display:grid;grid-template-columns:110px 1fr;row-gap:16px;align-items:center;margin-top:20px;font-size:13.5px">
+                  <span style="color:rgba(216,208,197,.42)">Branch</span><span style="font-family:'Space Mono',monospace;font-size:13px">fix/412-stripe-replay</span>
+                  <span style="color:rgba(216,208,197,.42)">From</span><span style="font-family:'Space Mono',monospace;font-size:13px">origin/main <span style="color:rgba(216,208,197,.42)">· synced 1m ago</span></span>
+                  <span style="color:rgba(216,208,197,.42)">Who writes it</span>
+                  <div style="display:flex;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:2px;gap:2px;width:max-content">
+                    <span style="height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:13px;color:rgba(216,208,197,.66)"><span style="font-family:'Kanji',serif">使</span>Agent</span>
+                    <span style="height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:13px;background:#d8d0c5;color:#0b0a09;border-radius:1px"><span style="font-family:'Kanji',serif">手</span>Me, by hand</span>
+                  </div>
+                </div>
+                <div style="margin-top:18px;padding:12px 14px;background:#0b0a09;border:1px solid rgba(216,208,197,.1);border-radius:2px;font-size:13px;line-height:1.55;color:rgba(216,208,197,.66)">No agent, no composer. haro’s AI only points you to sources and gives hints when you ask. Same gate, same merge rules.</div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:16px;font-size:14px"><span style="width:16px;height:16px;border:1px solid #d8d0c5;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:11px;line-height:14px;text-align:center">✓</span><span>Start from a test: write the failing test first</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">+30 XP</span></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 28px;margin-top:22px;border-top:1px solid rgba(216,208,197,.12)"><span style="font-size:12.5px;color:rgba(216,208,197,.42)">Its own worktree. Your main checkout is untouched.</span><span style="height:34px;display:flex;align-items:center;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">Create &amp; start writing ⌘↵</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ inWs }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0;display:grid;grid-template-rows:auto 64px minmax(0,1fr) 50px;animation:haroFade .3s ease">
+            <div style="padding:14px 22px 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+              <div><div style="font-size:19px;font-weight:500">Stop double credits on Stripe retry</div><div style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42);margin-top:4px">tessera-api · fix/412-stripe-replay → main · #412</div></div>
+              <span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ ws.elapsed }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12)">
+              <sc-for list="{{ bar }}" as="b" hint-placeholder-count="3">
+                <div style="padding:11px 18px;border-right:1px solid rgba(216,208,197,.08);border-top:2px solid {{ b.top }};margin-top:-1px;background:{{ b.bg }}">
+                  <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ b.n }}</span><span style="width:6px;height:6px;background:{{ b.dot }}"></span><span style="font-size:15px;font-weight:500;color:{{ b.nc }}">{{ b.name }}</span></div>
+                  <div style="font-family:'Space Mono',monospace;font-size:10.5px;margin-top:4px;color:{{ b.sc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.sub }}</div>
+                </div>
+              </sc-for>
+              <div style="display:flex;align-items:center;padding:0 16px"><span style="height:34px;display:flex;align-items:center;padding:0 16px;border-radius:2px;background:{{ act.bg }};color:{{ act.c }};border:1px solid {{ act.b }};font-size:13.5px;font-weight:500;white-space:nowrap">{{ act.l }}</span></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:0">
+              <sc-if value="{{ isShip }}" hint-placeholder-val="{{ false }}">
+                <div style="overflow:auto;padding:28px 32px;border-right:1px solid rgba(216,208,197,.12);animation:haroFade .3s ease">
+                  <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Pull request</div>
+                  <div style="font-size:24px;font-weight:500;letter-spacing:-.015em;margin-top:8px;padding-bottom:12px;border-bottom:1px solid rgba(216,208,197,.2)">fix(billing): dedupe Stripe webhook events (#412)</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66);margin-top:10px;display:flex;gap:16px;flex-wrap:wrap"><span>fix/412-stripe-replay → main</span><span>4 files</span><span><span style="color:#41d183">+41</span> <span style="color:#e0685e">−6</span></span><span>reviewer: aina.r</span></div>
+                  <div style="margin-top:22px;padding:18px 20px;border:1px solid rgba(65,209,131,.45);border-radius:2px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+                    <div><div style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;background:#41d183"></span><span style="font-size:17px;font-weight:500">Gate is green. Ready for review.</span></div><div style="font-size:13.5px;color:rgba(216,208,197,.66);margin-top:5px">Team rule: billing changes need one approval before merge.</div></div>
+                    <span style="height:36px;display:flex;align-items:center;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:14px;font-weight:500;white-space:nowrap">Open pull request</span>
+                  </div>
+                  <div style="margin-top:28px;display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(216,208,197,.2)"><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase">Gate receipt · posted to the PR</span><span style="font-family:'Kanji',serif;font-size:14px">{{ shipLabel }}</span></div>
+                  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px">
+                    <sc-for list="{{ receipt }}" as="rc" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:12px 130px minmax(0,1fr);gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(216,208,197,.08)"><span style="width:6px;height:6px;background:{{ rc.c }}"></span><span style="font-size:13.5px">{{ rc.l }}</span><span style="font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66)">{{ rc.v }}</span></div></sc-for>
+                  </div>
+                  <div style="margin-top:22px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ commitLabel }}</div>
+                  <pre style="margin:8px 0 0;padding:14px 16px;background:#131210;border:1px solid rgba(216,208,197,.1);border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap">{{ commitMsg }}</pre>
+                </div>
+              </sc-if>
+              <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ true }}">
+                <div style="display:grid;grid-template-rows:36px minmax(0,1fr) auto;min-height:0;border-right:1px solid rgba(216,208,197,.12)">
+                  <div style="display:flex;align-items:stretch;border-bottom:1px solid rgba(216,208,197,.08);overflow:hidden">
+                    <sc-for list="{{ ftabs }}" as="ft" hint-placeholder-count="3">
+                      <span style="display:flex;align-items:center;gap:8px;padding:0 14px;border-right:1px solid rgba(216,208,197,.08);font-family:'Space Mono',monospace;font-size:11.5px;white-space:nowrap;background:{{ ft.bg }};color:{{ ft.c }};border-top:1px solid {{ ft.top }}">{{ ft.n }}<span style="color:rgba(216,208,197,.42)">{{ ft.m }}</span></span>
+                    </sc-for>
+                    <span style="flex:1"></span>
+                    <span style="display:flex;align-items:center;padding:0 14px;font-family:'Space Mono',monospace;font-size:10.5px;white-space:nowrap;color:{{ ranColor }}">● you wrote · ln {{ curLine }}</span>
+                  </div>
+                  <div style="overflow:auto;padding:10px 0;font-family:'Space Mono',monospace;font-size:12.5px;line-height:21px">
+                    <sc-for list="{{ lines }}" as="l" hint-placeholder-count="14">
+                      <div style="display:grid;grid-template-columns:20px 38px minmax(0,1fr);background:{{ l.bg }}">
+                        <span style="text-align:center;font-size:8px;color:{{ l.mc }}">{{ l.mark }}</span>
+                        <span style="text-align:right;padding-right:14px;color:rgba(216,208,197,.28)">{{ l.n }}</span>
+                        <span style="white-space:pre"><sc-for list="{{ l.toks }}" as="t" hint-placeholder-count="3"><span style="color:{{ t.c }};font-weight:{{ t.w }}">{{ t.t }}</span></sc-for></span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ eyesOpen }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;left:0;right:360px;bottom:106px;padding:14px 16px;background:#131210;border-top:1px solid rgba(216,208,197,.3);display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:start;animation:haroFade .25s ease;z-index:3">
+                      <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.66);padding-top:2px">MUTANT SURVIVED</span>
+                      <div><div style="font-family:'Space Mono',monospace;font-size:12.5px">src/billing/webhooks.ts:22</div><div style="font-size:13.5px;line-height:1.5;color:rgba(216,208,197,.86);margin-top:4px">haro changed <span style="font-family:'Space Mono',monospace">if (fresh)</span> to <span style="font-family:'Space Mono',monospace">if (true)</span> and every test still passed. Nothing checks that a replay skips the receipt email.</div></div>
+                      <span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);white-space:nowrap">advisory · won’t block</span>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;align-items:center;gap:14px;padding:11px 16px;border-top:1px solid rgba(216,208,197,.12);background:#131210;min-height:56px">
+                    <span style="width:10px;height:10px;flex:none;background:{{ g.color }}"></span>
+                    <span style="font-family:'Space Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.2em;color:{{ g.color }};flex:none">{{ g.key }}</span>
+                    <div style="min-width:0;flex:1"><div style="font-size:14px">{{ g.t }}</div><div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.d }}</div></div>
+                    <sc-if value="{{ g.isRun }}" hint-placeholder-val="{{ false }}"><span style="width:160px;height:2px;background:rgba(216,208,197,.12)"><span style="display:block;height:2px;width:62%;background:#d8d0c5"></span></span></sc-if>
+                    <sc-if value="{{ g.look }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleEyes }}" style="font-family:'Space Mono',monospace;font-size:10.5px;padding:4px 9px;border:1px solid rgba(216,208,197,.3);border-radius:2px;white-space:nowrap">1 needs your eyes {{ eyesArrow }}</button></sc-if>
+                  </div>
+                </div>
+              </sc-if>
+
+              <div style="display:grid;grid-template-rows:40px minmax(0,1fr) auto;min-height:0">
+                <div style="display:flex;border-bottom:1px solid rgba(216,208,197,.12)">
+                  <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="3">
+                    <span style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;color:{{ tb.c }};border-bottom:2px solid {{ tb.u }}"><span style="font-family:'Kanji',serif;font-size:13px;color:rgba(216,208,197,.42)">{{ tb.k }}</span>{{ tb.l }}<span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">{{ tb.b }}</span></span>
+                  </sc-for>
+                </div>
+                <div style="overflow:auto;padding:16px 18px">
+                  <sc-if value="{{ pSearch }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border:1px solid rgba(216,208,197,.2);border-radius:2px;background:#131210;font-family:'Space Mono',monospace;font-size:12px"><span style="color:rgba(216,208,197,.42)">{{ qMode }}</span><span style="flex:1;color:{{ qColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ qText }}</span></div>
+                    <sc-if value="{{ hasAnswer }}" hint-placeholder-val="{{ false }}"><div style="margin-top:12px;font-size:13.5px;line-height:1.55;color:rgba(216,208,197,.86)">{{ answer }}</div></sc-if>
+                    <div style="display:flex;flex-direction:column;margin-top:10px">
+                      <sc-for list="{{ results }}" as="r" hint-placeholder-count="3">
+                        <div style="padding:12px 0;border-bottom:1px solid rgba(216,208,197,.08)">
+                          <div style="display:flex;justify-content:space-between;gap:10px;font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(216,208,197,.42)"><span>{{ r.src }}</span><span>{{ r.how }}</span></div>
+                          <div style="font-size:14px;margin-top:5px;font-family:{{ r.ff }}">{{ r.t }}</div>
+                          <div style="font-size:12.5px;color:rgba(216,208,197,.66);margin-top:3px;line-height:1.45">{{ r.why }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ pDoc }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;margin:-4px 0 18px;border-bottom:1px solid rgba(216,208,197,.12);padding-bottom:10px">
+                      <sc-for list="{{ docList }}" as="dl" hint-placeholder-count="4">
+                        <div style="display:flex;align-items:center;gap:10px;height:28px;padding:0 8px;border-radius:2px;background:{{ dl.bg }}">
+                          <span style="font-family:'Kanji',serif;font-size:12px;width:14px;color:rgba(216,208,197,.42)">{{ dl.k }}</span>
+                          <span style="font-family:'Space Mono',monospace;font-size:11.5px;flex:1;color:{{ dl.c }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ dl.n }}</span>
+                          <span style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.08em;color:rgba(216,208,197,.42);white-space:nowrap">{{ dl.m }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                    <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ doc.src }}</div>
+                    <div style="font-size:19px;font-weight:500;margin-top:8px;font-family:'Space Mono',monospace;line-height:1.3">{{ doc.title }}</div>
+                    <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px"><sc-for list="{{ doc.body }}" as="p" hint-placeholder-count="3"><div style="font-size:14px;line-height:1.6;color:rgba(216,208,197,.86)">{{ p.t }}</div></sc-for></div>
+                    <pre style="margin:14px 0 0;padding:12px 14px;background:#131210;border:1px solid rgba(216,208,197,.1);border-radius:2px;font-family:'Space Mono',monospace;font-size:11.5px;line-height:1.7;color:rgba(216,208,197,.86);white-space:pre-wrap">{{ doc.ex }}</pre>
+                    <div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);margin-top:12px">{{ doc.foot }}</div>
+                  </sc-if>
+                  <sc-if value="{{ pPlan }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase">Your plan</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ planStatus }}</span></div>
+                    <sc-if value="{{ planDraft }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:10px;border:1px solid rgba(216,208,197,.3);border-radius:2px;background:#131210">
+                        <pre style="margin:0;padding:12px 14px;min-height:210px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.75;white-space:pre-wrap;color:#d8d0c5">{{ planText }}<span style="display:inline-block;width:7px;height:13px;background:#d8d0c5;vertical-align:-2px"></span></pre>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-top:1px solid rgba(216,208,197,.1);font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)"><span>@ files · # issues</span><span>⌘↵ plan</span></div>
+                      </div>
+                      <div style="display:flex;gap:6px;margin-top:10px">
+                        <span style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500">Plan it</span>
+                        <span style="height:34px;display:flex;align-items:center;padding:0 12px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:13px">opus · high ▾</span>
+                      </div>
+                      <div style="font-size:12.5px;color:rgba(216,208,197,.42);margin-top:12px;line-height:1.5">haro plans the steps. It won’t write any code; that part is yours.</div>
+                    </sc-if>
+                    <sc-if value="{{ planList }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;margin-top:10px;border-top:1px solid rgba(216,208,197,.12)">
+                        <sc-for list="{{ plan }}" as="pl" hint-placeholder-count="6">
+                          <div style="display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:start;padding:9px 0;border-bottom:1px solid rgba(216,208,197,.08)">
+                            <span style="width:14px;height:14px;margin-top:2px;border:1px solid rgba(216,208,197,.42);border-radius:2px;background:{{ pl.bg }};color:#0b0a09;font-size:10px;line-height:12px;text-align:center">{{ pl.tick }}</span>
+                            <span style="font-size:13.5px;line-height:1.45;color:{{ pl.c }}">{{ pl.t }}</span>
+                            <span style="font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(216,208,197,.42);padding-top:3px">{{ pl.tag }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ planReview }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:13px;line-height:1.55;color:rgba(216,208,197,.66);margin-top:14px">Why this order: the replay test proves the bug first, and the mock change keeps the 14 other billing tests working.</div>
+                      <div style="display:flex;gap:6px;margin-top:14px">
+                        <span style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500">Finish plan → save to Docs</span>
+                        <span style="height:34px;display:flex;align-items:center;padding:0 12px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:13px">Edit</span>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ planFinal }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;justify-content:space-between;margin-top:12px;font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)"><span>書 saved as plan-412.md in Docs</span><span>planned by haro</span></div>
+                    </sc-if>
+                  </sc-if>
+                  <sc-if value="{{ pEyes }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase">Needs your eyes</div>
+                    <div style="margin-top:12px;padding:14px;border:1px solid rgba(216,208,197,.3);border-radius:2px">
+                      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.66)">MUTANT SURVIVED</div>
+                      <div style="font-family:'Space Mono',monospace;font-size:12.5px;margin-top:6px">webhooks.ts:22</div>
+                      <div style="font-size:13.5px;line-height:1.55;color:rgba(216,208,197,.86);margin-top:6px">haro changed <span style="font-family:'Space Mono',monospace">if (fresh)</span> to <span style="font-family:'Space Mono',monospace">if (true)</span>. Every test still passed, so nothing checks that a replay skips the receipt email.</div>
+                    </div>
+                    <div style="font-size:13px;color:rgba(216,208,197,.42);margin-top:12px;line-height:1.5">Advisory. It won’t block the merge, but it’s worth +40 XP to close.</div>
+                  </sc-if>
+                </div>
+                <div style="padding:10px 18px;border-top:1px solid rgba(216,208,197,.08);font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">haro AI · pointers only · 0 lines of code offered</div>
+              </div>
+            </div>
+
+            <sc-if value="{{ agentLayout }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:63px;left:0;right:0;bottom:0;background:#0b0a09;z-index:5;display:grid;grid-template-rows:64px minmax(0,1fr);animation:haroFade .35s ease">
+                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12)">
+                  <sc-for list="{{ abar }}" as="b" hint-placeholder-count="4">
+                    <div style="padding:11px 18px;border-right:1px solid rgba(216,208,197,.08);border-top:2px solid {{ b.top }};margin-top:-1px;background:{{ b.bg }}">
+                      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ b.n }}</span><span style="width:6px;height:6px;background:{{ b.dot }}"></span><span style="font-size:15px;font-weight:500;color:{{ b.nc }}">{{ b.name }}</span></div>
+                      <div style="font-family:'Space Mono',monospace;font-size:10.5px;margin-top:4px;color:{{ b.sc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.sub }}</div>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;align-items:center;padding:0 16px"><span style="height:34px;display:flex;align-items:center;padding:0 16px;border-radius:2px;background:{{ aact.bg }};color:{{ aact.c }};border:1px solid {{ aact.b }};font-size:13.5px;font-weight:500;white-space:nowrap">{{ aact.l }}</span></div>
+                </div>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;min-height:0">
+                  <div style="display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;border-right:1px solid rgba(216,208,197,.12)">
+                    <div style="overflow:auto;padding:26px 32px">
+                      <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px">
+                        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid rgba(216,208,197,.2);border-radius:2px">
+                          <span style="font-family:'Kanji',serif;font-size:16px;flex:none">使</span>
+                          <div style="font-size:13.5px;line-height:1.5;color:rgba(216,208,197,.86)">Switched from Manual at 09:52. Your 27 hand-written lines stay marked as yours; agent edits are marked as AI. This workspace no longer counts toward your streak, and the +65 XP you earned is kept.</div>
+                        </div>
+                        <div>
+                          <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.42)">YOU · 09:53 · WRITTEN FOR YOU BY HARO, EDITABLE</div>
+                          <div style="margin-top:8px;padding:13px 15px;background:#131210;border:1px solid rgba(216,208,197,.08);border-radius:2px;font-size:14.5px;line-height:1.55">Continue <span style="font-family:'Space Mono',monospace;font-size:13px">plan-412.md</span> from step 6. The gate is red: the shared Prisma mock has no processedEvent. Don’t rewrite my code in webhooks.ts or the migration unless the tests need it.</div>
+                        </div>
+                        <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.42)">AGENT · BUILD · SONNET · HIGH</div>
+                        <sc-for list="{{ astream }}" as="e" hint-placeholder-count="5">
+                          <div>
+                            <sc-if value="{{ e.isTool }}" hint-placeholder-val="{{ true }}">
+                              <div style="display:flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.66)"><span style="width:5px;height:5px;background:rgba(216,208,197,.42)"></span><span style="color:#d8d0c5;width:44px">{{ e.v }}</span><span>{{ e.t }}</span><span style="color:#41d183">{{ e.a }}</span><span style="color:#e0685e">{{ e.d }}</span><span style="color:rgba(216,208,197,.42)">{{ e.n }}</span></div>
+                            </sc-if>
+                            <sc-if value="{{ e.isText }}" hint-placeholder-val="{{ false }}"><div style="font-size:15px;line-height:1.6;color:rgba(216,208,197,.86)">{{ e.t }}</div></sc-if>
+                          </div>
+                        </sc-for>
+                        <sc-if value="{{ agentDone }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid rgba(216,208,197,.08);font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)"><span>done in 4m 12s · 1 file · $0.41</span><span>Review changes in code →</span></div></sc-if>
+                      </div>
+                    </div>
+                    <div style="padding:12px 32px 16px;border-top:1px solid rgba(216,208,197,.08)">
+                      <div style="max-width:720px;margin:0 auto;border:1px solid rgba(216,208,197,.2);border-radius:2px;background:#131210">
+                        <div style="padding:12px 14px 4px;font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.42)">Tell the agent what to do next…</div>
+                        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px 10px"><span style="height:26px;display:flex;align-items:center;padding:0 9px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:11px">build · sonnet · high ▾</span><span style="height:26px;display:flex;align-items:center;padding:0 9px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:11px">計 plan-412.md</span><span style="flex:1"></span><span style="height:28px;display:flex;align-items:center;padding:0 12px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500">Run agent ⌘↵</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;overflow:auto">
+                    <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+                      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">GATE</div>
+                      <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span style="width:13px;height:13px;background:{{ g.color }}"></span><span style="font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.2em;color:{{ g.color }}">{{ g.key }}</span></div>
+                      <div style="font-size:13.5px;margin-top:8px">{{ g.t }}</div>
+                    </div>
+                    <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+                      <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)"><span>NEEDS YOUR EYES</span><span style="color:#d8d0c5">{{ eyesN }}</span></div>
+                      <div style="font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66);margin-top:10px;line-height:1.5">{{ eyesRail }}</div>
+                    </div>
+                    <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+                      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">WHO WROTE IT</div>
+                      <div style="display:flex;height:6px;margin-top:12px;gap:2px"><span style="flex:27;background:#d8d0c5"></span><span style="flex:12;background:rgba(216,208,197,.3)"></span></div>
+                      <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'Space Mono',monospace;font-size:11.5px"><span>手 you · 27</span><span style="color:rgba(216,208,197,.66)">使 agent · 12</span></div>
+                    </div>
+                    <div style="padding:18px 20px">
+                      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">PLAN</div>
+                      <div style="font-family:'Space Mono',monospace;font-size:11.5px;margin-top:10px">{{ pdoneTxt }} · agent on step 6</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ shipMixed }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:63px;left:0;right:0;height:64px;background:#0b0a09;z-index:5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12)">
+                <sc-for list="{{ abar }}" as="b" hint-placeholder-count="4">
+                  <div style="padding:11px 18px;border-right:1px solid rgba(216,208,197,.08);border-top:2px solid {{ b.top }};margin-top:-1px;background:{{ b.bg }}">
+                    <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ b.n }}</span><span style="width:6px;height:6px;background:{{ b.dot }}"></span><span style="font-size:15px;font-weight:500;color:{{ b.nc }}">{{ b.name }}</span></div>
+                    <div style="font-family:'Space Mono',monospace;font-size:10.5px;margin-top:4px;color:{{ b.sc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.sub }}</div>
+                  </div>
+                </sc-for>
+                <div style="display:flex;align-items:center;padding:0 16px"><span style="height:34px;display:flex;align-items:center;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500;white-space:nowrap">Open pull request</span></div>
+              </div>
+              <div style="position:absolute;top:127px;right:0;width:360px;bottom:50px;background:#0b0a09;border-left:1px solid rgba(216,208,197,.12);z-index:5;overflow:auto">
+                <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+                  <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">GATE</div>
+                  <div style="display:flex;align-items:center;gap:10px;margin-top:10px"><span style="width:13px;height:13px;background:#41d183"></span><span style="font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.2em;color:#41d183">GREEN</span></div>
+                  <div style="font-size:13.5px;margin-top:8px">412 / 412 passed · mergeable</div>
+                </div>
+                <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+                  <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)"><span>NEEDS YOUR EYES</span><span style="color:#d8d0c5">1</span></div>
+                  <div style="font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66);margin-top:10px;line-height:1.5">○ webhooks.ts:22 · mutant survived. Advisory, won’t block.</div>
+                </div>
+                <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+                  <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">WHO WROTE IT</div>
+                  <div style="display:flex;height:6px;margin-top:12px;gap:2px"><span style="flex:27;background:#d8d0c5"></span><span style="flex:12;background:rgba(216,208,197,.3)"></span></div>
+                  <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'Space Mono',monospace;font-size:11.5px"><span>手 you · 27</span><span style="color:rgba(216,208,197,.66)">使 agent · 12</span></div>
+                </div>
+                <div style="padding:18px 20px">
+                  <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">PLAN</div>
+                  <div style="font-family:'Space Mono',monospace;font-size:11.5px;margin-top:10px">6 / 6 done · plan-412.md goes into the PR</div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;inset:0;background:rgba(8,7,6,.84);z-index:8;display:flex;align-items:flex-start;justify-content:center;padding-top:110px;animation:haroFade .25s ease">
+                <div style="width:520px;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px">
+                  <div style="padding:22px 26px 6px">
+                    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Kanji',serif;font-size:18px">手</span><span style="color:rgba(216,208,197,.42)">→</span><span style="font-family:'Kanji',serif;font-size:18px">使</span></div>
+                    <div style="font-size:21px;font-weight:500;margin-top:12px">Switch this workspace to Agent?</div>
+                    <div style="display:flex;flex-direction:column;margin-top:14px;border-top:1px solid rgba(216,208,197,.12)">
+                      <sc-for list="{{ confirmRows }}" as="cr" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:16px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid rgba(216,208,197,.08);font-size:13.5px;line-height:1.5"><span style="font-family:'Space Mono',monospace;color:rgba(216,208,197,.42)">{{ cr.m }}</span><span>{{ cr.t }}</span></div></sc-for>
+                    </div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 26px;margin-top:10px;border-top:1px solid rgba(216,208,197,.12)">
+                    <span style="font-size:12px;color:rgba(216,208,197,.42)">You can switch back any time.</span>
+                    <div style="display:flex;gap:8px"><button onClick="{{ keepWriting }}" style="height:34px;padding:0 12px;border:1px solid rgba(216,208,197,.25);border-radius:2px;font-size:13.5px">Keep writing</button><button onClick="{{ confirmSwitch }}" style="height:34px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">Switch to Agent</button></div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:22px;align-items:center;padding:0 18px;border-top:1px solid rgba(216,208,197,.12);background:#131210">
+              <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-family:'Kanji',serif;font-size:15px">{{ rank.k }}</span><div style="font-size:12.5px">{{ rank.name }} <span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">lv {{ rank.lvl }}</span></div></div>
+              <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                <span style="flex:1;height:3px;background:rgba(216,208,197,.12);min-width:80px"><span style="display:block;height:3px;background:#d8d0c5;width:{{ xpPct }}"></span></span>
+                <span style="font-family:'Space Mono',monospace;font-size:11px;white-space:nowrap">{{ xpText }}</span>
+                <sc-if value="{{ evShow }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid rgba(216,208,197,.3);border-radius:2px;white-space:nowrap">{{ evText }}</span></sc-if>
+              </div>
+              <span style="font-family:'Space Mono',monospace;font-size:11px;white-space:nowrap"><span style="color:rgba(216,208,197,.42)">this task </span>+{{ sessXp }} <span style="color:rgba(216,208,197,.42)">{{ gameMid }}</span></span>
+              <span style="font-family:'Space Mono',monospace;font-size:11px;white-space:nowrap">{{ gameRight }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const K={ink:'#d8d0c5',i86:'rgba(216,208,197,.86)',i66:'rgba(216,208,197,.66)',i40:'rgba(216,208,197,.42)',line:'rgba(216,208,197,.12)',green:'#41d183',red:'#e0685e',lilac:'#b3a0d6'};
+const TEST0=["import { describe, it, expect, vi } from 'vitest'","import { handleStripeEvent } from '../../src/billing/webhooks'","import { mockPrisma, fakeEvent } from '../helpers/prisma'","import { sendReceipt } from '../../src/mail/receipts'","","vi.mock('../../src/mail/receipts')","","describe('invoice.paid', () => {","  it('credits the ledger once per invoice', async () => {","    await handleStripeEvent(fakeEvent('invoice.paid', 'in_1PqX'))","    expect(mockPrisma.ledgerEntry.create).toHaveBeenCalledTimes(1)","  })","})"];
+const TEST1=TEST0.slice(0,12).concat(["","  it('ignores a replayed event (#412)', async () => {","    const evt = fakeEvent('invoice.paid', 'in_1PqX')","    await handleStripeEvent(evt)","    await handleStripeEvent(evt)  // Stripe retry","    expect(mockPrisma.ledgerEntry.create).toHaveBeenCalledTimes(1)","  })","})"]);
+const TEST2=TEST1.slice(0,19).concat(["    expect(sendReceipt).toHaveBeenCalledTimes(1)","  })","})"]);
+const WH0=["import type Stripe from 'stripe'","import { prisma } from '../db'","import { sendReceipt } from '../mail/receipts'","import { credit } from './ledger'","","export async function handleStripeEvent(evt: Stripe.Event) {","  switch (evt.type) {","    case 'invoice.paid': {","      const inv = evt.data.object as Stripe.Invoice","      await prisma.$transaction(async (tx) => {","        await tx.invoice.update({ where: { stripeId: inv.id }, data: { status: 'paid' } })","        await tx.ledgerEntry.create({ data: credit(inv) })","      })","      await sendReceipt(inv.customer_email, inv.id)  // #388","      return","    }","    default:","      return","  }","}"];
+const WH1=WH0.slice(0,9).concat(["      const fresh = await prisma.$transaction(async (tx) => {","        const seen = await tx.processedEvent.createMany({","          data: [{ stripeEventId: evt.id }],","          skipDuplicates: true,","        })","        if (seen.count === 0) return false  // Stripe retry, already handled","        await tx.invoice.update({ where: { stripeId: inv.id }, data: { status: 'paid' } })","        await tx.ledgerEntry.create({ data: credit(inv) })","        return true","      })","      if (fresh) void sendReceipt(inv.customer_email, inv.id)  // off the hot path","      return","    }","    default:","      return","  }","}"]);
+const MIG=["-- 20260929_processed_events","CREATE TABLE \"ProcessedEvent\" (","  \"stripeEventId\" TEXT PRIMARY KEY,","  \"processedAt\"   TIMESTAMPTZ NOT NULL DEFAULT now()",");","","-- prisma/schema.prisma","-- model ProcessedEvent {","--   stripeEventId String   @id","--   processedAt   DateTime @default(now())","-- }"];
+const HLP0=["import { vi } from 'vitest'","","export const mockPrisma = {","  invoice: { update: vi.fn() },","  ledgerEntry: { create: vi.fn() },","  $transaction: vi.fn((fn) => fn(mockPrisma)),","}","","export const fakeEvent = (type: string, invoice: string) => ({","  id: 'evt_' + invoice, type, data: { object: { id: invoice } },","})"];
+const HLP1=HLP0.slice(0,5).concat(["  processedEvent: { createMany: vi.fn(seenOnce()) },","  $transaction: vi.fn((fn) => fn(mockPrisma)),","}","","function seenOnce() {","  const ids = new Set<string>()","  return ({ data }) => {","    const fresh = data.filter((d) => !ids.has(d.stripeEventId))","    fresh.forEach((d) => ids.add(d.stripeEventId))","    return { count: fresh.length }","  }","}"],HLP0.slice(7));
+const PLANMD="Plan #412. Customers get credited twice when Stripe retries invoice.paid. Aina thinks #388 is related. I'll write the code myself, so plan only, no code.";
+const PLAN=[['Reproduce #412 with a replay test',7],['Find why Stripe retries',9],['Add a processed_events table',11],['Dedupe inside the transaction',12],['Move the receipt off the hot path',12],['Teach the shared Prisma mock the new table',14]];
+const PLANDOC={src:'This workspace · plan by haro AI',title:'plan-412.md',body:[{t:'1. Reproduce #412 with a replay test'},{t:'2. Find why Stripe retries'},{t:'3. Add a processed_events table'},{t:'4. Dedupe inside the transaction'},{t:'5. Move the receipt off the hot path'},{t:'6. Teach the shared Prisma mock the new table'}],ex:'## Notes\n- Stripe retries webhooks that miss its timeout, so\n  the handler must be safe to run twice.\n- Check the timing of #388 (receipt sent inline).\n- Key the dedupe on the Stripe event id.\n- test/helpers/prisma.ts is shared by 14 tests.',foot:'docs/plans/plan-412.md · planned by haro · goes into the PR description'};
+const R=(src,how,t,why,mono)=>({src,how,t,why,ff:mono?"'Space Mono',monospace":"'Space Grotesk',sans-serif"});
+const G=(st,t,d,look)=>({st,t,d,look:!!look});
+const F={t:'test/billing/webhooks.test.ts',w:'src/billing/webhooks.ts',m:'prisma/migrations/…/migration.sql',h:'test/helpers/prisma.ts'};
+const STEPS=[
+ {scr:'boot',clock:'09:02',cap:'You open haro in the morning',sub:'It restores yesterday’s workspaces, fetches every remote and re-checks the gates while the window fades in.'},
+ {scr:'triage',clock:'09:03',cap:'Triage: what needs you, and a nudge to write something yourself',sub:'Agents kept working overnight. The 手 card suggests a task from your backlog that’s worth doing by hand, sized to about an hour.',tri:'morning'},
+ {scr:'issue',clock:'09:05',cap:'A real bug from support, not a toy',sub:'Issue #412 on tessera-api: customers credited twice. A teammate suspects a change from three weeks ago.'},
+ {scr:'new',clock:'09:06',cap:'Choose who writes it: you',sub:'The same New workspace dialog, with one extra choice. Manual is set per workspace, so your agents keep running elsewhere.'},
+ {scr:'ws',clock:'09:08',cap:'Let haro do the planning',sub:'Planning is where AI helps most in manual mode. Describe the task in the Plan tab and haro drafts the steps. No code, only the plan.',file:'t',code:TEST0,mine:[],cur:13,gate:G('idle','Not run yet on this worktree','runs on save'),panel:'plan',plan:'draft',bar:'write',tabsOpen:['t']},
+ {scr:'ws',clock:'09:10',cap:'Read the plan',sub:'Six steps, including the shared test mock you might have missed. Edit any step, or finish it as it is.',panel:'plan',plan:'review'},
+ {scr:'ws',clock:'09:11',cap:'Finish the plan. It lands in Docs.',sub:'Saved as plan-412.md in the Docs tab, next to the Stripe and Prisma docsets. The Plan tab becomes your checklist. From here, the implementation is yours.',panel:'doc',plan:'final',doc:PLANDOC,docActive:'plan'},
+ {scr:'ws',clock:'09:14',cap:'Test first: pin the bug down',sub:'You write the failing test that reproduces #412. The gate goes red on your own test. That’s the target.',file:'t',code:TEST1,mine:[13,14,15,16,17,18,19],cur:17,gate:G('red','1 failing · ignores a replayed event (#412)','expected ledgerEntry.create to be called 1 time, got 2'),panel:'search',q:'',qm:'?',bar:'write',ev:['+30','started from a test'],tabsOpen:['t','w']},
+ {scr:'ws',clock:'09:18',cap:'Research: why does Stripe send it twice?',sub:'Ask a question. haro answers in one line and points to sources. It never writes the fix.',q:'why would stripe deliver invoice.paid twice',qm:'?',answer:'Stripe retries any webhook that doesn’t answer within its timeout, so handlers must be idempotent. Nothing in tessera-api dedupes by event id.',results:[R('Stripe docs','open ↗','Handle duplicate events','Record processed event ids and skip ones you’ve seen'),R('Stripe docs','open ↗','Webhook timeouts and retries','How long Stripe waits and how retries back off'),R('Your repo','jump','grep “evt.id” · 0 matches','The handler never looks at the event id',true)],ev:['+5','researched before typing']},
+ {scr:'ws',clock:'09:21',cap:'Follow the teammate’s hunch in git history',sub:'Blame the line that sends the receipt. The commit explains the timeout: the handler got slow in #388.',file:'w',code:WH0,mine:[],cur:14,q:'blame src/billing/webhooks.ts:14',qm:'git',answer:'',results:[R('git blame','show','a41c9e2 · aina.r · 3 weeks ago','perf? send receipt inline so it’s never lost (#388)',true),R('Datadog · linked','open ↗','POST /webhooks/stripe p95 11.8s','Up from 1.2s since Sept 8. Stripe gives up before that.'),R('Your repo','jump','src/mail/receipts.ts:31','sendReceipt renders a PDF before sending',true)],ev:['+25','found the cause in history']},
+ {scr:'ws',clock:'09:27',cap:'Read the docs, offline',sub:'You need an insert that silently skips duplicates. The Prisma docset has it, no browser needed.',panel:'doc',docActive:'prisma',doc:{foot:'offline docset · no network · no AI summary',src:'Prisma · offline docset · 5.x',title:'createMany({ skipDuplicates })',body:[{t:'createMany inserts several rows in one query. With skipDuplicates: true, rows that would violate a unique key are skipped instead of throwing.'},{t:'On PostgreSQL this compiles to INSERT … ON CONFLICT DO NOTHING. The result’s count tells you how many rows were actually inserted.'},{t:'Inside an interactive transaction the insert and your other writes commit or roll back together.'}],ex:'const r = await tx.thing.createMany({\n  data: [{ id: "a" }],\n  skipDuplicates: true,\n})\nr.count  // 0 if "a" already existed'},ev:['+5','read the docs']},
+ {scr:'ws',clock:'09:34',cap:'Write the migration',sub:'A table of processed event ids, keyed by the id itself.',file:'m',code:MIG,mine:[0,1,2,3,4,6,7,8,9,10],cur:5,panel:'doc',tabsOpen:['t','w','m']},
+ {scr:'ws',clock:'09:46',cap:'Write the fix in the handler',sub:'Insert the event id inside the transaction. If it was already there, stop. The receipt no longer blocks the response.',file:'w',code:WH1,mine:[9,10,11,12,13,14,15,17,18,19],cur:20,gate:G('idle','Changed 3 files · the gate runs on save','⌘S to save and run'),panel:'doc'},
+ {scr:'ws',clock:'09:47',cap:'Save. Red, for a new reason.',sub:'Your code is fine, but the test mock doesn’t know about the new table. Everyday work, not a puzzle.',gate:G('red','2 failing · TypeError in both invoice.paid tests','Cannot read properties of undefined (reading \'createMany\') · webhooks.ts:11'),bar:'verify',panel:'search',q:'grep "mockPrisma = {"',qm:'grep',answer:'',results:[R('Your repo','jump','test/helpers/prisma.ts:3','The shared Prisma mock every billing test uses',true),R('Your repo','jump','test/helpers/prisma.ts:5','ledgerEntry mocked, processedEvent missing',true)]},
+ {scr:'ws',clock:'09:55',cap:'Teach the mock about duplicates',sub:'A tiny fake that remembers ids, so the replay test exercises the real branch.',file:'h',code:HLP1,mine:[5,9,10,11,12,13,14,15,16],cur:14,gate:G('running','288 of 412 tests done','vitest · all tests · no failures yet'),bar:'verify',tabsOpen:['t','w','m','h']},
+ {scr:'ws',clock:'09:56',cap:'Green, but one mutant survived',sub:'Every test passes. The mutation check still found a mistake no test would notice.',gate:G('green','412 / 412 passed · mergeable','3.1s · mutation 97% · 1 survived',true),panel:'plan',bar:'verify'},
+ {scr:'ws',clock:'09:59',cap:'Close it with one assertion',sub:'You add the missing check. The gate re-runs with mutations: 100%.',file:'t',code:TEST2,mine:[13,14,15,16,17,18,19,20],cur:21,gate:G('green','412 / 412 passed · 0 mutants survived','3.2s · mutation 100% · all 41 lines you wrote ran'),panel:'plan',bar:'verify',ev:['+40','killed a surviving mutant']},
+ {scr:'ship',clock:'10:03',cap:'Ship with a receipt that says who wrote it',sub:'Same ship step as agent mode. The receipt records 0 AI lines, and your commit message is your own.',bar:'ship',gate:G('green','412 / 412 passed','')},
+ {scr:'triage',clock:'10:04',cap:'Back to triage, one hour later',sub:'The workspace moves to “In review”. Your streak ticks to 15 days and the XP lands.',tri:'after'}];
+const RED_I=STEPS.findIndex(s=>s.cap.startsWith('Save. Red'));
+const AG=(v,t,a,d,n)=>({isTool:true,isText:false,v,t,a:a||'',d:d||'',n:n||''});const AT=t=>({isTool:false,isText:true,t,v:'',a:'',d:'',n:''});
+const BS=[AT('Picking up plan-412.md at step 6. The gate is red because the shared Prisma mock has no processedEvent model.'),AG('Read','test/helpers/prisma.ts'),AG('Read','src/billing/webhooks.ts','','','yours · read only'),AG('Edit','test/helpers/prisma.ts','+12','−0'),AG('Bash','npm test -- billing')];
+const COMMIT="fix(billing): dedupe Stripe webhook events (#412)\n\nSince #388 the invoice.paid handler sends the receipt inline, which\npushes it past Stripe's 10s timeout. Stripe retries, and we credited\nthe ledger twice. Record each event id in processed_events inside the\ntransaction and skip replays. Receipt send moved off the hot path.";
+const STEPS_B=STEPS.slice(0,RED_I+1).concat([
+ {scr:'ws',clock:'09:52',cap:'Five minutes later, you’ve had enough',sub:'The red is only a test mock and you have a meeting at 10. You click 使 Agent in the top bar, and haro says exactly what switching means.',confirm:true},
+ {scr:'ws',clock:'09:53',mode:'agent',cap:'Same workspace, agent layout',sub:'The four steps come back. haro hands the agent your plan, the red gate and a rule not to rewrite your code.',bar:'agent',gate:G('running','Agent editing · the gate waits','test/helpers/prisma.ts'),stream:BS,agentDone:false},
+ {scr:'ws',clock:'09:58',mode:'agent',cap:'Green, with the agent’s help',sub:'The gate doesn’t care who wrote it. The mutation check flags the same gap, now on the right rail.',bar:'verify',gate:G('green','412 / 412 passed · mergeable','3.1s · mutation 97% · 1 survived',true),stream:BS.concat([AT('Done. The mock now remembers event ids, so your replay test runs the real branch. I didn’t change your code in webhooks.ts.')]),agentDone:true},
+ {scr:'ship',clock:'10:01',mode:'agent',cap:'The receipt tells the truth',sub:'Authorship is recorded line by line: 27 by you, 12 by the agent. Reviewers see exactly what was hand-written.',bar:'ship',gate:G('green','412 / 412 passed',''),mixed:true},
+ {scr:'triage',clock:'10:02',cap:'Back to triage',sub:'The workspace is in review, tagged 手→使. The XP you earned by hand is kept; it just doesn’t extend the streak. Today is still open.',tri:'afterB'}]);
+const KW=/^(import|from|export|const|async|await|function|return|if|switch|case|default|describe|it|expect|type|void|true|false|new|CREATE|TABLE|TEXT|PRIMARY|KEY|NOT|NULL|DEFAULT|TIMESTAMPTZ|model)$/;
+function toks(line){const out=[];const re=/(\/\/.*$|--.*$|`[^`]*`|'[^']*'|"[^"]*"|\b\d+(?:\.\d+)?\b|\b[A-Za-z_$]+\b)/g;let i=0,m;while((m=re.exec(line))){if(m.index>i)out.push({t:line.slice(i,m.index),c:'rgba(216,208,197,.66)',w:400});const s=m[0];let c='rgba(216,208,197,.82)',w=400;if(s.startsWith('//')||s.startsWith('--'))c=K.i40;else if(/^['`"]/.test(s))c=K.i66;else if(KW.test(s)){c=K.ink;w=700}else if(/^\d/.test(s))c=K.ink;out.push({t:s,c,w});i=m.index+s.length}if(i<line.length)out.push({t:line.slice(i),c:'rgba(216,208,197,.66)',w:400});return out}
+const RANKS=[[0,'初','Novice'],[800,'中','Journeyman'],[2000,'上','Craftsman'],[4000,'達','Master']];
+const ST={red:['RED',K.red,1],green:['GREEN',K.green,1],plan:['PLAN',K.ink,0],run:['AGENT',K.ink,0],gate:['GATE',K.ink,0],idle:['IDLE',K.i40,0],rev:['REVIEW',K.ink,0],man:['手',K.ink,0]};
+class Component extends DCLogic {
+  state={step:0,shown:9999,playing:false,w:1440,sc:'A',modeX:null,eyesX:null,confirmX:false};
+  S(){return this.state.sc==='B'?STEPS_B:STEPS}
+  wrapRef=React.createRef();
+  componentDidMount(){const el=this.wrapRef.current;if(el&&window.ResizeObserver){this.ro=new ResizeObserver(()=>this.setState({w:el.clientWidth}));this.ro.observe(el)}this.bootT=setTimeout(()=>this.setState({bootTick:1}),50)}
+  componentWillUnmount(){this.ro&&this.ro.disconnect();clearInterval(this.ty);clearInterval(this.pl);clearInterval(this.bt)}
+  resolve(i){const STEPS=this.S();const r={};STEPS.slice(0,i+1).forEach(s=>{if(s.scr==='ws'||s.scr==='ship')Object.assign(r,s);else r.scr=s.scr});Object.assign(r,{scr:STEPS[i].scr,cap:STEPS[i].cap,sub:STEPS[i].sub,clock:STEPS[i].clock,tri:STEPS[i].tri,ev:STEPS[i].ev||null,confirm:!!STEPS[i].confirm,mode:STEPS[i].mode||'manual'});if(!STEPS[i].results&&STEPS[i].q===undefined&&r.panel!=='search'){} return r}
+  go(i){const a=this.resolve(this.state.step),b=this.resolve(i);clearInterval(this.ty);let shown=9999;this.mid=null;
+    if(i===this.state.step+1&&b.scr==='ws'&&a.file===b.file&&a.code!==b.code){const x=a.code,y=b.code;let p=0;while(p<x.length&&p<y.length&&x[p]===y[p])p++;let q=0;while(q<x.length-p&&q<y.length-p&&x[x.length-1-q]===y[y.length-1-q])q++;this.mid={p,q};shown=0;const len=y.slice(p,y.length-q).join('\n').length;this.ty=setInterval(()=>this.setState(s=>{const n=s.shown+4;if(n>=len)clearInterval(this.ty);return {shown:n}}),16)}
+    else if(i===this.state.step+1&&b.scr==='ws'&&a.file!==b.file&&b.mine&&b.mine.length&&b.file==='m'){this.mid={p:0,q:0};shown=0;const len=b.code.join('\n').length;this.ty=setInterval(()=>this.setState(s=>{const n=s.shown+5;if(n>=len)clearInterval(this.ty);return {shown:n}}),16)}
+    if(b.scr==='boot'){this.setState({bootTick:0});clearTimeout(this.bootT);this.bootT=setTimeout(()=>this.setState({bootTick:1}),50)}
+    this.setState({step:i,shown,modeX:null,eyesX:null,confirmX:false})}
+  next(){const STEPS=this.S();if(this.state.step<STEPS.length-1)this.go(this.state.step+1);else{clearInterval(this.pl);this.setState({playing:false})}}
+  renderVals(){
+    const STEPS=this.S();const S=this.state,i=S.step,st=this.resolve(i),N=STEPS.length;
+    const scale=Math.min(1,S.w/1440);
+    const xpBase=1240;const evs=STEPS.slice(0,i+1).map(s=>s.ev).filter(Boolean);const task=evs.reduce((a,e)=>a+parseInt(e[0]),0)+(i>=17&&S.sc==='A'?120:0);
+    const done=i===N-1;const B=S.sc==='B',xp=xpBase+(done?(B?65:225):0);
+    let r=RANKS[0],nr=RANKS[1];RANKS.forEach((x,k)=>{if(xp>=x[0]){r=x;nr=RANKS[k+1]||x}});const top=nr[0]===r[0]?r[0]+1000:nr[0];
+    const rank={k:r[1],name:r[2],lvl:Math.floor(xp/180)+1};
+    const streak=Array.from({length:14},(_,k)=>({c:k===13?(done&&!B?K.ink:'transparent'):([3,8].includes(k)?K.line:'rgba(216,208,197,.55)')}));
+    const inWs=st.scr==='ws'||st.scr==='ship';
+    const code=(st.code||[]).slice();let codeV=code;
+    if(this.mid&&S.shown<9999&&inWs){const {p,q}=this.mid;const mt=code.slice(p,code.length-q).join('\n').slice(0,S.shown);codeV=code.slice(0,p).concat(mt.split('\n'),code.slice(code.length-q))}
+    const gate=st.gate||G('idle','','');const green=gate.st==='green';const mine=new Set(st.mine||[]);
+    const lines=codeV.map((l,k)=>({n:k+1,toks:toks(l),mark:mine.has(k)?'●':'',mc:green?K.green:K.ink,bg:k+1===st.cur?'rgba(216,208,197,.04)':'transparent'}));
+    const GM={red:['RED',K.red],green:['GREEN',K.green],running:['RUNNING',K.ink],idle:['WAITING',K.i40]};
+    const g={key:GM[gate.st][0],color:GM[gate.st][1],t:gate.t,d:gate.d,isRun:gate.st==='running',look:gate.look};
+    const bi={write:0,verify:1,ship:2}[st.bar||'write'];
+    const mineTotal=B&&i>RED_I?27:i>=16?41:i>=14?33:i>=12?27:i>=11?17:i>=7?7:0;
+    const bsub=[mineTotal+' lines by you · 4 files',gate.st==='red'?'red · '+gate.t.split(' · ')[0]:green?'green · 412 / 412':gate.st==='running'?'running · 288 / 412':'runs on save',green?'ready for review':'locked until green'];
+    const bdot=[mineTotal?K.ink:K.line,gate.st==='red'?K.red:green?K.green:gate.st==='running'?K.ink:K.line,green?K.ink:K.line];
+    const bar=['code','verify','ship'].map((name,k)=>({n:'0'+(k+1),name,sub:bsub[k],dot:bdot[k],top:k===bi?K.ink:'transparent',bg:k===bi?'#131210':'transparent',nc:k===bi?K.ink:K.i66,sc:bdot[k]===K.red?K.red:bdot[k]===K.green?K.green:K.i40}));
+    const act=st.scr==='ship'?{l:'Open pull request',bg:K.ink,c:'#0b0a09',b:K.ink}:green?{l:'Review & ship →',bg:K.ink,c:'#0b0a09',b:K.ink}:gate.st==='running'?{l:'Gate running',bg:'transparent',c:K.i40,b:K.line}:gate.st==='red'&&i<9?{l:'Write the fix',bg:'transparent',c:K.ink,b:'rgba(216,208,197,.3)'}:{l:'Save & run gate ⌘S',bg:K.ink,c:'#0b0a09',b:K.ink};
+    const mode=S.modeX||st.mode||'manual';const panel=st.panel||'search';
+    const pdone=PLAN.filter(p=>p[1]===14&&B?(i>=RED_I+3):i>=p[1]).length;const pcount=6;
+    const tabs=[['plan','Plan','計'],['search','Search','探'],['doc','Docs','書'],['_','','']].filter(t=>t[0]!=='_').map(([k,l,kj])=>({l,k:kj,b:k==='plan'&&st.plan&&st.plan!=='draft'?pdone+'/'+pcount:'',c:panel===k?K.ink:K.i66,u:panel===k?K.ink:'transparent'}));
+    const open=st.tabsOpen||['t'];
+    const ftabs=open.map(k=>({n:F[k].split('/').pop(),m:k===st.file?'':'',bg:k===st.file?'#131210':'transparent',c:k===st.file?K.ink:K.i66,top:k===st.file?K.ink:'transparent'}));
+    const side=[{name:'tessera-api',items:[['stop double credits','man',i>=4],['invoice pdf locale','green'],['rate-limit login','run'],['onboarding emails','plan']]},{name:'tessera-web',items:[['billing page skeletons','gate'],['a11y: focus traps','idle']]},{name:'haro',items:[['merge train','red']]}].map(p=>({name:p.name,items:p.items.filter(x=>x[2]!==false).map(([n,k])=>{const kk=(k==='man'&&done)?'rev':(k==='man'&&B&&i>RED_I+1)?'run':k;const [s,c,f]=ST[kk];return {n,s,c,fill:f?c:'transparent',bg:n==='stop double credits'&&inWs?'#1b1915':'transparent'}})}));
+    const rw=(l,n,p,d,a,k,man,bg)=>{const [s,c,f]=ST[k];return {l:s,c,fill:f?c:'transparent',n,p,d,a,man:!!man,bg:bg||'transparent'}};
+    const tri=st.tri==='afterB'?{kicker:'Tuesday · 10:02 · 3 projects',head:'1 workspace needs you.',sub:'Your fix is in review with aina.r, marked as mixed authorship. The invoice PDF agent is green and ready.',
+      groups:[{t:'Needs you',rows:[rw('','invoice pdf locale','tessera-api · agent','Green · 1 line no test ran','Review & ship','green')]},{t:'In review',rows:[rw('','stop double credits','tessera-api · #419 · 手→使','Waiting on aina.r · 27 by you, 12 by agent','Open PR ↗','rev',false,'#131210')]},{t:'Running',rows:[rw('','rate-limit login','tessera-api · agent','Agent editing src/auth/limits.ts','Watch','run')]}],
+      cardKicker:'手 TODAY · STILL OPEN',cardHead:'You switched to the agent at 09:52. The +65 XP you earned by hand is kept.',cardSub:'Only tasks finished by hand extend the streak. Pick a smaller one today to make it 15 days.',picks:[{src:'#398 · chore',tag:'~30m',t:'Replace moment with date-fns in reports/',bg:'#1b1915'},{src:'todo · perf',tag:'~2h',t:'Paginate /api/invoices over 500 rows',bg:'transparent'}],stats:[{l:'STREAK',v:'14d'},{l:'THIS WEEK',v:'2 by hand'},{l:'XP',v:'1,305'}],toast:false}
+     :st.tri==='after'?{kicker:'Tuesday · 10:04 · 3 projects',head:'1 workspace needs you.',sub:'Your fix is in review with aina.r. The invoice PDF agent finished while you were writing, and it’s green.',
+      groups:[{t:'Needs you',rows:[rw('','invoice pdf locale','tessera-api · agent','Green · 1 line no test ran','Review & ship','green')]},{t:'In review',rows:[rw('','stop double credits','tessera-api · #419','Waiting on aina.r · gate green','Open PR ↗','rev',true,'#131210')]},{t:'Running',rows:[rw('','rate-limit login','tessera-api · agent','Agent editing src/auth/limits.ts','Watch','run'),rw('','billing page skeletons','tessera-web · agent','Gate 210 / 344','Watch','gate')]}],
+      cardKicker:'手 TODAY · DONE',cardHead:'Written by hand: 41 lines, 0 AI code, mutation 100%.',cardSub:'Your 15-day streak is safe. One more by-hand task this week unlocks 上 Craftsman progress.',picks:[{src:'#419',tag:'in review',t:'fix(billing): dedupe Stripe webhook events',bg:'#1b1915'}],stats:[{l:'STREAK',v:'15d'},{l:'THIS WEEK',v:'3 by hand'},{l:'XP',v:'1,465'}],toast:true}
+     :{kicker:'Tuesday · 09:03 · 3 projects · overnight: 4 runs',head:'2 workspaces need you.',sub:'The invoice PDF agent is green and ready to review. The onboarding plan is waiting for approval. Everything else is running or idle.',
+      groups:[{t:'Needs you',rows:[rw('','invoice pdf locale','tessera-api · agent','Green · 1 line no test ran','Review & ship','green'),rw('','onboarding emails','tessera-api · agent','Plan ready · 5 steps, 3 files','Review plan','plan')]},{t:'Running',rows:[rw('','rate-limit login','tessera-api · agent','Agent editing src/auth/limits.ts','Watch','run'),rw('','billing page skeletons','tessera-web · agent','Gate 210 / 344','Watch','gate')]},{t:'Red',rows:[rw('','merge train','haro · agent','2 failing in train.test.ts','Send to agent','red')]}],
+      cardKicker:'手 WRITE ONE BY HAND TODAY',cardHead:'Your streak is 14 days. Pick something from the backlog.',cardSub:'Suggested because it’s a real bug, touches code you know, and has a clear test to write first.',picks:[{src:'#412 · bug · P1',tag:'~1h',t:'Customers credited twice when Stripe retries invoice.paid',bg:'#1b1915'},{src:'#398 · chore',tag:'~30m',t:'Replace moment with date-fns in reports/',bg:'transparent'},{src:'todo · perf',tag:'~2h',t:'Paginate /api/invoices over 500 rows',bg:'transparent'}],stats:[{l:'STREAK',v:'14d'},{l:'THIS WEEK',v:'2 by hand'},{l:'XP',v:'1,240'}],toast:false};
+    tri.groups=tri.groups.map(gp=>({...gp,n:gp.rows.length}));
+    const bootN=S.bootTick?5:0;
+    const bootLines=[['✓','restoring workspaces','7'],['✓','fetching origin','tessera-api · tessera-web · haro'],['✓','re-checking gates','3 green · 1 red · 1 running'],['✓','claude code login','ok · 42% session left'],['手','manual streak','14 days · today open']].map(([m,t,v],k)=>({m,t,v,mc:m==='手'?K.ink:K.green,op:k<bootN?1:0}));
+    const receiptB=[['Suite','412 / 412 passed',K.green],['Written by','you 27 · agent 12 · per line',K.ink],['Mode','manual → agent at 09:52',K.ink],['Plan','haro AI · 6 steps · 0 code',K.i40],['Mutation','97% · 1 survived',K.i40],['Tamper alarm','clean',K.i40],['Test first','yes · #412 reproduced',K.i40],['Time','55 min',K.i40]].map(([l,v,c])=>({l,v,c}));
+    const receipt=[['Suite','412 / 412 passed',K.green],['Plan','haro AI · 6 steps · 0 code',K.ink],['Written by','you · 41 lines · 0 AI',K.ink],['Test first','yes · #412 reproduced',K.ink],['Mutation','100% · 0 survived',K.i40],['Tamper alarm','clean',K.i40],['Research','3 sources · 1 blame',K.i40],['Time','58 min',K.i40]].map(([l,v,c])=>({l,v,c}));
+    const crumb=inWs?'tessera-api / stop double credits':st.scr==='issue'?'backlog / #412':'triage';
+    return {
+      wrapRef:this.wrapRef,scale,wrapH:Math.round(860*scale)+'px',
+      stepNo:i+1,stepCount:N,cap:st.cap,sub:st.sub,clock:st.clock,
+      dots:STEPS.map((s,k)=>({go:()=>this.go(k),t:s.cap,c:k<=i?K.ink:K.line})),
+      prev:()=>{if(i>0)this.go(i-1)},next:()=>this.next(),nextLabel:i===N-1?'Done':'Next ▸',
+      playLabel:S.playing?'PAUSE':'PLAY',togglePlay:()=>{if(S.playing){clearInterval(this.pl);this.setState({playing:false})}else{if(i>=N-1)this.go(0);this.pl=setInterval(()=>this.next(),5200);this.setState({playing:true})}},
+      scTabs:[['A','A · FINISH BY HAND'],['B','B · SWITCH HALFWAY']].map(([k,l])=>({l,bg:S.sc===k?K.ink:'transparent',c:S.sc===k?'#0b0a09':K.i66,pick:()=>{clearInterval(this.pl);this.setState({sc:k,playing:false},()=>this.go(k==='B'?(this.state.step<=RED_I?RED_I+1:this.state.step):Math.min(this.state.step,RED_I+1)))}})),
+      mA:{bg:mode==='agent'?K.ink:'transparent',c:mode==='agent'?'#0b0a09':K.i66},mM:{bg:mode==='manual'?K.ink:'transparent',c:mode==='manual'?'#0b0a09':K.i66},
+      toAgent:()=>{if(mode!=='agent')this.setState({confirmX:true})},toManual:()=>{if(mode==='agent')this.setState({modeX:'manual'})},
+      confirmOpen:inWs&&(st.confirm||S.confirmX)&&mode==='manual',
+      confirmRows:[{m:'→',t:'The agent picks up from your worktree, your plan and the current red gate.'},{m:'手',t:'Your 27 hand-written lines stay marked as yours. Agent edits are marked as AI, line by line.'},{m:'✕',t:'This workspace stops counting toward your streak. The +65 XP you earned is kept.'},{m:'門',t:'Nothing about the gate changes. It still has to be green to merge.'}],
+      keepWriting:()=>{if(st.confirm){this.setState({sc:'A'},()=>this.go(RED_I+1))}else this.setState({confirmX:false})},
+      confirmSwitch:()=>{if(S.sc==='B'&&st.confirm)this.go(i+1);else this.setState({sc:'B',confirmX:false},()=>this.go(RED_I+2))},
+      agentLayout:st.scr==='ws'&&mode==='agent',astream:st.stream||[],agentDone:!!st.agentDone,
+      abar:[['agent',st.agentDone?'done · 4m · $0.41':'running · picked up at step 6',st.agentDone?K.i40:K.ink],['code','4 files · 27 by you · 12 by agent',K.i40],['verify',green?'green · 412 / 412':'waits for the agent',green?K.green:K.line],['ship',green?'ready for review':'locked until green',green?K.ink:K.line]].map(([name,sub,dot],k)=>{const on=(st.bar==='agent'&&k===0)||(st.bar==='verify'&&k===2)||(st.bar==='ship'&&k===3);return {n:'0'+(k+1),name,sub,dot,top:on?K.ink:'transparent',bg:on?'#131210':'transparent',nc:on?K.ink:K.i66,sc:dot===K.green?K.green:on?K.ink:K.i40}}),
+      aact:green?{l:'Review & ship →',bg:K.ink,c:'#0b0a09',b:K.ink}:{l:'Agent running',bg:'transparent',c:K.i40,b:K.line},
+      eyesN:g.look?1:0,eyesRail:g.look?'○ webhooks.ts:22 · mutant survived (if (fresh) → if (true))':'Nothing yet',pdoneTxt:pdone+' / 6 done',
+      eyesOpen:g.look&&S.eyesX!==false&&mode==='manual'&&st.scr==='ws',eyesArrow:S.eyesX!==false?'▾':'▸',toggleEyes:()=>this.setState(s=>({eyesX:s.eyesX===false?true:false})),
+      shipLabel:st.mixed?'手→使 mixed · 27 you · 12 agent':'手 written by hand',commitLabel:st.mixed?'Commit message · yours, with a co-author line':'Commit message · yours',commitMsg:st.mixed?COMMIT+'\n\nCo-authored-by: haro agent <agent@haro.local>':COMMIT,
+      needTxt:done?'1 NEED YOU':'2 NEED YOU',crumb,isBoot:st.scr==='boot',bootLines,isTriage:st.scr==='triage'||st.scr==='boot'||st.scr==='issue'||st.scr==='new',isIssue:st.scr==='issue',isNew:st.scr==='new',inWs,isShip:st.scr==='ship',isEditor:st.scr==='ws',
+      navTriBg:st.scr==='triage'?'#1b1915':'transparent',navBackBg:st.scr==='issue'?'#1b1915':'transparent',
+      side,tri,rank,streak,streakN:done&&!B?15:14,xpShort:xp.toLocaleString()+' XP',
+      ws:{elapsed:inWs?'started 09:06 · '+st.clock:''},bar,act,lines,curLine:st.cur||1,ranColor:green?K.green:K.i66,g,ftabs,tabs,
+      pSearch:panel==='search',pDoc:panel==='doc',pEyes:panel==='eyes',pPlan:panel==='plan',
+      planDraft:st.plan==='draft',planList:st.plan==='review'||st.plan==='final',planReview:st.plan==='review',planFinal:st.plan==='final',planText:PLANMD,
+      planStatus:st.plan==='draft'?'ask haro':st.plan==='review'?'haro AI · 6 steps':pdone+' / 6 done',
+      plan:PLAN.filter(p=>st.plan!=='draft'&&(p[2]!=='added'||st.plan!=='review'||true)).map(p=>{const d=st.plan==='final'&&i>=p[1];return {t:p[0],tick:d?'✓':'',bg:d?K.ink:'transparent',c:d?K.i40:K.ink,tag:''}}),
+      docList:[['plan','計','plan-412.md','yours',i>=6],['stripe','書','Stripe API','web · pinned',true],['prisma','書','Prisma 5.x','offline',true],['pg','書','PostgreSQL 16','offline',true],['man','書','man pages','offline',true]].filter(d=>d[4]).map(([id,k,n,m])=>({k,n,m,bg:st.docActive===id?'#1b1915':'transparent',c:st.docActive===id?K.ink:K.i66})),
+      qMode:st.qm||'?',qText:st.q||'Ask where to look…',qColor:st.q?K.ink:K.i40,hasAnswer:!!st.answer,answer:st.answer||'',
+      results:st.q?(st.results||[]):[],
+      doc:st.doc||{src:'',title:'',body:[],ex:'',foot:''},
+      receipt:st.mixed?receiptB:receipt,shipMixed:st.scr==='ship'&&!!st.mixed&&mode==='agent',
+      gameMid:st.mixed?'· plan by haro · agent helped':'· plan by haro · code by you',gameRight:st.mixed?'27 by you · 12 by agent':mineTotal+' lines by you · 0 AI',
+      xpPct:Math.min(100,Math.round((xp+task-r[0])/(top-r[0])*100))+'%',xpText:(xp).toLocaleString()+' / '+top.toLocaleString()+' XP',
+      evShow:!!st.ev&&inWs,evText:st.ev?st.ev[0]+' XP · '+st.ev[1]:'',sessXp:task,mineTotal
+    };
+  }
+}
+</script>
+</body>
+</html>

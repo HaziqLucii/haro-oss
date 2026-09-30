@@ -1,0 +1,169 @@
+/* buttons — the signature: chunky 3D "pushable" keycaps.
+   Rest: a solid bottom edge. Hover: pops up (edge deepens). Click: presses flat. */
+button {
+  background: var(--panel-2);
+  border: 1.5px solid var(--border);
+  color: var(--fg);
+  border-radius: var(--radius-md);
+  padding: 8px 15px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow-key);
+  transition: transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+button:hover:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--edge);
+}
+button:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 var(--edge);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* motion.css's global rule only zeroes durations, so the keycap press-shift
+     would otherwise still happen, just instantly — a movement, not a fade,
+     which is exactly what reduced-motion users are opting out of. Must come
+     after both rules above: equal specificity means source order decides. */
+  button:hover:not(:disabled),
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+/* primary — flat bone/inverted keycap. Green is reserved for the gate itself
+   (see .btn-gate below); everywhere else "primary" means bone. */
+button.primary {
+  background: var(--action);
+  color: var(--action-ink);
+  border-color: var(--line-strong);
+  box-shadow: none;
+  transform: none;
+}
+button.primary:hover:not(:disabled) {
+  background: var(--action-hover);
+  border-color: var(--line-strong);
+  transform: none;
+  box-shadow: none;
+}
+button.primary:active:not(:disabled) {
+  background: var(--action-hover);
+  transform: none;
+  box-shadow: none;
+}
+/* gate — the ONE place green survives as a primary action: the ③ gate ->
+   ④ ship merge button. Flat, same border treatment as .primary. */
+button.btn-gate {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--line-strong);
+  box-shadow: none;
+  transform: none;
+}
+button.btn-gate:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+  border-color: var(--line-strong);
+  transform: none;
+  box-shadow: none;
+}
+button.btn-gate:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+button.danger {
+  border-color: var(--del);
+  color: var(--del);
+}
+/* merged — GitHub-style purple keycap; a terminal state, so it reads as disabled.
+   Flattened structurally like .primary/.btn-gate but keeps its own hue: it
+   signals a terminal git state, not a call-to-action. */
+button.merged,
+button.merged:disabled {
+  background: var(--merged);
+  color: var(--merged-ink);
+  border-color: var(--line-strong);
+  box-shadow: none;
+  transform: none;
+  opacity: 1;
+}
+/* inline spinner for in-flight button actions (e.g. merge: push → PR → merge).
+   Inherits the button's text color via currentColor so it reads on the green
+   primary keycap as well as ghost buttons. */
+.spinner {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 0.1em;
+  vertical-align: -0.1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin var(--dur-spin) linear infinite;
+}
+/* ghost — outlined keycap: bordered at rest, presses in on hover, no color change */
+button.ghost {
+  background: transparent;
+  padding: 5px 11px;
+}
+
+/* Buttons that pair a leading SVG icon with a text label (run · run app · scripts):
+   align the icon to the text baseline-center with a small gap, so a proper icon
+   replaces the old ▸ / ⚙ text glyphs. */
+.btn-ico {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* these buttons are list/grid/tab items, NOT keycaps — no edge, no press */
+.cell,
+.tab,
+.ed-tab-open,
+.ed-tab-close,
+.term-shell-x,
+.side-ws,
+.side-project-row,
+.backlog-tab,
+.issue-filter-btn,
+.settings-tab {
+  box-shadow: none;
+}
+.cell:hover:not(:disabled) {
+  box-shadow: none;
+}
+.cell:active:not(:disabled) {
+  box-shadow: none;
+  transform: scale(1.2);
+}
+.tab:hover:not(:disabled),
+.tab:active:not(:disabled),
+.ed-tab-open:hover:not(:disabled),
+.ed-tab-open:active:not(:disabled),
+.ed-tab-close:hover:not(:disabled),
+.ed-tab-close:active:not(:disabled),
+.term-shell-x:hover:not(:disabled),
+.term-shell-x:active:not(:disabled),
+.side-ws:hover:not(:disabled),
+.side-ws:active:not(:disabled),
+.side-project-row:hover:not(:disabled),
+.side-project-row:active:not(:disabled),
+.backlog-tab:hover:not(:disabled),
+.backlog-tab:active:not(:disabled),
+.issue-filter-btn:hover:not(:disabled),
+.issue-filter-btn:active:not(:disabled),
+.side-row-menu-btn:hover:not(:disabled),
+.side-row-menu-btn:active:not(:disabled),
+.brand:hover:not(:disabled),
+.brand:active:not(:disabled),
+.settings-tab:hover:not(:disabled),
+.settings-tab:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}

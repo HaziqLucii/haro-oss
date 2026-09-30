@@ -1,0 +1,23 @@
+/* Dossier flourishes — the ryoku "system dossier" texture. The giant bottom-right
+   kanji watermark (門, "gate") that used to live here was removed at Haziq's request
+   — it read as a big distracting word rather than a ghost in the ground. Only the
+   film grain remains as an ambient body-level layer; the dashboard's own small
+   katakana peek (`dashboard.css` `.dash::before`) is the one surviving corner
+   flourish, scoped to that screen rather than global. */
+
+/* Film grain — a desaturated fractal-noise tile at ~5%, fixed over the whole
+   viewport. Gives the ground the slightly-analogue texture ryoku carries; far too
+   faint to hurt legibility, and pointer-events:none so it's inert. High z-index so
+   it sits uniformly over panels and overlays alike (grain, like real film, is on
+   everything, not behind it). Suppressed under prefers-reduced-motion? No — it's
+   static, so it stays; it only reads as texture, never motion. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}

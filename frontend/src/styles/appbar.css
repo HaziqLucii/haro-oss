@@ -1,0 +1,183 @@
+
+.app {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 18px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100vh;
+}
+
+.appbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  /* Desktop shell: the OS title bar is hidden (desktop/main.js titleBarStyle),
+     so the appbar doubles as the draggable title bar. The strip drags; the
+     interactive controls below opt out so they stay clickable. Ignored in a
+     plain browser, so it's harmless in dev / Docker. */
+  -webkit-app-region: drag;
+  app-region: drag;
+  /* A drag strip MUST be unselectable. Otherwise a press-drag over the tagline
+     or brand text starts a TEXT SELECTION, which captures the mousedown so the
+     window never begins dragging: the "can't drag, keeps highlighting text" bug
+     on the macOS hidden-titlebar build. The no-drag controls below stay
+     clickable regardless. */
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+.appbar button,
+.appbar input,
+.appbar select,
+.appbar a,
+.appbar [role="menu"],
+.appbar .no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+/* macOS: the traffic-light buttons float at the top-left over our content, so
+   pad the row clear of them. Tagged by preload.js only in the desktop app on
+   macOS — a browser (no traffic lights) keeps the flush-left layout. */
+:root[data-desktop="mac"] .appbar {
+  padding-left: 58px;
+}
+
+/* ── self-update control (right of the appbar / title bar) ──────────────────
+   "Update" chip when a newer local build is available; a determinate progress
+   pill (label · bar · %) while the rebuild runs (real milestones from
+   rebuild.sh). Renders nothing otherwise, so the appbar is unchanged normally. */
+.upd {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.upd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid color-mix(in srgb, var(--fg) 45%, var(--border));
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+  color: var(--fg);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.upd-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 26%, transparent);
+}
+.upd-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.upd-btn svg {
+  display: block;
+}
+.upd-queued {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid var(--border);
+  color: var(--dim);
+}
+.upd-applying {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid var(--border);
+  background: var(--panel-2);
+}
+.upd-track {
+  position: relative;
+  width: 84px;
+  height: 4px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border);
+}
+.upd-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ink-muted);
+  transition: width var(--dur-2) var(--ease-out);
+}
+.upd-pct {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+  text-align: right;
+}
+/* the appbar logo doubles as "home" (back to the cross-project triage); reset the
+   base button's keycap look so it reads as the wordmark, not a button */
+.brand {
+  font-family: var(--wordmark);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em; /* a display serif wants its default tight fit, not tracking */
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.brand:hover {
+  opacity: 0.72; /* monochrome hover cue — the wordmark carries no accent now */
+}
+/* the wordmark morph's NEW snapshot name, set only for the one frame between the
+   boot splash lifting and .landing clearing — see index.html's inline boot script
+   and its OLD-side rule (html.booting #boot .boot-mark). Never both at once. */
+html.landing .brand {
+  view-transition-name: wordmark;
+}
+.north-star {
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.appbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  padding: 2px 9px;
+  line-height: 1;
+}
+/* desktop: the workspace name lives in the stats-strip (see .strip-ws); the
+   appbar crumb is hidden here and only re-appears on mobile, where the strip is
+   itself hidden (see the ≤720px block). */
+.ws-crumb {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.app-link {
+  color: var(--fg);
+  text-decoration: none;
+  border: var(--border-w) solid var(--fg);
+  border-radius: var(--radius-sm);
+  padding: 3px 9px;
+  font-size: 11px;
+}
+.app-link:hover {
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+}
