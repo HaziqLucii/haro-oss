@@ -1,0 +1,388 @@
+
+/* ---- SHELL: sidebar + content ---- */
+.shell {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 12px;
+}
+.shell-collapsed {
+  grid-template-columns: 1fr;
+}
+.side-toggle {
+  font-size: 15px;
+  padding: 2px 9px;
+  line-height: 1;
+}
+
+/* sidebar (LEFT spine) — projects → workspaces */
+.sidebar {
+  min-height: 0;
+}
+.side-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: var(--border-w) solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+.side-add {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.side-add input {
+  font-size: 12px;
+  padding: 6px 8px;
+}
+.side-add-ws {
+  border-bottom: none;
+  padding: 6px 0 6px 18px;
+}
+.side-scroll {
+  overflow-y: auto;
+  padding: 6px;
+  flex: 1 1 auto;
+  min-height: 60px;
+}
+/* drawer footer (theme / settings / archive) — mobile only; on desktop these
+   controls live in the appbar, so the footer stays hidden */
+.side-foot {
+  display: none;
+}
+.side-empty {
+  padding: 16px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.side-project-head,
+.side-ws-row {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+}
+.side-ws-row {
+  gap: 0;
+}
+/* project AND workspace rows are CAPSULES: name (left) + an always-visible ⋯ menu
+   (right), the two halves split by a divider inside one bordered box. */
+.side-project-head,
+.side-ws-row {
+  border: var(--border-w) solid var(--border);
+  background: var(--panel-2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.side-project-head {
+  margin-bottom: 4px;
+}
+.side-project-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--fg);
+  cursor: pointer;
+  border-radius: 0;
+}
+.side-ws-row:hover {
+  border-color: var(--line-strong);
+}
+.side-project-head:hover {
+  border-color: var(--line-strong);
+}
+/* selected → tint the whole capsule (highlight lifts off the inner name button) */
+.side-project-head:has(.side-project-row-sel) {
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  border-color: var(--line-strong);
+}
+.side-ws-row-sel {
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  border-color: var(--line-strong);
+}
+
+/* "projects" title doubles as a home link back to the cross-project triage */
+/* "projects" is a plain section label (the home action moved to the appbar logo). */
+
+/* the caret is its own click target (toggle expand) inside the select-the-project
+   row — a plain span so it doesn't nest a <button> inside a <button> */
+.side-project-caret {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+/* the project row is showing its dashboard — highlight now lives on the capsule
+   (.side-project-head:has(...)), so the inner button stays transparent */
+.side-project-row-sel {
+  background: transparent;
+}
+
+/* the hover-revealed "⋯" — no width cost at rest, appears on row hover/focus
+   or while its own menu is open */
+.side-row-menu-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  /* NOT a keycap — reset the base button's border + drop-shadow so it reads as a
+     plain icon affordance, not a boxed, shadowed button around a tiny glyph. */
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--dim);
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.side-project-head:hover .side-row-menu-btn,
+.side-ws-row:hover .side-row-menu-btn,
+.side-project-head:focus-within .side-row-menu-btn,
+.side-ws-row:focus-within .side-row-menu-btn,
+.side-row-menu-btn[aria-expanded="true"] {
+  opacity: 1;
+}
+/* "quiet dots": always visible, but a small dim glyph flush-right — no divider,
+   no boxed segment (that read as two joined buttons). Just a soft chip on hover. */
+.side-project-head .side-row-menu-btn,
+.side-ws-row .side-row-menu-btn {
+  opacity: 1;
+}
+.side-row-menu-btn:hover {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 15%, transparent);
+}
+
+/* fixed-positioned popover so the scrolling sidebar never clips it */
+.side-row-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 168px;
+  max-width: 240px;
+  background: var(--panel);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgb(var(--shadow-rgb) / 0.28);
+  padding: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.side-row-menu-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 7px 9px;
+  color: var(--fg);
+  cursor: pointer;
+}
+.side-row-menu-item:hover {
+  background: var(--panel-2);
+}
+/* every button in the popover is a flat menu item, not a keycap — kill the base
+   button's border + drop-shadow at rest AND the translate/shadow press on
+   hover/active (menu item, Cancel, and the Remove confirm) */
+.side-row-menu button {
+  border: none;
+  box-shadow: none;
+}
+.side-row-menu button:hover:not(:disabled),
+.side-row-menu button:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+.side-row-menu-item.danger,
+.side-row-confirm-go.danger {
+  color: var(--del);
+}
+.side-row-confirm {
+  padding: 8px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.side-row-confirm-text {
+  color: var(--fg);
+  line-height: 1.45;
+}
+.side-row-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.side-row-confirm-actions button {
+  border-radius: var(--radius-md);
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.side-row-confirm-go {
+  background: color-mix(in srgb, var(--del) 14%, transparent);
+  border: var(--border-w) solid color-mix(in srgb, var(--del) 40%, transparent);
+}
+.side-row-confirm-go:hover {
+  background: color-mix(in srgb, var(--del) 22%, transparent);
+}
+/* the one shared disclosure chevron — diff file blocks, sidebar projects, and
+   the code-editor file tree all render <Chevron>, so they animate identically */
+.chevron {
+  flex-shrink: 0;
+  color: var(--dim);
+  transition: transform var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.chevron.open {
+  transform: rotate(90deg);
+}
+.side-project-name {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* tech-stack brand logos, sitting between the caret and the project name */
+.stack-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+/* each logo on a light tile so dark marks (Next.js) stay visible on warm-dark;
+   the tile is theme-neutral because brand SVGs are drawn for a light ground */
+.stack-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background: #f6f3ec;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 60%, transparent);
+}
+.stack-ico svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.side-count {
+  font-size: 11px;
+}
+.side-ws-list {
+  margin: 2px 0 8px 14px;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.side-ws {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+}
+.side-ws-sel {
+  /* fill lives on the row capsule (.side-ws-row-sel); keep the inner button
+     transparent so the name and ⋯ halves share one uniform tint (no seam) */
+  background: transparent;
+  color: var(--fg);
+}
+.side-ws-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Client-derived "draft" overlay: this workspace has unsent composer text (typed or
+   pasted, not yet run). Not a backend status — a faint bone pill. Right-aligned;
+   never shrinks. Deliberately NOT var(--accent): that's the gate's signature alone. */
+.side-ws-draft {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 14%, transparent);
+  border: var(--border-w) solid color-mix(in srgb, var(--fg) 30%, transparent);
+}
+/* Provenance pill: this workspace is an adopted foreign worktree (agentless — the ①
+   agent step is hidden). Deliberately dim, NOT accent-green: green is the gate's
+   signature, and provenance mustn't read as a gate signal. backlog/merge-firewall.md. */
+.side-ws-adopted {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: var(--radius-md);
+  color: var(--dim);
+  background: color-mix(in srgb, var(--dim) 12%, transparent);
+  border: var(--border-w) solid color-mix(in srgb, var(--dim) 26%, transparent);
+}
+.ws-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+.ws-dot-gate_green {
+  /* the literal gate verdict for this workspace (mirrors .dash-gate_green in
+     dashboard.css and .mnav-glyph-green in mobile.css) — a real per-workspace
+     gate status dot, not decorative, so it keeps the reserved accent green,
+     matching its sibling .ws-dot-gate_red which stays the protected --del. */
+  background: var(--accent);
+}
+.ws-dot-gate_red {
+  background: var(--del);
+}
+.ws-dot-agent_running,
+.ws-dot-tests_running {
+  background: var(--amber);
+}
+.ws-dot-broken {
+  background: var(--amber);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 35%, transparent);
+}
+.ws-dot-merged {
+  background: var(--merged);
+}
+.side-newws {
+  text-align: left;
+  padding: 5px 8px;
+  color: var(--dim);
+  font-size: 11px;
+}
+

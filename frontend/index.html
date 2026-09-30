@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0b0a09" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/SpaceMono-Regular.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/SpaceGrotesk-Variable.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/Fraunces-Variable.woff2" crossorigin />
+    <title>haro.</title>
+    <style>
+      /* Kuro boot splash (notes/kuro-motion-plan.md). Self-sufficient: Vite injects
+         the bundle stylesheet through JS in dev, so nothing from styles.css exists
+         at first paint — every color below is a literal hex/rgb, never a var().
+         Keep in sync with desktop/loader.html (the Electron pre-health splash). */
+      html {
+        background: #0b0a09;
+      }
+      @font-face {
+        font-family: "Fraunces";
+        font-weight: 300 600;
+        font-style: normal;
+        font-display: swap;
+        src: url("/fonts/Fraunces-Variable.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Space Mono";
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+        src: url("/fonts/SpaceMono-Regular.woff2") format("woff2");
+      }
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: grid;
+        place-items: center;
+        background: #0b0a09;
+      }
+      #boot-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+        transform: translateY(-4vh);
+      }
+      .boot-mark {
+        font-family: "Fraunces", Georgia, serif;
+        font-weight: 600;
+        font-size: 56px;
+        letter-spacing: -0.01em;
+        color: rgb(205 196 186);
+        opacity: 0;
+      }
+      .boot-period {
+        opacity: 0;
+      }
+      #boot.is-ready .boot-mark {
+        animation: boot-resolve 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      #boot.is-ready .boot-period {
+        animation: boot-resolve 600ms cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards;
+      }
+      .boot-rule {
+        width: 220px;
+        height: 1px;
+        background: rgba(205, 196, 186, 0.2);
+        transform: scaleX(0);
+        transform-origin: left;
+      }
+      #boot.is-ready .boot-rule {
+        animation: boot-rule-draw 600ms cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards;
+      }
+      .boot-rows {
+        display: flex;
+        flex-direction: column;
+        width: 220px;
+      }
+      .boot-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 0;
+        border-top: 1px solid rgba(205, 196, 186, 0.1);
+        font-family: "Space Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        opacity: 0;
+      }
+      .boot-row:first-child {
+        border-top: none;
+      }
+      #boot.is-ready .boot-row[data-key="backend"] {
+        animation: boot-resolve 600ms cubic-bezier(0.16, 1, 0.3, 1) 260ms forwards;
+      }
+      #boot.is-ready .boot-row[data-key="workspaces"] {
+        animation: boot-resolve 600ms cubic-bezier(0.16, 1, 0.3, 1) 320ms forwards;
+      }
+      #boot.is-ready .boot-row[data-key="feed"] {
+        animation: boot-resolve 600ms cubic-bezier(0.16, 1, 0.3, 1) 380ms forwards;
+      }
+      .boot-row .k {
+        color: rgba(205, 196, 186, 0.4);
+        text-transform: uppercase;
+      }
+      .boot-row .v {
+        color: rgb(205 196 186);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+      .boot-row .v.is-pending {
+        opacity: 0.4;
+        animation: boot-breathe 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+      .boot-row .v.is-set {
+        opacity: 1;
+        animation: boot-resolve 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes boot-resolve {
+        from {
+          opacity: 0.1;
+          transform: translateY(2px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes boot-rule-draw {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      @keyframes boot-breathe {
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 0.85;
+        }
+      }
+      /* the wordmark morph's OLD snapshot name — see appbar.css for the NEW side
+         (html.landing .brand), set once React mounts. Never both at once: #boot is
+         removed before .landing is added (see the inline script below). */
+      html.booting #boot .boot-mark {
+        view-transition-name: wordmark;
+      }
+      /* film grain, copied from styles/dossier.css so the texture is present before
+         the bundle lands (a harmless duplicate rule once styles.css loads over it) */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0.05;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        background-size: 140px 140px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot,
+        #boot * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="boot">
+      <div id="boot-stack">
+        <div class="boot-mark">haro<span class="boot-period">.</span></div>
+        <div class="boot-rule"></div>
+        <div class="boot-rows">
+          <div class="boot-row" data-key="backend">
+            <span class="k">backend</span><span class="v is-pending">···</span>
+          </div>
+          <div class="boot-row" data-key="workspaces">
+            <span class="k">workspaces</span><span class="v is-pending">···</span>
+          </div>
+          <div class="boot-row" data-key="feed">
+            <span class="k">live feed</span><span class="v is-pending">···</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Pre-React boot join logic (notes/kuro-motion-plan.md). React only ever
+      // reports facts via window.__haroBoot.stage(key, value); this script owns
+      // every decision about when the splash is done.
+      (function () {
+        document.documentElement.classList.add("booting");
+        // Installed first, before anything below can throw: a hung request must
+        // never permanently trap the user behind a black splash with no way out,
+        // and React's boot.stage calls (motion.ts) must always have a real
+        // function to call, never undefined, even if the code below errors.
+        setTimeout(done, 5000);
+        window.__haroBoot = { stage: stage };
+
+        var boot = document.getElementById("boot");
+        var rows = document.querySelectorAll(".boot-row");
+        var rowMap = {};
+        rows.forEach(function (row) {
+          rowMap[row.dataset.key] = row.querySelector(".v");
+        });
+        var seen = {};
+        var doneRan = false;
+        var t0 = Date.now();
+
+        function setRow(key, value) {
+          var v = rowMap[key];
+          if (!v) return;
+          v.textContent = value;
+          v.classList.remove("is-pending");
+          v.classList.add("is-set");
+        }
+
+        // Electron only ever loadURL()s this document after its own /health poll
+        // already succeeded (see desktop/main.js) — preload.js tags data-desktop
+        // as early as it can, so when it's present the BACKEND row can skip the
+        // breathing dots and read "ready" from the very first frame.
+        if (document.documentElement.dataset.desktop) {
+          setRow("backend", "ready");
+          seen.backend = true;
+        }
+
+        if (document.fonts && document.fonts.load) {
+          var fontTimer = setTimeout(markReady, 300);
+          document.fonts
+            .load("600 1em Fraunces")
+            .catch(function () {})
+            .then(function () {
+              clearTimeout(fontTimer);
+              markReady();
+            });
+        } else {
+          markReady();
+        }
+        function markReady() {
+          boot.classList.add("is-ready");
+        }
+
+        function stage(key, value) {
+          if (doneRan) return;
+          setRow(key, value);
+          seen[key] = true;
+          if (seen.workspaces && seen.feed) done();
+        }
+
+        function done() {
+          if (doneRan) return;
+          doneRan = true;
+          var wait = Math.max(0, 600 - (Date.now() - t0));
+          setTimeout(function () {
+            var lift = function () {
+              boot.remove();
+              document.documentElement.classList.remove("booting");
+              document.documentElement.classList.add("landing");
+            };
+            var reduced =
+              window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (document.startViewTransition && !reduced) {
+              var t = document.startViewTransition(lift);
+              t.finished
+                .catch(function () {})
+                .then(function () {
+                  document.documentElement.classList.remove("landing");
+                });
+            } else {
+              boot.style.transition = "opacity 600ms cubic-bezier(0.16,1,0.3,1)";
+              boot.style.opacity = "0";
+              setTimeout(function () {
+                lift();
+                document.documentElement.classList.remove("landing");
+              }, reduced ? 0 : 600);
+            }
+          }, wait);
+        }
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

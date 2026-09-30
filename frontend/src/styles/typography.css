@@ -1,0 +1,140 @@
+/* ---- TYPOGRAPHY ROLES ---- */
+/* headings + buttons → rounded display (Open Runde). The .brand wordmark sets its
+   own 8-bit font (Pixelify Sans) in appbar.css, so it's deliberately NOT listed here —
+   this rule used to win the cascade (imported after appbar.css) and silently override
+   the wordmark's font. */
+.setup-title,
+.empty-title,
+button,
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  letter-spacing: -0.01em;
+}
+/* UI chrome → clean sans (names, crumbs, meta, form labels) */
+.north-star,
+.ws-crumb,
+.crumb,
+.row label,
+.side-project-name,
+.side-count,
+.side-newws,
+.card-head,
+.pane-head {
+  font-family: var(--sans);
+}
+/* eyebrow labels → monospace, wide-tracked: the "system dossier" voice (the
+   uppercasing itself lives in each partial; here they only switch font + tracking).
+   Extended to every other section-head label across the partials that already
+   uppercases + tracks itself (git-ship, editor, stream, sidebar, backlog, runbook,
+   settings, hotkeys) so they read as one consistent eyebrow voice instead of a
+   mix of mono/sans per file. */
+.dash-title,
+.tab,
+.setup-sub,
+.stat-k,
+.analysis-head,
+.flame-title,
+.impact-col-title,
+.git-sec-head,
+.ft-head,
+.stream-queue-head,
+.side-head,
+.side-backlog-head,
+.backlog-cat-head,
+.issue-detail-comments-head,
+.rb-section-title,
+.settings-rail-head,
+.hotkeys-group-title {
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+}
+/* code / data / terminal / identifiers → mono, tabular figures so columns of
+   numbers (stat cells, wall-times, counts) line up digit-for-digit */
+.tag,
+.stream,
+.diff,
+.stat-v,
+.verdict,
+.gate-summary,
+.case-name,
+.cd-name,
+.flame-label,
+.review-context,
+.case-msg,
+.gate-error,
+.side-ws-name,
+.impact-metric,
+.if-path {
+  font-family: var(--mono);
+}
+.stat-v,
+.impact-metric,
+.gate-summary {
+  font-variant-numeric: tabular-nums;
+}
+/* the task prompt the user types → Anthropic Sans (its stream echo matches) */
+.composer textarea {
+  font-family: var(--prompt);
+  font-size: 13.5px;
+}
+
+/* v2 "setting up" state — amber, pulsing */
+.stat-setting_up .stat-v {
+  color: var(--amber);
+  animation: breathe var(--dur-breath) var(--ease-in-out) infinite;
+}
+.ws-dot-setting_up {
+  background: var(--amber);
+}
+.dash-setting_up {
+  border-left-color: var(--amber);
+}
+.dash-setting_up .dash-status {
+  color: var(--amber);
+}
+
+/* ---- LEDGER-ROW utility (brand pass-3, item 6) ----
+   A generic key/value row for future "list of similar rows" surfaces: a
+   hairline (not a gap/margin) between rows, and the value in the mono/muted
+   "data" voice. Existing row classes across the partials (sidebar's workspace
+   capsules, dashboard card meta lines, git history, ③ verify's look-at rows)
+   already have their OWN layout (grid vs. flex, boxed capsule vs. flowing
+   list) — composing them onto this exact selector would fight that layout, so
+   each partial adds the *properties* (border-hairline + the mono/muted value
+   color) to its own real row class instead; this class stays here as the
+   reusable shape for a plain new row that doesn't have one yet. */
+.ledger-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  padding: 9px 0;
+}
+.ledger-row > .ledger-value {
+  color: var(--ink-muted);
+  font-family: var(--mono);
+}
+
+/* ---- RULE-TITLE utility (brand pass-3, item 7) ----
+   A section label with a hairline filling the rest of its row — the
+   "letterhead" look. `flex: 1; min-width: 0` beyond the plan's literal
+   snippet: every real usage site (.dash-title inside .dash-head, .gh-sec-title
+   inside .git-sec-head, .rb-section-title inside .rb-section-head,
+   .gate-verdict inside .pane-head) is itself a flex child of a
+   `justify-content: space-between` row, so without an explicit grow factor the
+   label hugs its own text and the ::after hairline has no space left to fill. */
+.rule-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+.rule-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+

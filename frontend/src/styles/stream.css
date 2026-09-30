@@ -1,0 +1,653 @@
+/* responsive: keep the sidebar a LEFT column always; stack only the content */
+@media (max-width: 1100px) {
+  .shell {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  .shell-collapsed {
+    grid-template-columns: 1fr;
+  }
+  .bento {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas: "strip" "main" "side";
+    overflow-y: auto;
+  }
+  .proj-dash {
+    overflow-y: auto;
+  }
+  .backlog-panel {
+    min-height: 340px;
+  }
+  /* stack the file rail above the checklist so neither is squeezed at ~420px */
+  .backlog-split {
+    flex-direction: column;
+  }
+  .backlog-rail {
+    flex: 0 0 auto;
+    max-width: none;
+    max-height: 190px;
+    border-right: none;
+    border-bottom: var(--border-w) solid var(--border);
+  }
+  /* stacked single column. Two things caused the stream + composer to overflow
+     onto the side pane: (1) area-main's base `min-height: 0` defeats its content
+     minimum, so the `auto` grid row collapsed it to ~0; restore content sizing with
+     `min-height: auto`. (2) its stream-card is `flex: 1`, which in an auto row has
+     no height to fill; pin it to a definite height so area-main = stream + composer
+     and the panes stack cleanly (the bento itself scrolls). */
+  .area-main {
+    min-height: auto;
+  }
+  .area-main .stream-card {
+    flex: 0 0 auto;
+    height: 55vh;
+    min-height: 320px;
+  }
+  .area-side {
+    min-height: 460px;
+  }
+}
+
+/* stream */
+.stream {
+  overflow-y: auto;
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.stream.empty,
+.diff.empty {
+  color: var(--dim);
+  padding: 24px 12px;
+}
+.ev-token {
+  margin: 0 0 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--mono);
+  animation: resolve var(--dur-2) var(--ease-out) 1;
+}
+.ev-system {
+  color: var(--dim);
+}
+/* your prompt, echoed into the stream (the "back and forth") */
+.ev-user {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 10px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--fg);
+  background: color-mix(in srgb, var(--fg) 7%, transparent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  animation: resolve var(--dur-2) var(--ease-out) 1;
+}
+.ev-user-mark {
+  color: var(--fg);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.ev-user-text {
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+  /* echo of the prompt the user typed → same Anthropic Sans as the composer */
+  font-family: var(--prompt);
+}
+/* Clickable @file mention inside a task line — echoes the composer's @file token
+   (accent chip) but reads as a link and jumps to the file in the code step. */
+.ev-file-ref {
+  font: inherit;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 15%, transparent);
+  cursor: pointer;
+  animation: resolve var(--dur-2) var(--ease-out) 1;
+}
+.ev-file-ref:hover {
+  background: color-mix(in srgb, var(--fg) 28%, transparent);
+  text-decoration: underline;
+}
+.ev-user + .md {
+  margin-top: 0;
+}
+/* A fenced block pasted into a prompt renders as a real code block here. The row itself is
+   `white-space: pre-wrap` (so typed newlines survive), which would otherwise add a blank
+   line either side of the block — reset it inside, and let the block own its own spacing. */
+.ev-user-text .code-block {
+  white-space: normal;
+  margin: 6px 0;
+}
+.ev-user-text .code-block pre {
+  white-space: pre;
+}
+/* Per-turn marker — the visible turn boundary, pushed to the row's right edge. A
+   static "turn N" tag until the rewind action wires it into a "rewind to here" button.
+   Revealed on row hover/focus so it stays out of the way of reading the prompt. */
+.ev-turn-mark,
+.ev-turn-rewind {
+  margin-left: auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--dim);
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-out);
+}
+.ev-user:hover .ev-turn-mark,
+.ev-user:hover .ev-turn-rewind,
+.ev-turn-rewind:focus-visible {
+  opacity: 0.7;
+}
+.ev-turn-rewind {
+  cursor: pointer;
+  padding: 1px 6px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--fg);
+}
+.ev-turn-rewind:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  border-color: var(--line-strong);
+}
+/* Follow-up tasks queued while the agent is busy — a dimmed section pinned at the
+   bottom of the stream. They fire (oldest first) once the workspace frees up. */
+.stream-queue {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.stream-queue-head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+.ev-queued {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 6px 0;
+  padding: 7px 10px;
+  border-left: 2px dashed color-mix(in srgb, var(--fg) 55%, transparent);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  opacity: 0.72;
+}
+.ev-queued-num {
+  color: var(--fg);
+  font-weight: 700;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+.ev-queued-text {
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+}
+.ev-queued-x {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1;
+}
+.ev-queued-x:hover {
+  color: var(--danger);
+}
+.ev-tool,
+.ev-edit {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin: 4px 0;
+}
+/* CLI-style op line: ● Tool(target)  +added −removed */
+.ev-op {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  animation: resolve var(--dur-2) var(--ease-out) 1;
+}
+.ev-op-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+.ev-op-dot-done {
+  background: var(--gh-push);
+}
+.ev-op-dot-run {
+  background: var(--gh-push);
+  animation: breathe var(--dur-breath) var(--ease-in-out) infinite;
+}
+.ev-op-name {
+  flex-shrink: 0;
+  color: var(--fg);
+  font-weight: 600;
+}
+.ev-op-target {
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+.ev-op-stat {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+/* Sub-agent delegation row (haro's own scout, Phase 2 — notes/workflow-roles-plan.md):
+   indented and dimmed so "handed off to scout" reads as a distinct, quieter beat
+   than the driving agent's own tool calls, not another op line at the same weight. */
+.ev-delegate {
+  margin-left: 15px;
+  opacity: 0.7;
+}
+.ev-delegate .ev-op-dot {
+  width: 5px;
+  height: 5px;
+}
+.ev-delegate .ev-op-target {
+  font-style: italic;
+}
+.ev-add {
+  color: var(--add);
+}
+.ev-del {
+  color: var(--del);
+  margin-left: 6px;
+}
+/* expandable inline diff under a file-edit op row */
+.ev-op-click {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.ev-op-click:hover {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+.ev-op-chev {
+  margin-left: 8px;
+  color: var(--dim);
+  font-size: 10px;
+}
+.ev-diff {
+  margin: 2px 0 6px 15px;
+  padding: 6px 0;
+  border-left: 2px solid var(--border);
+  overflow-x: auto;
+  font-family: var(--code, var(--mono));
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre;
+}
+.ev-diff-line {
+  display: flex;
+  gap: 8px;
+  padding: 0 10px;
+}
+.ev-diff-add {
+  background: color-mix(in srgb, var(--add) 12%, transparent);
+}
+.ev-diff-del {
+  background: color-mix(in srgb, var(--del) 12%, transparent);
+}
+.ev-diff-sign {
+  flex-shrink: 0;
+  width: 1ch;
+  user-select: none;
+}
+.ev-diff-add .ev-diff-sign {
+  color: var(--add);
+}
+.ev-diff-del .ev-diff-sign {
+  color: var(--del);
+}
+.ev-diff-text {
+  white-space: pre;
+}
+.ev-diff-more {
+  padding: 4px 10px 0;
+  font-size: 11px;
+}
+
+/* ── Material Icon Theme file icon (reused: agent-stream chips now, file tree later) ── */
+.fileicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+  user-select: none;
+}
+.fileicon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── File pill: icon · name · +/- , with a hover tooltip carrying the full path ── */
+.file-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 7px 1px 4px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 100%;
+  min-width: 0;
+}
+.file-chip-name {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-chip-stat {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+/* clickable chip: click toggles the diff popover open/closed */
+.file-chip-btn {
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.file-chip-btn:hover {
+  border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.file-chip-btn:focus-visible {
+  outline: none;
+  border-color: var(--line-strong);
+}
+.file-chip-open {
+  border-color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 15%, transparent);
+}
+/* Floating diff preview — portalled to <body>, fixed-position, sized to its
+   content. It escapes the scroll pane entirely, so it's never clipped; JS only
+   nudges it to stay on-screen. */
+.file-tip {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 10px 30px rgb(var(--shadow-rgb) / 0.4);
+  overflow: hidden;
+}
+.file-tip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px 10px;
+  border-bottom: var(--border-w) solid color-mix(in srgb, var(--border) 70%, transparent);
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.file-tip-path {
+  color: var(--dim);
+  white-space: nowrap;
+}
+.file-tip-stat {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.file-tip-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+/* flat close button, NOT a keycap — reset the base button's edge/press */
+.file-tip-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--dim);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: none;
+  transform: none;
+}
+.file-tip-close:hover:not(:disabled),
+.file-tip-close:active:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  color: var(--fg);
+  box-shadow: none;
+  transform: none;
+}
+.file-tip-diff {
+  display: block;
+  max-height: 320px;
+  padding: 4px 0;
+  overflow: auto;
+  font-family: var(--code, var(--mono));
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.cht-line {
+  display: flex;
+  gap: 6px;
+  padding: 0 10px;
+  white-space: pre;
+}
+.cht-add {
+  background: color-mix(in srgb, var(--add) 13%, transparent);
+}
+.cht-del {
+  background: color-mix(in srgb, var(--del) 13%, transparent);
+}
+.cht-sign {
+  flex-shrink: 0;
+  width: 1ch;
+  user-select: none;
+}
+.cht-add .cht-sign {
+  color: var(--add);
+}
+.cht-del .cht-sign {
+  color: var(--del);
+}
+.cht-text {
+  white-space: pre;
+}
+.cht-more {
+  display: block;
+  padding: 3px 10px 1px;
+  color: var(--dim);
+  font-size: 10.5px;
+}
+.file-tip-empty {
+  padding: 7px 10px;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+
+/* ── Turn footer: wall time · copy · ⋯ · changed-file chips ── */
+.turn-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 14px;
+  padding-top: 8px;
+  border-top: var(--border-w) solid color-mix(in srgb, var(--border) 70%, transparent);
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.turn-time {
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+/* small keycaps: bordered top face + a bottom edge shadow for depth, pressing in
+   on hover/active — matches the app's signature keycap buttons, scaled down. */
+.turn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--dim);
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--edge);
+  transition: transform var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), background var(--dur-1) var(--ease-out);
+}
+.turn-btn:hover:not(:disabled) {
+  color: var(--fg);
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 var(--edge);
+}
+.turn-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--edge);
+}
+.turn-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+.turn-btn-ok {
+  color: var(--gh-push);
+  border-color: color-mix(in srgb, var(--gh-push) 45%, var(--border));
+}
+.turn-more-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.turn-more-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+.turn-more-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 170px;
+  padding: 5px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgb(var(--shadow-rgb) / 0.3);
+}
+.turn-more-info {
+  padding: 4px 8px 6px;
+  margin-bottom: 4px;
+  border-bottom: var(--border-w) solid color-mix(in srgb, var(--border) 70%, transparent);
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+/* flat menu items, NOT keycaps — reset the base button's edge shadow + press */
+.turn-more-menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+  transform: none;
+}
+.turn-more-menu button:hover:not(:disabled),
+.turn-more-menu button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--fg) 14%, transparent);
+  color: var(--text);
+  box-shadow: none;
+  transform: none;
+}
+.turn-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+  min-width: 0;
+}
+.badge {
+  background: var(--panel-2);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1px 6px;
+  font-size: 11px;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+.badge-edit {
+  color: var(--gh-push);
+  border-color: var(--gh-push);
+}
+.tool-summary {
+  color: var(--dim);
+  word-break: break-all;
+}
+
+/* --- agent session switcher (stream-card head) ------------------------------ *
+ * A tab strip like the terminal's shell tabs: each tab is a separate agent
+ * conversation on the same worktree; "+" opens a fresh one. Sits where the
+ * "agent stream" label used to be; scrolls horizontally so it never pushes the
+ * head's right cluster (model·effort badge + fullscreen) off-screen. */
+.stream-sessions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stream-sessions::-webkit-scrollbar {
+  display: none;
+}
+.stream-session-tab {
+  flex: none;
+}
+/* "+" new-session keycap — square, icon-only, after the last session tab. */
+.stream-session-add {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+}
+

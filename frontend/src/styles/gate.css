@@ -1,0 +1,1250 @@
+/* gate */
+.gate-verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.verdict {
+  font-weight: 600;
+}
+/* the hanko seal's mark stays once pressed: a permanent 1px accent hairline
+   under the ink, not just a transient flourish during the flip. Lives on
+   .verdict-green itself (not .verdict-flip) so it survives GatePanel dropping
+   .verdict-flip 3.3s after a genuine flip — see the comment on .verdict-flip
+   below for why the drawing-in animation is scoped separately from this. */
+.verdict-green {
+  position: relative;
+  display: inline-block;
+  color: var(--accent);
+}
+.verdict-green::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(1);
+  transform-origin: left;
+}
+.verdict-red {
+  color: var(--del);
+}
+.verdict-run {
+  color: var(--accent);
+  animation: breathe var(--dur-breath) var(--ease-in-out) infinite;
+}
+.verdict-merged {
+  color: var(--merged);
+}
+/* .verdict-green is deliberately excluded: its arrival motion IS the stamp
+   (.verdict-flip below) while flipping, and a bare green mount (reopening an
+   already-green workspace) must stay solid with no animation at all — the
+   same rule the flip class itself exists to enforce. Giving it `resolve` too
+   would replay a fade 3.3s after the flip settles, the instant .verdict-flip
+   is removed and the element's animation-name changes out from under it. */
+.verdict-red,
+.verdict-merged {
+  animation: resolve var(--dur-2) var(--ease-out) 1;
+}
+/* Kuro motion: the hanko-seal stamp — a genuine red/running → green flip (see
+   GatePanel's justFlippedGreen) settles from a faint, enlarged impression to
+   full ink while a 1px accent rule draws beneath it. Fires once, in one place. */
+.verdict-flip {
+  animation: stamp var(--dur-3) var(--ease-out) 1;
+}
+/* Only the animation is scoped to the transient .verdict-flip class; the
+   hairline's geometry lives on .verdict-green::after above so it's still
+   there, fully drawn, once .verdict-flip is gone (equal specificity, later in
+   the cascade, so this wins for the one property it declares). */
+.verdict-flip::after {
+  animation: rule-draw var(--dur-3) var(--ease-out) 1;
+}
+/* Green-but-impacted nudge: a green gate that ran only impacted tests isn't the
+   whole story before ship — click to run the full suite. Amber, quiet, clickable. */
+.verdict-scope-hint {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--amber);
+  background: none;
+  border: var(--border-w) solid color-mix(in srgb, var(--amber) 40%, transparent);
+  border-radius: var(--radius-md);
+  padding: 1px 6px;
+  cursor: pointer;
+}
+.verdict-scope-hint:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+.verdict-scope-hint:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.gate-actions {
+  display: flex;
+  gap: 8px;
+}
+.gate-body {
+  overflow-y: auto;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.gate-summary {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.s-pass {
+  color: var(--accent);
+}
+.s-fail {
+  color: var(--del);
+}
+.s-skip {
+  color: var(--amber);
+}
+/* the green* signal (tamper alarm) — amber like .gate-tamper-star, so a starred
+   verdict reads the same wherever it surfaces (gate panel, dashboard, banner). */
+.s-star {
+  color: var(--amber);
+}
+.gate-error {
+  background: color-mix(in srgb, var(--del) 10%, transparent);
+  border: var(--border-w) solid var(--border);
+  border-left: 2px solid var(--del);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  color: var(--del);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 8px 0 0;
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  max-height: 220px;
+  overflow: auto;
+}
+/* "the gate couldn't run" — a framed, plain-language card (setup/no-tests/crash),
+   amber-led for setup (fix it, it's not your code) vs red for a genuine crash. */
+.gate-errcard {
+  border: var(--border-w) solid var(--border);
+  border-left: 2px solid var(--amber);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.gate-errcard-runner {
+  border-left-color: var(--del);
+  background: color-mix(in srgb, var(--del) 6%, transparent);
+}
+/* Adopted-worktree "environment, not code": a setup-kind error on a foreign worktree.
+   Kept off the red palette (the gate never ran — nothing failed) and given the head
+   room to hold the re-run-setup affordance beside re-run-gate. */
+.gate-errcard-env {
+  border-left-color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 6%, transparent);
+}
+.gate-errcard-env .gate-errcard-head {
+  flex-wrap: wrap;
+}
+.gate-errcard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.gate-errcard-title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--fg);
+}
+.gate-errcard-hint {
+  margin: 6px 0 0;
+  color: var(--dim);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+/* Merge-result note (non-conflict case; a conflict is a Zone 2 blocker instead). */
+.gate-cov {
+  color: var(--amber);
+  font-size: 12.5px;
+  margin-bottom: 10px;
+}
+
+/* ── green* reason chip (the test-tamper alarm) ──────────────────────────────
+   An otherwise-green gate whose suite changed suspiciously. The green* asterisk
+   rides the pane-head verdict; this banner is the reason chip in the merge-note
+   slot — accent-tinted for a warn, red when block mode made it merge-blocking.
+   The green* asterisk is literal text on the .verdict-green-star verdict span. */
+.gate-tamper {
+  border: var(--border-w) solid color-mix(in srgb, var(--accent) 38%, var(--border));
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  margin-bottom: 10px;
+  font-size: 12.5px;
+}
+.gate-tamper-block {
+  border-color: color-mix(in srgb, var(--del) 45%, var(--border));
+  border-left-color: var(--del);
+  background: color-mix(in srgb, var(--del) 6%, transparent);
+}
+.gate-tamper-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.gate-tamper-head .chevron {
+  color: var(--fg-dim);
+  flex: none;
+}
+.gate-tamper-badge {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--accent);
+  flex: none;
+}
+.gate-tamper-block .gate-tamper-badge {
+  color: var(--del);
+}
+.gate-tamper-star {
+  color: var(--amber);
+}
+.gate-tamper-flag {
+  color: var(--del);
+  font-weight: 600;
+  flex: none;
+}
+.gate-tamper-note {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gate-tamper-sub {
+  padding: 0 9px 7px 27px;
+  font-size: 11.5px;
+}
+.gate-tamper-sub code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+/* green* → agent: the tamper alarm's answer to "fix all → agent". Amber-keyed like
+   the finding tags (red once block mode makes the findings merge-blocking), so the
+   action inherits the severity of the banner it sits in. */
+.gate-tamper-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px 8px 27px;
+  font-size: 11.5px;
+}
+.gate-tamper-fix {
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--border));
+  color: var(--amber);
+}
+.gate-tamper-fix:hover {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+.gate-tamper-block .gate-tamper-fix {
+  border-color: color-mix(in srgb, var(--del) 45%, var(--border));
+  color: var(--del);
+}
+.gate-tamper-block .gate-tamper-fix:hover {
+  background: color-mix(in srgb, var(--del) 14%, transparent);
+}
+.gate-tamper-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 9px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gate-tamper-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+}
+.gate-tamper-item .tf-kind {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--amber);
+  flex: none;
+}
+/* A removed test is the strongest signal — flag it red even in warn mode. */
+.gate-tamper-kind-removed .tf-kind {
+  color: var(--del);
+}
+.gate-tamper-item .tf-test {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gate-tamper-item .tf-detail {
+  flex: none;
+}
+.gate-tamper-item .tf-file {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Failure summary header — the red→green loop: every failing test at a glance,
+   plus a one-shot "fix all → agent". Sits above the grid when the gate is red. */
+.gate-failures {
+  border: var(--border-w) solid var(--border);
+  border-left: 2px solid var(--del);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--del) 6%, transparent);
+  padding: 8px;
+  margin-bottom: 12px;
+}
+.gate-failures-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.gate-failure-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.gate-failure {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 3px 6px;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+}
+.gate-failure:hover,
+.gate-failure-sel {
+  background: color-mix(in srgb, var(--del) 12%, transparent);
+}
+.gate-failure-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gate-failure-file {
+  flex-shrink: 0;
+  font-family: var(--mono, monospace);
+  font-size: 0.85em;
+}
+
+.cases {
+  display: flex;
+  flex-direction: column;
+}
+.case {
+  border-top: var(--border-w) solid var(--border);
+}
+.case-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 2px;
+}
+.case-head.clickable {
+  cursor: pointer;
+}
+.case-head.clickable:hover {
+  background: var(--panel-2);
+}
+.case-glyph {
+  width: 12px;
+  flex-shrink: 0;
+}
+.case-pass .case-glyph {
+  color: var(--accent);
+}
+.case-fail .case-glyph {
+  color: var(--del);
+}
+.case-skip .case-glyph {
+  color: var(--amber);
+}
+.case-name {
+  flex: 1;
+  word-break: break-word;
+}
+.case-dur {
+  color: var(--dim);
+  flex-shrink: 0;
+}
+.case-msg {
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  margin: 6px 0;
+  color: var(--del);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 11.5px;
+}
+.s-run {
+  color: var(--dim);
+  animation: breathe var(--dur-breath) var(--ease-in-out) infinite;
+}
+
+/* ── AI review lane — the verify step's advisory "quality" half (Bet 7) ──── */
+/* hairline divider from whatever's above it (usually an .analysis-block —
+   coverage/flaky — or ToolsRow directly if neither ran); horizontal inset
+   comes from .gate-details-body, so only vertical padding remains here. */
+.review-lane {
+  padding: 10px 0 0;
+  border-top: var(--border-w) solid var(--border);
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rv-title {
+  font-size: 12px;
+}
+.rv-running {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.rv-spinner {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent);
+  animation: spin var(--dur-spin) linear infinite;
+  flex: none;
+}
+.rv-empty {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.rv-summary {
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+}
+.rv-clean {
+  font-size: 12px;
+  color: var(--accent);
+  padding: 6px 0;
+}
+.rv-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rv-item {
+  border: var(--border-w) solid var(--border);
+  border-left: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  background: var(--panel);
+}
+.rv-item-high {
+  border-left-color: var(--del);
+  background: color-mix(in srgb, var(--del) 5%, transparent);
+}
+.rv-item-medium {
+  border-left-color: var(--amber);
+}
+.rv-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.rv-sev {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: var(--radius-md);
+}
+.rv-sev-high {
+  color: var(--del);
+  background: color-mix(in srgb, var(--del) 14%, transparent);
+}
+.rv-sev-medium {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+.rv-sev-low,
+.rv-sev-nit {
+  color: var(--dim);
+  background: color-mix(in srgb, var(--dim) 16%, transparent);
+}
+.rv-cat,
+.rv-loc {
+  font-size: 10.5px;
+}
+.rv-loc {
+  margin-left: auto;
+}
+.rv-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.rv-item-detail {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.rv-item-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+/* Kill-the-survivors: the strength tab's "fix all → agent", styled like the tamper/
+   quality action rows (amber-keyed — a survivor is a gap, not a failure). */
+.rv-batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  margin-bottom: 8px;
+}
+.rv-batch-fix {
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--border));
+  color: var(--amber);
+}
+.rv-batch-fix:hover {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+
+/* ---- Autonomy-ladder trust checklist (④ ship) — backlog/autonomy-ladder.md ----
+   A deterministic conjunction of gate facts rendered as met/unmet rows. No score,
+   no percentage: the checklist IS the product, the auto-merge switch its reward. */
+.trust-lane {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.trust-empty {
+  margin: 12px;
+}
+.trust-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.trust-title {
+  font-size: 12px;
+}
+.trust-verdict {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+.trust-verdict-armed,
+.trust-verdict-ready {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.trust-verdict-locked {
+  color: var(--dim);
+  background: color-mix(in srgb, var(--dim) 12%, transparent);
+}
+.trust-hint {
+  font-size: 12px;
+}
+.trust-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.trust-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 9px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+}
+.trust-row-met {
+  border-left: 2px solid var(--accent);
+}
+.trust-row-unmet {
+  border-left: 2px solid color-mix(in srgb, var(--dim) 60%, var(--border));
+}
+.trust-glyph {
+  font-size: 12px;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+.trust-row-met .trust-glyph {
+  color: var(--accent);
+}
+.trust-row-unmet .trust-glyph {
+  color: var(--dim);
+}
+.trust-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.trust-row-label {
+  font-size: 12.5px;
+}
+.trust-row-detail {
+  font-size: 11.5px;
+}
+/* Deep-link to the fix for an unmet row — pushed to the row's right edge. */
+.trust-fix {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: auto;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  white-space: nowrap;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border: var(--border-w) solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.trust-fix:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+}
+
+/* Gate Receipt (usp-critique-plan.md idea 1) — the exportable evidence packet on the
+   ④ ship step. Reuses the trust-lane row system (same visual language, "a checklist of
+   facts") in its own bordered card, open by default (idea 3: evidence on by default,
+   not hidden behind a click) but collapsible via the header. */
+.receipt-lane {
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  flex-shrink: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.receipt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+
+/* Gate degraded (backlog/double-gate.md §0) — a check the project asked for could not run,
+   so this green covers less than it appears to. The one-line "a check didn't run" now
+   lives as an ordinary Zone 2 blocker (`.blk-row`, no special styling — see below);
+   this is only the detail line inside Details naming WHICH checks. */
+.gate-degraded-note {
+  margin-bottom: 8px;
+  font-size: 11.5px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ③ verify redesign — verdict first, one page (notes/verify-redesign-plan.md)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.gate-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gate-timetravel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 0;
+}
+
+/* Zone 1 — the verdict card: one plain headline, one primary action. Tone comes from
+   `.gv-<kind>` (the pure `VerdictKind` from verdict.ts), never a separate color prop, so
+   the badge/stepper/page can never disagree about what a kind means. */
+.gate-verdict-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: var(--border-w) solid var(--border);
+  border-left: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+.gv-headline {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+}
+.gv-past {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.gv-lead {
+  font-weight: 700;
+}
+/* Detail is its own element (not string-concatenated into the lead) precisely so a
+   blocker's own "·"-joined text can't be mistaken for the lead/detail separator. */
+.gv-detail {
+  font-weight: 400;
+}
+.gv-ready .gv-headline,
+.gv-ready_advisory .gv-headline,
+.gv-merged .gv-headline {
+  color: var(--accent);
+}
+.gate-verdict-card.gv-ready,
+.gate-verdict-card.gv-ready_advisory,
+.gate-verdict-card.gv-merged {
+  border-left-color: var(--accent);
+}
+.gv-ready_star .gv-headline {
+  color: var(--amber);
+}
+.gate-verdict-card.gv-ready_star {
+  border-left-color: var(--amber);
+}
+.gv-not_ready .gv-headline {
+  color: var(--del);
+}
+.gate-verdict-card.gv-not_ready {
+  border-left-color: var(--del);
+}
+.gv-cant_tell .gv-headline {
+  color: var(--amber);
+}
+.gate-verdict-card.gv-cant_tell {
+  border-left-color: var(--amber);
+}
+
+/* Zone 2 — blockers: only when non-empty, one sentence + its fix per row. The richer
+   signals (gate error, tamper, quality) render their own banner instead of `.blk-row`
+   (TamperBanner/QualityBanner/GateErrorCard, kept verbatim from the tab-strip version). */
+.gate-blockers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.blk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: var(--border-w) solid var(--border);
+  border-left: 2px solid var(--del);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--del) 6%, transparent);
+  font-size: 12.5px;
+}
+.blk-text {
+  color: var(--fg);
+}
+.blk-fix {
+  flex: none;
+  border-color: color-mix(in srgb, var(--del) 45%, var(--border));
+  color: var(--del);
+}
+.blk-fix:hover {
+  background: color-mix(in srgb, var(--del) 14%, transparent);
+}
+
+/* Zone 3 — things to look at: advisory, collapsible, never a blocker's colour.
+   A real card (border + panel surface), not just a hairline — matches the
+   Zone 4 details card below. */
+.gate-lookat {
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+}
+.gate-lookat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  transition: background var(--dur-1) var(--ease-out);
+}
+/* Neutralize the base button's 3D keycap hover (buttons.css): this header
+   resets to a flat, borderless surface, so the generic translateY-press +
+   keycap box-shadow just made it jump and flash a stray edge with nothing
+   behind it. :not(:disabled) matches the base rule's own specificity so this
+   actually wins the cascade instead of losing silently to it. */
+.gate-lookat-head:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+.gate-lookat-head:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+.gate-lookat-head .chevron {
+  color: var(--fg-dim);
+  flex: none;
+}
+.gate-lookat-count {
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: var(--radius-md);
+  font-size: 9.5px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--amber) 20%, transparent);
+  color: var(--amber);
+}
+.la-empty {
+  padding: 8px 9px 10px;
+  font-size: 12px;
+}
+.gate-lookat-body {
+  padding: 0 0 8px;
+}
+.la-summary {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 0 9px 4px;
+}
+.la-caveat {
+  font-size: 10.5px;
+  padding: 0 9px 4px;
+}
+/* The unified row's kind + text line — reuses `.ctc-kind`/`.ctc-file` typography
+   (see the moved `.ctc-*` block below) in a flex layout, since a look-at row's shape
+   varies by kind more than a code-to-check row's grid could accommodate. */
+.la-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+/* A non-tickable row (every kind but code-to-check) still needs the tick column's
+   width reserved, so the body aligns with tickable rows above/below it. */
+.ctc-tick-spacer {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+}
+
+/* ---- code to check rows, moved here from gate-live.css: the shape (tick + body +
+   kind/file/detail) is now shared by every "look at" kind, not just code-to-check
+   (notes/verify-redesign-plan.md). ----
+   The rail's old standalone `.code-to-check` card is gone; only `.ctc-row` and its
+   children survive, embedded in `.gate-lookat-body` above. */
+.ctc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 9px 0;
+}
+/* A row is two controls, not one: a tick box that records "I looked", and a body that
+   opens the file in ② code. Two targets because the row asks two different things of
+   you, and a row you cannot act on is just a statistic. */
+.ctc-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  border-bottom: 1px solid var(--line);
+  padding: 6px 0;
+}
+.ctc-row:last-child {
+  border-bottom: none;
+}
+.ctc-row:hover {
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+/* The tick. Square, unfilled, deliberately undramatic: it marks that a human looked,
+   and nothing here is allowed to read as a verification badge. */
+.ctc-tick {
+  width: 15px;
+  height: 15px;
+  margin-top: 6px;
+  padding: 0;
+  flex-shrink: 0;
+  border: var(--border-w) solid color-mix(in srgb, var(--fg) 28%, transparent);
+  border-radius: var(--radius-md);
+  background: transparent;
+  box-shadow: none;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--dim);
+  cursor: pointer;
+}
+.ctc-tick:hover {
+  border-color: color-mix(in srgb, var(--fg) 55%, transparent);
+  box-shadow: none;
+}
+.ctc-tick.on {
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--fg) 45%, transparent);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.ctc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  width: 100%;
+  padding: 4px 6px 5px 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ctc-body:hover {
+  background: transparent;
+  box-shadow: none;
+}
+.ctc-body:disabled {
+  cursor: default;
+}
+/* The plain sentence, on the row rather than in a tooltip. "no test ran · rungs.py ·
+   41" is only legible to someone who already knows the codebase; the sentence is what
+   makes the row readable by whoever happens to be looking at the screen. */
+.ctc-detail {
+  font-size: 11px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A ticked row stays legible but steps back — answered, not deleted. */
+.ctc-row-done .ctc-body {
+  opacity: 0.55;
+}
+.ctc-row-done .ctc-file {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--fg) 35%, transparent);
+}
+.ctc-done-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 8px;
+  border: none;
+  border-top: var(--border-w) solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  text-align: left;
+  cursor: pointer;
+}
+.ctc-done-head:hover:not(:disabled) {
+  color: var(--fg);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+/* The kind label is the row's category; it stays literal ("no test ran"), never a
+   verdict. */
+.ctc-kind {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.ctc-row-secret .ctc-kind,
+.ctc-row-suite_weakened .ctc-kind {
+  color: var(--del);
+}
+.ctc-row-new_dep .ctc-kind,
+.ctc-row-migration .ctc-kind,
+.ctc-row-deleted .ctc-kind {
+  color: var(--amber);
+}
+.ctc-file {
+  font-family: var(--mono);
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ctc-n {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.ctc-actions {
+  padding: 4px 10px 10px;
+  flex-shrink: 0;
+}
+.ctc-send {
+  width: 100%;
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   THE DOUBLE GATE — quality findings (backlog/double-gate.md §2)
+   Structurally the twin of .gate-tamper above: same chip → detail → action-row
+   rhythm, because both answer "is this green trustworthy?" and a reader should
+   not have to learn two layouts for that. Amber while every finding is advisory,
+   red once one of them actually blocks the merge — an advisory row must never
+   wear a blocker's colour or the severity dial is decorative.
+   --------------------------------------------------------------------------- */
+.gate-quality {
+  border: var(--border-w) solid color-mix(in srgb, var(--amber) 38%, var(--border));
+  border-left: 2px solid var(--amber);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--amber) 6%, transparent);
+  margin-bottom: 10px;
+  font-size: 12.5px;
+}
+.gate-quality-block {
+  border-color: color-mix(in srgb, var(--del) 45%, var(--border));
+  border-left-color: var(--del);
+  background: color-mix(in srgb, var(--del) 6%, transparent);
+}
+.gate-quality-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.gate-quality-head .chevron {
+  color: var(--fg-dim);
+  flex: none;
+}
+.gate-quality-badge {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--amber);
+  flex: none;
+}
+.gate-quality-block .gate-quality-badge {
+  color: var(--del);
+}
+.gate-quality-flag {
+  color: var(--del);
+  font-weight: 600;
+  flex: none;
+}
+.gate-quality-note {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gate-quality-sub {
+  padding: 0 9px 7px 27px;
+  font-size: 11.5px;
+}
+.gate-quality-sub code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.gate-quality-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px 8px 27px;
+  font-size: 11.5px;
+}
+.gate-quality-fix {
+  border-color: color-mix(in srgb, var(--amber) 45%, var(--border));
+  color: var(--amber);
+}
+.gate-quality-fix:hover {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+}
+.gate-quality-block .gate-quality-fix {
+  border-color: color-mix(in srgb, var(--del) 45%, var(--border));
+  color: var(--del);
+}
+.gate-quality-block .gate-quality-fix:hover {
+  background: color-mix(in srgb, var(--del) 14%, transparent);
+}
+/* Grouped by tool: the reader's first question is what KIND of problem this is. */
+.gate-quality-groups {
+  padding: 0 9px 8px 27px;
+}
+.gate-quality-group + .gate-quality-group {
+  margin-top: 8px;
+}
+.gate-quality-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+.qf-tool {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--fg);
+}
+.gate-quality-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gate-quality-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  min-width: 0;
+}
+.qf-sev {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-dim);
+  flex: none;
+  width: 52px;
+}
+.qf-sev-high .qf-sev {
+  color: var(--del);
+}
+.qf-sev-medium .qf-sev {
+  color: var(--amber);
+}
+.qf-rule {
+  font-family: var(--mono);
+  color: var(--fg);
+  flex: none;
+}
+.qf-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.qf-loc {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-left: auto;
+  flex: none;
+}
+/* A blocking row earns a marker, so scanning the list answers "which of these is
+   actually standing between me and a merge?" without reading every severity. */
+.qf-blocking .qf-rule::after {
+  content: "●";
+  color: var(--del);
+  font-size: 9px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+/* The refuter's must-fix rows (Phase 3 of notes/workflow-roles-plan.md) stack the
+   cited diff line BELOW the row instead of in it — a mono blob doesn't fit the
+   baseline-aligned single-line layout above, so this variant switches the item to a
+   column and gives the cited hunk its own expandable <details>. */
+.qf-item-column {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+.qf-item-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.qf-cited {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.qf-cited summary {
+  cursor: pointer;
+}
+.qf-cited-line {
+  margin: 4px 0 0;
+  padding: 4px 8px;
+  background: var(--bg-inset, var(--bg));
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  white-space: pre;
+}
