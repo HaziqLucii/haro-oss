@@ -1,0 +1,697 @@
+/* code view: file tree + editor */
+/* The code step is a column: a slim toolbar (Monaco⇄nvim toggle) over the active
+   editor surface — either the Monaco split (.code) or the nvim PTY (.code-nvim). */
+.code-wrap {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+.code-topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.code-kind {
+  display: inline-flex;
+  gap: 2px;
+}
+.code {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+/* nvim editor pane: a full-bleed PTY (its own file tree lives inside nvim). The
+   .term child takes the remaining height like it does in the terminal card. */
+.code-nvim {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.code-nvim .term {
+  flex: 1;
+  min-height: 0;
+}
+.ft {
+  /* Width is user-draggable (see .ft-resize) — driven by a CSS var so the
+     mobile `width: 100%` override below still wins over the inline value. */
+  width: var(--ft-w, 220px);
+  flex-shrink: 0;
+  border-right: var(--border-w) solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* The drag handle straddling the tree/editor border — a wide invisible hit-area
+   so it's easy to grab, with a thin faint accent line (::after) that only shows
+   on hover/drag. */
+.ft-resize {
+  position: relative;
+  flex: 0 0 auto;
+  width: 6px;
+  margin: 0 -3px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 2;
+}
+.ft-resize::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--line-strong);
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-out);
+}
+.ft-resize:hover::after,
+.ft-resize.dragging::after {
+  opacity: 0.4;
+}
+.ft-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: var(--border-w) solid var(--border);
+  font-family: var(--sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+.ft-scroll {
+  overflow-y: auto;
+  padding: 4px 0;
+  flex: 1;
+  /* Hide the scrollbar chrome but keep the pane scrollable (Firefox + WebKit). */
+  scrollbar-width: none;
+}
+.ft-scroll::-webkit-scrollbar {
+  display: none;
+}
+.ft-row {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 3px 8px;
+  font-family: var(--sans);
+  /* rows are <button>s (inherit the app's 600 weight) — reset to normal so the
+     tree reads light; Anthropic Sans is legible without the weight. */
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.ft-row:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: var(--panel-2);
+}
+.ft-file {
+  color: var(--dim);
+}
+.ft-sel {
+  background: color-mix(in srgb, var(--fg) 14%, transparent);
+  color: var(--fg);
+}
+/* changed-file highlighting (VS Code style): tint the file name by status + a
+   trailing status dot; parent folders of any change are tinted (amber) too, so a
+   collapsed folder still signals it contains edits. */
+/* changed files are signalled by colour (the -added/-modified/-deleted tints
+   below) + the trailing dot alone — no weight bump, so the tree stays evenly
+   light in Anthropic Sans (readable un-bolded). */
+.ft-changed {
+  font-weight: 400;
+}
+.ft-changed-added {
+  color: var(--add);
+}
+.ft-changed-modified,
+.ft-changed-dir {
+  color: var(--amber);
+}
+.ft-changed-deleted {
+  color: var(--del);
+}
+.ft-file.ft-changed::after {
+  content: "●";
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 8px;
+  line-height: 1;
+}
+
+/* Tree right-click context menu (new file/folder, rename, delete). */
+.ctx-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 150px;
+  padding: 4px;
+  background: var(--panel-2);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+.ctx-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  padding: 5px 9px;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--fg);
+}
+.ctx-item:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+}
+.ctx-item.ctx-danger {
+  color: var(--del);
+}
+.ctx-item.ctx-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--del) 16%, transparent);
+}
+.ctx-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+.ed {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.ed-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: var(--border-w) solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* ---- open editor tabs (multi-file) ---- */
+.ed-tabs {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  border-bottom: var(--border-w) solid var(--border);
+  background: var(--bg);
+}
+/* Firefox only, same reason as base.css's body rule: merely setting
+   scrollbar-width in Chromium switches it to the "standard" scrollbar mode,
+   which ignores the global *::-webkit-scrollbar* rules this would otherwise
+   just be redundant with. */
+@supports not selector(::-webkit-scrollbar) {
+  .ed-tabs {
+    scrollbar-width: thin;
+  }
+}
+.ed-tab {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  max-width: 200px;
+  border-right: var(--border-w) solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 2px solid transparent;
+}
+.ed-tab:hover {
+  background: var(--bg-soft, var(--panel));
+}
+.ed-tab.on {
+  color: var(--text);
+  background: var(--panel);
+  border-top-color: var(--fg);
+}
+.ed-tab-open {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 4px 6px 10px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.ed-tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 0 6px 0 2px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+.ed-tab-close:hover {
+  background: var(--border);
+}
+.ed-tab-x {
+  display: none;
+  font-size: 15px;
+}
+.ed-tab-dot {
+  display: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+/* dirty tab: show the dot; hovering the close button swaps it for the × */
+.ed-tab-close.dirty .ed-tab-dot {
+  display: block;
+}
+.ed-tab:hover .ed-tab-x,
+.ed-tab-close:hover .ed-tab-x {
+  display: block;
+}
+.ed-tab:hover .ed-tab-close.dirty .ed-tab-dot,
+.ed-tab-close:hover .ed-tab-dot {
+  display: none;
+}
+.ed-saveall-n {
+  display: inline-block;
+  min-width: 15px;
+  padding: 0 4px;
+  border-radius: var(--radius-md);
+  background: var(--amber);
+  color: var(--bg);
+  font-size: 10px;
+  text-align: center;
+}
+.ed-path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* clickable breadcrumb: folder segments reveal their folder in the tree, the
+   final (file) segment is inert — the header path is a live tree index */
+.ed-crumbs {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.ed-crumb {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.ed-crumb-sep {
+  color: var(--fg);
+  opacity: 0.35;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+.ed-crumb-dir {
+  background: none;
+  border: none;
+  padding: 1px 3px;
+  border-radius: var(--radius-md);
+  font: inherit;
+  color: var(--fg);
+  opacity: 0.65;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ed-crumb-dir:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+}
+.ed-crumb-file {
+  padding: 1px 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the mobile-only "‹ files" back button (master-detail); desktop shows the
+   tree and editor side-by-side so it isn't needed there */
+.ed-back {
+  display: none;
+}
+.ed-dirty {
+  color: var(--amber);
+  font-size: 11px;
+}
+.ed-note {
+  font-size: 11px;
+}
+.ed-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+/* inline preview of non-text files (images / PDFs) in place of the editor */
+.ed-preview {
+  height: 100%;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background:
+    repeating-conic-gradient(color-mix(in srgb, var(--fg) 5%, transparent) 0% 25%, transparent 0% 50%)
+      50% / 20px 20px; /* subtle checkerboard so transparent images read clearly */
+}
+.ed-preview-img img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+.ed-preview-pdf {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--panel);
+}
+/* guard panel: file the editor won't open (too large / binary) → download escape hatch */
+.ed-guard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+.ed-guard-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.ed-guard-msg {
+  max-width: 42ch;
+  line-height: 1.5;
+}
+.ed-guard-dl {
+  margin-top: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  background: var(--action);
+  color: var(--action-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ed-guard-dl:hover {
+  filter: brightness(1.05);
+}
+/* rendered markdown preview (toggle in the editor head for .md files) */
+.ed-mdtoggle {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+/* per-file diff review controls (editor head, shown while the diff lens is on):
+   the commit-by-commit selector + the split/unified layout toggle. */
+.ed-diff-commit {
+  flex: 0 1 auto;
+  max-width: 260px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg);
+  background: var(--bg);
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.ed-diff-layout {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.ed-md-preview {
+  height: 100%;
+  overflow: auto;
+  padding: 22px 26px;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+/* Fill the available width (matters in fullscreen — the preview used to stay
+   locked to a narrow measure and leave the right half empty). */
+.ed-md-preview .md-file {
+  max-width: none;
+}
+
+/* ---- rendered .md file view (react-markdown + GFM): full document fidelity,
+   styled against the semantic tags the renderer emits (headings, lists, task
+   lists, rules, blockquotes, tables, links) ---- */
+.md-file {
+  color: var(--fg);
+}
+/* preview images (rewritten to the worktree raw-file endpoint) must never
+   overflow the pane; keep the aspect ratio. */
+.md-file img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+.md-file > *:first-child {
+  margin-top: 0;
+}
+.md-file > *:last-child {
+  margin-bottom: 0;
+}
+.md-file p {
+  margin: 0 0 12px;
+  word-break: break-word;
+}
+.md-file h1,
+.md-file h2,
+.md-file h3,
+.md-file h4,
+.md-file h5,
+.md-file h6 {
+  font-family: var(--display, var(--sans));
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--fg);
+  margin: 22px 0 10px;
+}
+.md-file h1 {
+  font-size: 1.7em;
+  padding-bottom: 6px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.md-file h2 {
+  font-size: 1.4em;
+  padding-bottom: 5px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.md-file h3 {
+  font-size: 1.2em;
+}
+.md-file h4 {
+  font-size: 1.05em;
+}
+.md-file h5 {
+  font-size: 0.95em;
+}
+.md-file h6 {
+  font-size: 0.9em;
+  color: var(--dim);
+}
+.md-file ul,
+.md-file ol {
+  margin: 0 0 12px;
+  padding-left: 26px;
+}
+.md-file li {
+  margin: 3px 0;
+}
+.md-file li > ul,
+.md-file li > ol {
+  margin: 3px 0;
+}
+.md-file ul {
+  list-style: disc;
+}
+.md-file ol {
+  list-style: decimal;
+}
+/* GFM task lists: drop the bullet, align the (disabled) checkbox with the text */
+.md-file li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -20px;
+}
+.md-file input[type="checkbox"] {
+  margin: 0 8px 0 0;
+  vertical-align: middle;
+  accent-color: var(--gh-push);
+}
+.md-file hr {
+  border: none;
+  border-top: var(--border-w) solid var(--border);
+  margin: 22px 0;
+}
+.md-file blockquote {
+  margin: 0 0 12px;
+  padding: 2px 14px;
+  border-left: 3px solid var(--line-strong);
+  color: var(--dim);
+}
+.md-file blockquote > *:last-child {
+  margin-bottom: 0;
+}
+.md-file a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.md-file a:hover {
+  text-decoration: none;
+}
+.md-file img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+.md-file del {
+  opacity: 0.7;
+}
+.md-file table {
+  border-collapse: collapse;
+  margin: 0 0 14px;
+  width: max-content;
+  max-width: 100%;
+  font-size: 0.92em;
+  display: block;
+  overflow-x: auto;
+}
+.md-file th,
+.md-file td {
+  border: var(--border-w) solid var(--border);
+  padding: 6px 11px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+.md-file th {
+  font-weight: 700;
+  background: var(--panel-2);
+}
+.md-file tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--panel-2) 45%, transparent);
+}
+/* Monaco is haro's one editor engine. It has no native placeholder, so we overlay
+   one while the buffer is empty; `.mon-loading` is the lazy-load fallback. Shared
+   by the full code editor and the Runbook / Settings fields. */
+.mon-ph {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dim);
+  opacity: 0.7;
+  white-space: pre-wrap;
+  pointer-events: none;
+}
+.mon-loading {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+/* preview view */
+.ph-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* file-tree / search mode toggle */
+.ft-modes {
+  display: flex;
+  gap: 4px;
+}
+.seg2 {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-family: var(--sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+.seg2:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  color: var(--fg);
+}
+.seg2.on {
+  color: var(--fg);
+}
+.ft-search {
+  padding: 8px 10px;
+  border-bottom: var(--border-w) solid var(--border);
+}
+.ft-search input {
+  width: 100%;
+  font-size: 12px;
+  padding: 6px 8px;
+}
+.sr {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px;
+}
+.sr-loc {
+  font-size: 10.5px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sr-text {
+  font-size: 11.5px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+}
+

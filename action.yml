@@ -1,0 +1,58 @@
+name: 'haro gate'
+description: "Run haro's merge-blocking test gate and post the Gate Receipt to the job summary"
+inputs:
+  path:
+    description: 'Directory to gate'
+    required: false
+    default: '.'
+  base:
+    description: 'Base ref to diff/test against (default: the repo''s own detected default branch)'
+    required: false
+    default: ''
+  python-version:
+    description: 'Python version to run haro-gate under'
+    required: false
+    default: '3.11'
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install haro-gate
+      shell: bash
+      run: pip install --disable-pip-version-check haro-gate
+
+    # `set +e` around the gate call ONLY: the default `bash -e` for `run:` steps
+    # would otherwise abort right here on a red gate, before the receipt below
+    # ever reaches the job summary — exactly the run a reviewer most needs to see.
+    #
+    # Inputs go through `env:`, never interpolated straight into the script body:
+    # `${{ inputs.path }}` etc. are substituted as literal text BEFORE bash parses
+    # anything, so a path containing a space splits into two argv entries, and a
+    # crafted input can inject arbitrary shell — both reproduced during review.
+    # `"$INPUT_PATH"` is a real, quoted shell variable, so it isn't re-parsed.
+    - name: Run the gate
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_BASE: ${{ inputs.base }}
+      run: |
+        args=("$INPUT_PATH")
+        if [ -n "$INPUT_BASE" ]; then
+          args+=(--base "$INPUT_BASE")
+        fi
+        set +e
+        haro gate "${args[@]}" > receipt.md 2>&1
+        rc=$?
+        set -e
+        {
+          echo "## haro gate"
+          cat receipt.md
+        } >> "$GITHUB_STEP_SUMMARY"
+        if [ "$rc" -ne 0 ]; then
+          cat receipt.md
+          exit "$rc"
+        fi
