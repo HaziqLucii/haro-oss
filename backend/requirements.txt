@@ -1,0 +1,13 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic>=2.9
+aiosqlite>=0.20
+watchfiles>=0.21
+# ed25519 signing for `haro gate --attest`/`haro verify` (usp-critique-round3.md Move A).
+cryptography>=42
+pytest>=8.3
+# test_packaging.py builds a real wheel via setuptools.build_meta to verify the
+# CLI's [project.scripts] packaging (usp-critique-plan.md rounds 10-13) — Python
+# ≥3.12 no longer seeds setuptools into a fresh venv, so it needs declaring here
+# rather than assuming it's already present.
+setuptools>=68

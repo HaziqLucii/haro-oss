@@ -1,0 +1,63 @@
+name: release
+
+# Builds the Linux download (AppImage + tarball, backend bundled) and attaches both to the
+# GitHub Release for the tag. Meant to run on the public mirror (HaziqLucii/haro-oss), where
+# Actions minutes are free; scripts/publish-oss.sh copies .github across with the rest.
+#
+# ubuntu-22.04 on purpose: the Flutter engine and the frozen backend link against the build
+# machine's glibc, so building on an older one keeps the download working on more distros.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  linux:
+    name: linux · appimage + tarball
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev \
+            liblzma-dev libstdc++-12-dev libfuse2 curl
+
+      - name: Build
+        run: ./scripts/build-linux.sh
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: haro-linux
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Attach to the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.AppImage
+            dist/*.tar.gz
+          fail_on_unmatched_files: true
