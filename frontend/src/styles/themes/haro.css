@@ -1,0 +1,36 @@
+/* haro — light mode of the Haro family (the platform look). The family's DARK
+   ground is the token contract in styles/base.css (`:root`, the app default); this
+   file layers only the LIGHT palette on top, scoped to the Haro family so it never
+   bleeds into another one. Activated when the appbar sun/moon sets data-mode="light"
+   while the Haro family (data-theme="haro") is active. Shape/type/font tokens are
+   inherited from base.css unchanged — a mode swap is a palette swap, not a reskin. */
+:root[data-theme="haro"][data-mode="light"] {
+  color-scheme: light;
+  --bg: #f4f1e6;
+  --panel: #fbfaf4;
+  --panel-2: #ede8d8;
+  --border: #e2dbc8;
+  --fg: #17160f;
+  --dim: #5b584c;
+  --accent: #12a150;
+  --accent-ink: #ffffff;
+  --add: #12a150;
+  --del: #e5484d;
+  --coral: #ff5a36;
+  --blue: #2a4be0;
+  --marker: #ffd84d;
+  --amber: #b7791f;
+  --merged: #8250df; /* GitHub-style "merged" purple (light) */
+  --merged-ink: #ffffff;
+  --gh-pull: #0969da; /* GitHub sync/fetch blue — pull (light) */
+  --gh-push: #1a7f37; /* GitHub success green — push (light) */
+  /* --warn / --danger are NOT theme-invariant on a light ground: base.css tunes
+     them for the dark ground, where the inherited values (#e6a53d / #e5534b) read
+     as text at only ~2:1 / ~3.5:1 on this cream panel. Deepen them for AA legibility
+     (they surface as text — the hot context-meter %, inline error copy), same as
+     --amber/--marker already get a light override above. */
+  --warn: #9a5b00; /* was inherited #e6a53d (2.05:1) → 5.19:1 on --panel */
+  --danger: #c62828; /* was inherited #e5534b (3.54:1) → 5.38:1 on --panel */
+  --shadow: 0 3px 12px rgba(23, 22, 15, 0.08);
+  --edge: rgba(23, 22, 15, 0.22);
+}

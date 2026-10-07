@@ -1,0 +1,546 @@
+/* Runbook — the in-app scripts editor (in the preview step) */
+.runbook {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: var(--border-w) solid var(--border);
+  background: color-mix(in srgb, var(--panel-2) 40%, transparent);
+}
+.rb-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.rb-k {
+  font-family: var(--sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  width: 44px;
+  flex-shrink: 0;
+  padding-top: 7px;
+}
+/* Monaco as a chromeless command field (transparent theme → --panel shows through) */
+.rb-editor {
+  flex: 1;
+  min-width: 0;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--panel);
+}
+.rb-editor:focus-within {
+  border-color: var(--line-strong);
+}
+.rb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.rb-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.rb-note {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  margin-right: auto;
+}
+.rb-hint {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.rb-hint code {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  background: var(--panel-2);
+  padding: 1px 4px;
+  border-radius: var(--radius-md);
+}
+/* Runbook: custom-instructions section */
+.rb-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.rb-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rb-section-title {
+  font-family: var(--sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+.rb-scope {
+  display: flex;
+  gap: 6px;
+}
+/* generic pill toggle (instructions scope + notification sound picker) */
+.chip {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-md);
+  border: var(--border-w) solid var(--border);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+}
+.chip:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+.chip-on {
+  background: color-mix(in srgb, var(--fg) 16%, transparent);
+  border-color: var(--fg);
+  color: var(--fg);
+}
+/* Agent-done sound settings popover (appbar) */
+.notif-anchor {
+  position: relative;
+  display: inline-flex;
+}
+.theme-toggle.notif-off {
+  opacity: 0.55;
+}
+.notif-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  box-shadow: 0 12px 32px rgb(var(--shadow-rgb) / 0.35);
+}
+.notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.notif-title {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+}
+.notif-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notif-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.notif-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.notif-k {
+  font-family: var(--sans);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  width: 52px;
+  flex-shrink: 0;
+}
+.notif-custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.notif-fname {
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notif-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--ink-muted);
+}
+.notif-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.notif-note {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-right: auto;
+}
+.notif-desktop {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: var(--border-w) solid var(--border);
+}
+.main-tabs {
+  display: flex;
+  gap: 4px;
+}
+.main-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.main-body .pane-tab {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.main-body .pane-tab > .stream {
+  flex: 1;
+  min-height: 0;
+}
+/* embedded terminal */
+.term {
+  /* flex child of .term-card (below .card-head) — must take the REMAINING space,
+     not height:100% of the whole card, or xterm fits too many rows and the bottom
+     row overflows below the card, unreachable even scrolled to the end. */
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 6px 6px 10px;
+  background: var(--panel);
+}
+.term .xterm {
+  height: 100%;
+}
+.term .xterm-viewport {
+  overflow-y: auto;
+  /* xterm.css hardcodes the viewport background to #000. FitAddon only fits a
+     whole number of rows, so a sub-row remainder is left below the last row;
+     without this override that strip shows the #000 as a black bar. Paint it
+     the panel color so the remainder blends into the terminal. */
+  background-color: var(--panel) !important;
+}
+.area-side {
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+/* Side column = app strip · look-at chip · terminal (notes/verify-redesign-plan.md moved
+   the "things to look at" worklist into ③ verify itself; the rail keeps only a one-line
+   deep-link back to it). Both the strip and the chip are content-height status lines, so
+   the rail's whole vertical budget goes to the one surface that actually streams: the
+   shell. */
+.area-side > .app-strip {
+  flex: 0 0 auto;
+}
+.area-side > .look-at-chip {
+  flex: 0 0 auto;
+  margin: 0 0 2px;
+}
+.term-card {
+  flex: 1;
+  min-height: 0;
+}
+/* Agent-manager card: hidden when nothing's been delegated yet, so it only ever
+   takes rail space (which the terminal otherwise owns fully) once it has rows
+   to show. Capped height + internal scroll so a long-running session with many
+   delegations can't push the terminal off-screen. */
+.agent-mgr-card {
+  flex: 0 0 auto;
+  max-height: 140px;
+}
+.agent-mgr-rows {
+  overflow-y: auto;
+  padding: 4px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.agent-mgr-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.agent-mgr-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dim);
+  align-self: center;
+}
+.agent-mgr-dot-running {
+  background: var(--gh-push);
+  animation: breathe var(--dur-breath) var(--ease-in-out) infinite;
+}
+.agent-mgr-dot-done {
+  background: var(--gh-push);
+  opacity: 0.45;
+}
+.agent-mgr-dot-error,
+.agent-mgr-dot-stalled {
+  background: var(--danger);
+  opacity: 0.7;
+}
+.agent-mgr-name {
+  flex-shrink: 0;
+  color: var(--fg);
+  font-weight: 600;
+}
+.agent-mgr-desc {
+  flex: 1;
+  min-width: 0;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-mgr-status {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--dim);
+}
+.agent-mgr-status-running {
+  color: var(--fg);
+}
+.agent-mgr-status-error,
+.agent-mgr-status-stalled {
+  color: var(--danger);
+}
+/* terminal card is tabbed: shell (PTY) · dev log */
+.term-head {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+/* pane-tab strip: dev log · shell 1 · shell 2 … · +. Scrolls horizontally when
+   the shells outgrow the row so the right-hand action cluster never gets pushed
+   off; the actions themselves don't shrink. */
+.term-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.term-tabs::-webkit-scrollbar {
+  display: none;
+}
+/* a shell tab = its label button + a plain close × that hugs the label. */
+.term-shell-tab {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.term-shell-btn {
+  padding-right: 3px;
+}
+/* minimalist close × — a bare dim glyph, no box; just brightens on hover. */
+.term-shell-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: none;
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+  line-height: 1;
+}
+.term-shell-x:hover {
+  color: var(--fg);
+}
+/* "+" new-shell keycap — square, icon-only, sits after the last shell tab. */
+.term-add {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+}
+/* right cluster of the terminal head — claude menu + focus keycap (shell only) +
+   branch keycap + fullscreen toggle. Never shrinks so shell tabs scroll instead. */
+.term-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+/* compact focus keycap (replaces the verbose "⌃`` to focus" phrase) — the tooltip
+   carries the meaning, mirroring the composer's focus affordance. */
+.term-focus-key {
+  white-space: nowrap;
+}
+/* "claude" menu — drops a claude command on the shell prompt (reuses .ctx-menu
+   /.ctx-item from the editor's tree menu, re-anchored below the trigger). */
+.claude-menu {
+  position: relative;
+  display: inline-flex;
+}
+.claude-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.claude-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 200px;
+}
+.claude-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.claude-item-label {
+  font-family: var(--mono);
+}
+.claude-item-hint {
+  margin-left: auto;
+  font-size: 11px;
+}
+/* Run menu — several named run commands (web/worker/test), each started/stopped
+   on its own port. Reuses .ctx-menu/.ctx-item, re-anchored below the trigger and
+   right-aligned so it never overflows the preview card's right edge. */
+.run-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+}
+.run-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 210px;
+}
+.run-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.run-menu-row .ctx-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.run-menu-name {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+/* Live dot — a run is up (a "clean/running" status, not the haro gate itself). */
+.run-menu-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gh-push);
+  flex: none;
+}
+/* branch ref (the sole place the branch shows in a workspace). Long names used
+   to wrap the shell/dev-log header onto two lines, so the name no longer renders
+   inline — it's a compact git-branch keycap (BranchBadge) reusing the appbar
+   .theme-toggle keycap design; click it for a popover with the full name. */
+.branch-key svg {
+  opacity: 0.85;
+}
+/* Full branch name, portalled to <body> and fixed-positioned so the card never
+   clips it (see BranchBadge). git label · mono name · copy keycap. */
+.branch-pop {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 16px);
+  padding: 7px 10px;
+  border: var(--border-w) solid var(--border);
+  /* Hangs flush from the card-head's bottom border — drop the top edge + square
+     the top corners so the popover reads as continuous with that line. */
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--panel);
+  box-shadow: 0 10px 30px rgb(var(--shadow-rgb) / 0.4);
+}
+.branch-pop-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  flex: none;
+}
+.branch-pop-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg);
+  white-space: nowrap;
+  user-select: all;
+}
+.branch-pop-copy {
+  flex: none;
+  padding: 3px 6px;
+}
+.term-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dev-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 10px;
+  background: var(--panel);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.dev-log-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--fg);
+}
+.dev-log-empty {
+  margin: auto;
+  text-align: center;
+}
+.link-btn {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: var(--fg);
+  font-size: 12px;
+  cursor: pointer;
+}
+.link-btn:hover {
+  text-decoration: underline;
+}
+

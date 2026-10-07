@@ -1,0 +1,108 @@
+/* Kuro motion system — tokens + primitives (notes/kuro-motion-plan.md).
+   Four rules: resolve don't slide, hairlines draw themselves, two curves/three
+   durations, green is one event not a glow. Every other partial should retoken
+   onto these vars rather than hardcode a duration/easing — see the plan's
+   "sweep" table for the mechanical retoken pass. */
+
+:root {
+  --dur-1: 120ms; /* feedback: hover, press, toggle */
+  --dur-2: 200ms; /* state: reveal, swap, expand (capped — View Transitions freeze input) */
+  --dur-3: 600ms; /* event: gate stamp, boot */
+  --dur-breath: 1.4s; /* idle loops */
+  --dur-spin: 800ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* arrivals: decisive, no overshoot */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* loops */
+}
+
+/* ---- primitives — the only keyframes any partial may use outside theme files ---- */
+
+@keyframes resolve {
+  from {
+    opacity: 0.1;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rule-draw {
+  from {
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  to {
+    transform-origin: left;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes stamp {
+  from {
+    opacity: 0.2;
+    transform: scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cell-resolve {
+  from {
+    opacity: 0.35;
+    transform: scale(1.18);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---- View Transition timing ---- */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--dur-2);
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-group(wordmark) {
+  animation-duration: var(--dur-3);
+  animation-timing-function: var(--ease-out);
+}
+
+/* ---- reduced motion — the single global rule (replaces the 15 scattered blocks) ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  ::view-transition-group(*) {
+    animation-duration: 0.01ms;
+  }
+}
