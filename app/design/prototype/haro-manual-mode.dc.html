@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Regular.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Bold.woff2) format('woff2');font-weight:700}
+@font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk-Variable.woff2) format('woff2');font-weight:300 700}
+@font-face{font-family:'Fraunces';src:url(fonts/Fraunces-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:'Kanji';src:url(fonts/NotoSerifJP-kanji.woff2) format('woff2')}
+html,body{margin:0;background:#0b0a09;color:#d8d0c5;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#d8d0c5}a:hover{color:#fff}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+@keyframes haroFade{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:32px max(20px,3vw) 48px;display:flex;flex-direction:column;gap:20px;max-width:1520px;margin:0 auto">
+
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px">
+    <div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Live demo · manual mode</div>
+      <div style="display:flex;align-items:baseline;gap:14px;margin-top:10px"><span style="font-family:'Kanji',serif;font-size:34px">手</span><span style="font-size:30px;font-weight:500;letter-spacing:-.02em">Write it yourself. The gate still holds.</span></div>
+      <div style="font-size:15px;color:rgba(216,208,197,.66);margin-top:8px;max-width:680px;line-height:1.5">With manual mode on, the agent is gone. haro only points you to sources, gives hints if you ask, and rewards you for finishing on your own.</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <sc-for list="{{ ucTabs }}" as="u" hint-placeholder-count="3">
+        <button onClick="{{ u.pick }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px 14px;min-width:190px;border-radius:2px;border:1px solid {{ u.border }};background:{{ u.bg }};text-align:left">
+          <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.42)">USE CASE {{ u.n }}</span>
+          <span style="font-size:14px;color:{{ u.color }}">{{ u.title }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding:14px 18px;border:1px solid rgba(216,208,197,.16);border-radius:2px;background:#131210">
+    <div style="min-width:0">
+      <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ stepNo }} / {{ stepCount }}</span><span style="font-size:17px;font-weight:500">{{ cap }}</span></div>
+      <div style="font-size:14px;color:rgba(216,208,197,.66);margin-top:4px;line-height:1.45">{{ sub }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;gap:4px">
+        <sc-for list="{{ dots }}" as="d" hint-placeholder-count="5"><button onClick="{{ d.go }}" style="width:18px;height:4px;background:{{ d.c }}"></button></sc-for>
+      </div>
+      <button onClick="{{ prev }}" style="height:32px;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:13px">◂</button>
+      <button onClick="{{ togglePlay }}" style="height:32px;padding:0 12px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;min-width:74px">{{ playLabel }}</button>
+      <button onClick="{{ next }}" style="height:32px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500">Next ▸</button>
+    </div>
+  </div>
+
+  <div data-screen-label="Manual mode app" style="height:760px;display:grid;grid-template-rows:46px 64px minmax(0,1fr) 56px;border:1px solid rgba(216,208,197,.2);border-radius:2px;overflow:hidden;background:#0b0a09;position:relative">
+
+    <div style="display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid rgba(216,208,197,.12)">
+      <span style="font-family:'Fraunces',serif;font-size:20px;font-weight:500">haro.</span>
+      <span style="width:1px;height:16px;background:rgba(216,208,197,.14)"></span>
+      <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(216,208,197,.42);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ uc.project }} / <span style="color:#d8d0c5">{{ uc.ws }}</span></span>
+      <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);white-space:nowrap">{{ uc.branch }}</span>
+      <span style="flex:1"></span>
+      <button onClick="{{ toggleManual }}" style="display:flex;align-items:center;gap:10px;height:30px;padding:0 10px 0 12px;border:1px solid {{ manBorder }};border-radius:2px">
+        <span style="font-family:'Kanji',serif;font-size:15px">手</span>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em">MANUAL</span>
+        <span style="width:30px;height:16px;border-radius:2px;border:1px solid {{ manBorder }};background:{{ manTrack }};position:relative"><span style="position:absolute;top:2px;left:{{ manKnob }};width:10px;height:10px;background:{{ manKnobBg }}"></span></span>
+      </button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;border-bottom:1px solid rgba(216,208,197,.12)">
+      <sc-for list="{{ bar }}" as="b" hint-placeholder-count="3">
+        <div style="padding:11px 18px;border-right:1px solid rgba(216,208,197,.08);border-top:2px solid {{ b.top }};background:{{ b.bg }}">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ b.n }}</span><span style="width:6px;height:6px;background:{{ b.dot }}"></span><span style="font-size:15px;font-weight:500;color:{{ b.nc }}">{{ b.name }}</span></div>
+          <div style="font-family:'Space Mono',monospace;font-size:10.5px;margin-top:4px;color:{{ b.sc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.sub }}</div>
+        </div>
+      </sc-for>
+      <div style="display:flex;align-items:center;padding:0 16px"><span style="height:34px;display:flex;align-items:center;padding:0 16px;border-radius:2px;background:{{ act.bg }};color:{{ act.c }};border:1px solid {{ act.b }};font-size:13.5px;font-weight:500;white-space:nowrap">{{ act.l }}</span></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,340px);min-height:0">
+      <div style="display:grid;grid-template-rows:38px minmax(0,1fr) auto;min-height:0;border-right:1px solid rgba(216,208,197,.12)">
+        <div style="display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid rgba(216,208,197,.08);font-family:'Space Mono',monospace;font-size:12px">
+          <span style="flex:none;white-space:nowrap">{{ file }}</span><span style="flex:none;white-space:nowrap;color:rgba(216,208,197,.42)">{{ mineCount }} by you</span><span style="flex:1"></span>
+          <span style="font-size:10.5px;color:rgba(216,208,197,.42);display:flex;gap:14px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"><span style="color:{{ ranColor }}">● you wrote</span><span>ln {{ curLine }}</span></span>
+        </div>
+        <div style="overflow:auto;padding:12px 0;font-family:'Space Mono',monospace;font-size:13px;line-height:23px">
+          <sc-for list="{{ lines }}" as="l" hint-placeholder-count="10">
+            <div style="display:grid;grid-template-columns:22px 40px minmax(0,1fr);background:{{ l.bg }}">
+              <span style="text-align:center;font-size:8px;color:{{ l.mc }}">{{ l.mark }}</span>
+              <span style="text-align:right;padding-right:14px;color:rgba(216,208,197,.28)">{{ l.n }}</span>
+              <span style="white-space:pre"><sc-for list="{{ l.toks }}" as="t" hint-placeholder-count="3"><span style="color:{{ t.c }};font-weight:{{ t.w }}">{{ t.t }}</span></sc-for></span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-top:1px solid rgba(216,208,197,.12);background:#131210;min-height:58px">
+          <span style="width:10px;height:10px;flex:none;background:{{ g.color }}"></span>
+          <span style="font-family:'Space Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.2em;color:{{ g.color }};flex:none">{{ g.key }}</span>
+          <div style="min-width:0"><div style="font-size:14px">{{ g.t }}</div><div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.d }}</div></div>
+          <sc-if value="{{ g.isRun }}" hint-placeholder-val="{{ false }}"><span style="flex:1;height:2px;background:rgba(216,208,197,.12);min-width:60px"><span style="display:block;height:2px;width:56%;background:#d8d0c5"></span></span></sc-if>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-rows:40px minmax(0,1fr) auto;min-height:0">
+        <div style="display:flex;border-bottom:1px solid rgba(216,208,197,.12)">
+          <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="3">
+            <button onClick="{{ tb.pick }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;color:{{ tb.c }};border-bottom:2px solid {{ tb.u }}"><span style="font-family:'Kanji',serif;font-size:13px;color:rgba(216,208,197,.42)">{{ tb.k }}</span>{{ tb.l }}</button>
+          </sc-for>
+        </div>
+        <div style="overflow:auto;padding:16px 18px">
+          <sc-if value="{{ pSearch }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:10px;height:38px;padding:0 12px;border:1px solid rgba(216,208,197,.2);border-radius:2px;background:#131210;font-family:'Space Mono',monospace;font-size:12.5px">
+              <span style="color:rgba(216,208,197,.42)">?</span><span style="flex:1;color:{{ qColor }}">{{ qText }}</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+              <sc-for list="{{ scopes }}" as="sp" hint-placeholder-count="4"><span style="height:22px;display:flex;align-items:center;padding:0 8px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.66)">{{ sp.l }}</span></sc-for>
+            </div>
+            <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:28px;font-size:14px;color:rgba(216,208,197,.42);line-height:1.55">Ask where to look. haro searches your repo, offline docs, man pages and the web, and answers with sources only.</div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;margin-top:14px">
+              <sc-for list="{{ results }}" as="r" hint-placeholder-count="3">
+                <div style="padding:13px 0;border-bottom:1px solid rgba(216,208,197,.08);background:{{ r.bg }}">
+                  <div style="display:flex;justify-content:space-between;gap:10px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(216,208,197,.42)"><span>{{ r.src }}</span><span>{{ r.how }}</span></div>
+                  <div style="font-size:14.5px;margin-top:5px">{{ r.t }}</div>
+                  <div style="font-size:13px;color:rgba(216,208,197,.66);margin-top:3px;line-height:1.45">{{ r.why }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ pDoc }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ doc.src }}</div>
+            <div style="font-size:24px;font-weight:500;letter-spacing:-.01em;margin-top:8px;font-family:'Space Mono',monospace">{{ doc.title }}</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">
+              <sc-for list="{{ doc.body }}" as="p" hint-placeholder-count="3"><div style="font-size:14.5px;line-height:1.6;color:rgba(216,208,197,.86)">{{ p.t }}</div></sc-for>
+            </div>
+            <pre style="margin:16px 0 0;padding:12px 14px;background:#131210;border:1px solid rgba(216,208,197,.1);border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.7;color:rgba(216,208,197,.86);white-space:pre-wrap">{{ doc.ex }}</pre>
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42);margin-top:14px">offline docset · no network · no AI summary</div>
+          </sc-if>
+          <sc-if value="{{ pHint }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:14px;color:rgba(216,208,197,.66);line-height:1.5">Stuck? Climb one rung at a time. Each rung costs a little XP. haro never offers code.</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+              <sc-for list="{{ ladder }}" as="h" hint-placeholder-count="3">
+                <div style="border:1px solid {{ h.border }};border-radius:2px;padding:14px">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase">{{ h.n }} · {{ h.lvl }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ h.cost }} XP</span></div>
+                  <sc-if value="{{ h.open }}" hint-placeholder-val="{{ false }}"><div style="font-size:14.5px;line-height:1.55;margin-top:10px">{{ h.text }}</div></sc-if>
+                  <sc-if value="{{ h.locked }}" hint-placeholder-val="{{ true }}"><button onClick="{{ h.reveal }}" style="margin-top:10px;height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:12.5px;color:{{ h.bc }}">{{ h.bl }}</button></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        <div style="padding:10px 18px;border-top:1px solid rgba(216,208,197,.08);font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">haro AI · pointers only · 0 lines of code written</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:22px;align-items:center;padding:0 16px;border-top:1px solid rgba(216,208,197,.12);background:#131210">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-family:'Kanji',serif;font-size:16px">{{ rank.k }}</span>
+        <div><div style="font-size:13px">{{ rank.name }}</div><div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">level {{ rank.lvl }}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        <span style="flex:1;height:3px;background:rgba(216,208,197,.12);min-width:80px"><span style="display:block;height:3px;background:#d8d0c5;width:{{ xpPct }}"></span></span>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;white-space:nowrap">{{ xpText }}</span>
+        <sc-if value="{{ evShow }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Space Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid rgba(216,208,197,.3);border-radius:2px;white-space:nowrap">{{ evText }}</span></sc-if>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;white-space:nowrap"><span style="color:rgba(216,208,197,.42)">session </span>+{{ sessXp }} <span style="color:rgba(216,208,197,.42)">× </span>{{ multText }}</div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">STREAK {{ streakN }}d</span><div style="display:flex;gap:2px"><sc-for list="{{ streak }}" as="s" hint-placeholder-count="14"><span style="width:7px;height:14px;background:{{ s.c }}"></span></sc-for></div></div>
+      <span style="font-family:'Space Mono',monospace;font-size:11px;white-space:nowrap">0 AI lines</span>
+    </div>
+
+    <sc-if value="{{ finale }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:110px 0 56px 0;background:rgba(11,10,9,.82);display:flex;align-items:center;justify-content:center;animation:haroFade .4s ease">
+        <div style="width:min(560px,92%);background:#131210;border:1px solid rgba(65,209,131,.45);border-radius:2px;padding:26px 28px;position:relative;overflow:hidden">
+          <div style="position:absolute;right:-6px;top:-30px;font-family:'Kanji',serif;font-size:190px;color:rgba(216,208,197,.05);line-height:1">手</div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:10px;height:10px;background:#41d183"></span><span style="font-family:'Space Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.2em;color:#41d183">GREEN</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ fin.tests }}</span></div>
+          <div style="font-size:32px;font-weight:500;letter-spacing:-.02em;margin-top:12px;position:relative">Written by you.</div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:18px;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12);position:relative">
+            <sc-for list="{{ fin.stats }}" as="st" hint-placeholder-count="4"><div style="padding:12px 0 12px 12px;border-right:1px solid rgba(216,208,197,.08)"><div style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ st.l }}</div><div style="font-size:19px;font-weight:500;margin-top:4px">{{ st.v }}</div></div></sc-for>
+          </div>
+          <div style="margin-top:14px;display:flex;flex-direction:column;position:relative">
+            <sc-for list="{{ fin.xp }}" as="x" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;padding:6px 0;font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.86)"><span>{{ x.l }}</span><span>{{ x.v }}</span></div></sc-for>
+            <div style="display:flex;justify-content:space-between;padding:10px 0 0;margin-top:4px;border-top:1px solid rgba(216,208,197,.12);font-family:'Space Mono',monospace;font-size:13px;font-weight:700"><span>Total</span><span>{{ fin.total }}</span></div>
+          </div>
+          <sc-if value="{{ fin.hasBadge }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:14px;align-items:center;margin-top:16px;padding:12px 14px;border:1px solid rgba(216,208,197,.3);border-radius:2px;position:relative">
+              <span style="width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;background:#d8d0c5;color:#0b0a09;border-radius:2px;font-family:'Kanji',serif;font-size:22px">{{ fin.badge.k }}</span>
+              <div><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.42)">BADGE UNLOCKED</div><div style="font-size:15px;font-weight:500;margin-top:2px">{{ fin.badge.name }}</div><div style="font-size:12.5px;color:rgba(216,208,197,.66);margin-top:2px">{{ fin.badge.d }}</div></div>
+            </div>
+          </sc-if>
+          <div style="display:flex;gap:8px;margin-top:18px;position:relative">
+            <button onClick="{{ restart }}" style="height:36px;padding:0 14px;border:1px solid rgba(216,208,197,.25);border-radius:2px;font-size:13.5px">Share receipt</button>
+            <span style="flex:1"></span>
+            <button onClick="{{ nextUc }}" style="height:36px;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">Merge into main</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ manualOff }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:46px 0 0 0;background:rgba(11,10,9,.9);display:flex;align-items:center;justify-content:center;animation:haroFade .25s ease">
+        <div style="max-width:420px;text-align:center">
+          <div style="font-family:'Kanji',serif;font-size:40px;color:rgba(216,208,197,.42)">使</div>
+          <div style="font-size:22px;font-weight:500;margin-top:10px">Agent mode would take over here.</div>
+          <div style="font-size:14px;color:rgba(216,208,197,.66);margin-top:8px;line-height:1.5">Switching mid-task marks this workspace as assisted. Your streak and XP so far are kept.</div>
+          <button onClick="{{ toggleManual }}" style="margin-top:18px;height:36px;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">Keep writing by hand</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const K={ink:'#d8d0c5',i86:'rgba(216,208,197,.86)',i66:'rgba(216,208,197,.66)',i40:'rgba(216,208,197,.42)',line:'rgba(216,208,197,.12)',green:'#41d183',red:'#e0685e'};
+const G=(st,t,d)=>({st,t,d});
+const UCS=[
+ {title:'Fix a rounding bug',project:'gate-sandbox',ws:'shipping rounding',branch:'fix/half-cents',
+  hints:['Look at which way your function rounds 4.995.','Math.floor always goes down. You want the nearest value, with halves going up.','MDN, Math.round(), and the note on floating point in the Number.EPSILON page.'],
+  finale:{tests:'16 / 16 · 1.4s',stats:[['By you','3 lines'],['AI code','0'],['Hints','0'],['Docs read','1']],xp:[['Red to green, unassisted','+120'],['Searched before typing','+5'],['Read the docs','+5'],['Hint multiplier','× 1.0']],total:'+130 XP',badge:{k:'初',name:'First by hand',d:'Your first gate turned green with zero AI code.'}},
+  steps:[
+   {cap:'The task starts from a failing test',sub:'You picked “start from a test”. haro wrote nothing. The gate is red on the test you approved.',file:'lib/shipping.ts',code:['export const FREE_SHIPPING_AT = 75','','export function roundCents(amount: number) {','  return Math.floor(amount * 100) / 100','}','','export function shippingFor(subtotal: number) {','  if (subtotal >= FREE_SHIPPING_AT) return 0','  return roundCents(subtotal * 0.065 + 4.99)','}'],mine:[],cur:4,gate:G('red','1 failing · rounds half-cents up','expected 9.87, received 9.86 · lib/shipping.test.ts:41'),panel:'search',q:'',results:[],bar:'write'},
+   {cap:'Research first',sub:'Ask haro where to look. It answers with sources, never with code.',q:'javascript round to 2 decimals, halves up',results:[{src:'MDN · offline',how:'read here',t:'Math.round()',why:'How it rounds .5 and negative numbers'},{src:'Stack Overflow',how:'open ↗',t:'How to round to at most 2 decimal places',why:'Why ×100 then ÷100 has float pitfalls · +4.1k'},{src:'MDN · offline',how:'read here',t:'Number.EPSILON',why:'The smallest gap between two floats'},{src:'Your repo',how:'jump',t:'lib/money.ts:8 · toCents()',why:'You already convert to integer cents here'}],ev:['+5','searched before typing']},
+   {cap:'Read it inside haro',sub:'Offline docs open in a plain reader. No page loads, no ads, no AI summary.',panel:'doc',hl:0,doc:{src:'MDN · JavaScript · offline',title:'Math.round()',body:['Rounds to the nearest integer. A value exactly halfway goes up, toward +∞: 2.5 becomes 3, and −2.5 becomes −2.','Floats can’t store every decimal exactly. 1.005 × 100 is 100.49999…, so it rounds to 100 instead of 101.','Adding Number.EPSILON before scaling nudges values that sit just under the halfway mark.'],ex:'Math.round(2.5)   // 3\nMath.round(-2.5)  // -2\nMath.round(1.005 * 100) / 100  // 1'},ev:['+5','read the docs']},
+   {cap:'Write it yourself',sub:'Two lines, typed by you. The gutter marks every line you wrote.',code:['export const FREE_SHIPPING_AT = 75','','export function roundCents(amount: number) {','  // halves round up; EPSILON guards 1.005 * 100','  return Math.round((amount + Number.EPSILON) * 100) / 100','}','','export function shippingFor(subtotal: number) {','  if (subtotal >= FREE_SHIPPING_AT) return 0','  return roundCents(subtotal * 0.065 + 4.99)','}'],mine:[3,4],cur:5,gate:G('idle','Changed · the gate runs on save','⌘S to save and run'),panel:'doc'},
+   {cap:'Save. The gate runs by itself.',sub:'Same gate as agent mode. It doesn’t care who wrote the code.',gate:G('running','9 of 16 tests done','vitest · lib/'),bar:'verify'},
+   {cap:'Green. Written by you.',sub:'The receipt records 0 AI-written lines. XP and your streak update.',gate:G('green','16 / 16 passed · mergeable','1.4s · both of your lines ran'),bar:'ship',finale:true}]},
+ {title:'Stuck on a retry loop',project:'gate-sandbox',ws:'rates retry',branch:'feat/rates-retry',
+  hints:['Count calls, not retries. With retries = 3, how many times does your loop call fetch?','An off-by-one: a loop from 0 that stops at “≤ n” runs n + 1 times.','Compare the loop condition on line 2 with the test on rates.test.ts:22.'],
+  finale:{tests:'21 / 21 · 1.9s',stats:[['By you','8 lines'],['AI code','0'],['Hints','1 nudge'],['Docs read','1']],xp:[['Red to green','+120'],['Recovered from your own red','+30'],['Searched before typing','+5'],['Hint multiplier','× 0.9']],total:'+140 XP',badge:null},
+  steps:[
+   {cap:'A new task, a red test',sub:'The test says fetchRates retries 3 times, then throws.',file:'lib/rates.ts',code:['export async function fetchRates(zone: string) {','  const res = await fetch(`/api/rates/${zone}`)','  if (!res.ok) throw new Error(`rates ${res.status}`)','  return res.json()','}'],mine:[],cur:1,gate:G('red','1 failing · retries 3 times then throws','expected fetch to be called 3 times, got 1 · rates.test.ts:22'),panel:'search',q:'retry with exponential backoff',results:[{src:'AWS Architecture blog',how:'open ↗',t:'Exponential backoff and jitter',why:'Why waiting 2ⁿ × base avoids thundering herds'},{src:'Stack Overflow',how:'open ↗',t:'Retry a fetch request n times',why:'Loop vs recursion, and where the delay goes'},{src:'Your repo',how:'jump',t:'lib/http.ts:3 · sleep(ms)',why:'You already have a sleep helper'}],bar:'write',ev:['+5','searched before typing']},
+   {cap:'First attempt',sub:'You write the loop. The gate turns red again, for a new reason.',code:['export async function fetchRates(zone: string, retries = 3) {','  for (let attempt = 0; attempt <= retries; attempt++) {','    const res = await fetch(`/api/rates/${zone}`)','    if (res.ok) return res.json()','    await sleep(2 ** attempt * 100)','  }','  throw new Error(\'rates unavailable\')','}'],mine:[0,1,2,3,4,5,6,7],cur:2,gate:G('red','1 failing · retries 3 times then throws','expected fetch to be called 3 times, got 4'),bar:'verify'},
+   {cap:'Stuck? Take one rung.',sub:'The hint ladder gives a nudge, not an answer. It costs 10% of this task’s XP.',panel:'hint',hl:1,ev:['−10%','nudge used']},
+   {cap:'Fix it',sub:'One character. You found it.',code:['export async function fetchRates(zone: string, retries = 3) {','  for (let attempt = 0; attempt < retries; attempt++) {','    const res = await fetch(`/api/rates/${zone}`)','    if (res.ok) return res.json()','    await sleep(2 ** attempt * 100)','  }','  throw new Error(\'rates unavailable\')','}'],cur:2,gate:G('running','14 of 21 tests done','vitest · lib/'),bar:'verify'},
+   {cap:'Green, with honest help',sub:'The receipt says 1 nudge used. That’s fine: the code is still all yours.',gate:G('green','21 / 21 passed · mergeable','1.9s · all 8 of your lines ran'),bar:'ship',finale:true}]},
+ {title:'Hunt a surviving mutant',project:'haro',ws:'log since flag',branch:'feat/log-since',
+  hints:['Your tests pass, but one boundary is never checked.','What should happen when the duration is exactly zero?','Look at the > on args.ts line 6, and the cases in args.test.ts.'],
+  finale:{tests:'38 / 38 · 2.2s',stats:[['By you','11 lines'],['AI code','0'],['Hints','0'],['Mutation','100%']],xp:[['Green, unassisted','+120'],['Killed a surviving mutant','+50'],['Read a man page','+5'],['Hint multiplier','× 1.0']],total:'+175 XP',badge:{k:'狩',name:'Mutant hunter',d:'Wrote the test that caught a surviving mutant.'}},
+  steps:[
+   {cap:'grep before you write',sub:'Search your own repo first. Maybe it already exists.',file:'cli/args.ts',code:['import { parseDuration } from \'../lib/time\'','','export function parseSince(flag?: string) {','}'],mine:[],cur:4,gate:G('red','2 failing · parseSince','“2h” should be 7,200,000 ms · args.test.ts:9'),panel:'search',q:'grep parseDuration',results:[{src:'Your repo',how:'jump',t:'lib/time.ts:12 · parseDuration()',why:'Turns “2h”, “15m” into milliseconds'},{src:'Your repo',how:'jump',t:'cli/log.ts:40',why:'Already used for --timeout'},{src:'man · offline',how:'read here',t:'date(1) · --date',why:'The relative formats users will expect'}],bar:'write',ev:['+5','read a man page']},
+   {cap:'Write it',sub:'You reuse what’s already there.',code:['import { parseDuration } from \'../lib/time\'','','export function parseSince(flag?: string) {','  if (!flag) return undefined','  const ms = parseDuration(flag)','  if (ms > 0) return Date.now() - ms','  throw new Error(`--since: bad duration “${flag}”`)','}'],mine:[3,4,5,6],cur:6,gate:G('running','30 of 38 tests done','vitest · cli/')},
+   {cap:'Green, but one mutant survived',sub:'haro changed > to >= on line 6 and every test still passed. So no test checks the zero case.',gate:G('green','38 / 38 passed · 1 mutant survived','args.ts:6  > → >= went unnoticed · mutation 96%'),bar:'verify'},
+   {cap:'Write the test that catches it',sub:'You switch to the test file and add the boundary case.',file:'cli/args.test.ts',code:['import { parseSince } from \'./args\'','','test(\'parses 2h\', () => {','  expect(parseSince(\'2h\')).toBeLessThan(Date.now())','})','','test(\'rejects a zero duration\', () => {','  expect(() => parseSince(\'0m\')).toThrow(\'bad duration\')','})'],mine:[6,7,8],cur:8,gate:G('running','Re-running with mutations','50 mutants · cli/args.ts'),panel:'search'},
+   {cap:'Mutation 100%',sub:'The tests notice every planted mistake now. That’s the satisfying kind of green.',gate:G('green','38 / 38 passed · 0 mutants survived','2.2s · mutation 100%'),bar:'ship',finale:true}]}];
+const KW=/^(export|const|let|async|await|function|return|if|for|throw|new|import|from|test|expect)$/;
+function toks(line){const out=[];const re=/(\/\/.*$|`[^`]*`|'[^']*'|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]+\b)/g;let i=0,m;while((m=re.exec(line))){if(m.index>i)out.push({t:line.slice(i,m.index),c:'rgba(216,208,197,.7)',w:400});const s=m[0];let c='rgba(216,208,197,.8)',w=400;if(s.startsWith('//'))c=K.i40;else if(/^['`]/.test(s))c=K.i66;else if(KW.test(s)){c=K.ink;w=700}else if(/^\d/.test(s))c=K.ink;out.push({t:s,c,w});i=m.index+s.length}if(i<line.length)out.push({t:line.slice(i),c:'rgba(216,208,197,.7)',w:400});return out}
+const RANKS=[[0,'初','Novice'],[800,'中','Journeyman'],[2000,'上','Craftsman'],[4000,'達','Master']];
+class Component extends DCLogic {
+  state={uc:0,step:0,shown:9999,playing:false,hintX:0,panelX:null,manual:true,xp:1240,banked:{}};
+  componentWillUnmount(){clearInterval(this.ty);clearInterval(this.pl)}
+  resolve(uc,step){const r={};UCS[uc].steps.slice(0,step+1).forEach(s=>Object.assign(r,s));r.finale=!!UCS[uc].steps[step].finale;r.ev=UCS[uc].steps[step].ev||null;return r}
+  go(uc,step){const prev=this.resolve(this.state.uc,this.state.step),nx=this.resolve(uc,step);clearInterval(this.ty);
+    let shown=9999;if(uc===this.state.uc&&prev.file===nx.file&&prev.code!==nx.code){const a=prev.code,b=nx.code;let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;let j=0;while(j<a.length-i&&j<b.length-i&&a[a.length-1-j]===b[b.length-1-j])j++;this.mid={i,j};shown=0;const len=b.slice(i,b.length-j).join('\n').length;this.ty=setInterval(()=>this.setState(s=>{const n=s.shown+2;if(n>=len)clearInterval(this.ty);return {shown:n}}),16)}else this.mid=null;
+    const ns={uc,step,shown,panelX:null};if(uc!==this.state.uc)ns.hintX=0;
+    if(nx.finale&&!this.state.banked[uc]){const add=parseInt(UCS[uc].finale.total.replace(/\D/g,''));ns.xp=this.state.xp+add;ns.banked={...this.state.banked,[uc]:true}}
+    this.setState(ns)}
+  next(){const n=UCS[this.state.uc].steps.length;if(this.state.step<n-1)this.go(this.state.uc,this.state.step+1);else{clearInterval(this.pl);this.setState({playing:false})}}
+  renderVals(){
+    const S=this.state,U=UCS[S.uc],st=this.resolve(S.uc,S.step),N=U.steps.length;
+    let code=st.code.slice();
+    if(this.mid&&S.shown<9999){const {i,j}=this.mid;const midTxt=code.slice(i,code.length-j).join('\n').slice(0,S.shown);code=code.slice(0,i).concat(midTxt.split('\n'),code.slice(code.length-j))}
+    const green=st.gate.st==='green';const mine=new Set(st.mine||[]);
+    const lines=code.map((l,ix)=>({n:ix+1,toks:toks(l),mark:mine.has(ix)?'●':'',mc:green?K.green:K.ink,bg:ix+1===st.cur?'rgba(216,208,197,.04)':'transparent'}));
+    const GM={red:['RED',K.red],green:['GREEN',K.green],running:['RUNNING',K.ink],idle:['WAITING',K.i40]};
+    const g={key:GM[st.gate.st][0],color:GM[st.gate.st][1],t:st.gate.t,d:st.gate.d,isRun:st.gate.st==='running'};
+    const hintLvl=Math.max(st.hl||0,S.hintX);const mult=[1,.9,.75,.6][hintLvl];
+    const barIdx={write:0,verify:1,ship:2}[st.bar];
+    const bsub=[mine.size?mine.size+' lines by you':'nothing written yet',st.gate.st==='red'?'red · '+st.gate.t.split(' · ')[0]:green?'green':st.gate.st==='running'?'running':'runs on save',green?'ready to merge':'locked until green'];
+    const bdot=[mine.size?K.ink:K.line,st.gate.st==='red'?K.red:green?K.green:st.gate.st==='running'?K.ink:K.line,green?K.ink:K.line];
+    const bar=['code','verify','ship'].map((name,i)=>({n:'0'+(i+1),name,sub:bsub[i],dot:bdot[i],top:i===barIdx?K.ink:'transparent',bg:i===barIdx?'#131210':'transparent',nc:i===barIdx?K.ink:K.i66,sc:bdot[i]===K.red?K.red:bdot[i]===K.green?K.green:K.i40}));
+    const act=green?{l:'Merge →',bg:K.ink,c:'#0b0a09',b:K.ink}:st.gate.st==='running'?{l:'Gate running',bg:'transparent',c:K.i40,b:K.line}:{l:'Save & run gate ⌘S',bg:K.ink,c:'#0b0a09',b:K.ink};
+    const panel=S.panelX||st.panel;
+    const tabs=[['search','Search','探'],['doc','Docs','書'],['hint','Hints','助']].map(([k,l,kj])=>({l,k:kj,pick:()=>this.setState({panelX:k}),c:panel===k?K.ink:K.i66,u:panel===k?K.ink:'transparent'}));
+    const ladder=U.hints.map((text,i)=>{const open=hintLvl>i;const canNext=hintLvl===i;return {n:'0'+(i+1),lvl:['Nudge','Concept','Pointer'][i],cost:['−10%','−25%','−40%'][i],text,open,locked:!open,bl:canNext?'Reveal':'Reveal the one above first',bc:canNext?K.ink:K.i40,border:open?'rgba(216,208,197,.3)':K.line,reveal:()=>{if(canNext)this.setState({hintX:i+1})}}});
+    const evs=U.steps.slice(0,S.step+1).map(s=>s.ev).filter(Boolean);const sess=evs.reduce((a,e)=>a+(e[0][0]==='+'?parseInt(e[0].slice(1)):0),0)+(st.finale?parseInt(U.finale.total.replace(/\D/g,''))-sess0(U):0);
+    function sess0(u){return u.steps.map(s=>s.ev).filter(Boolean).reduce((a,e)=>a+(e[0][0]==='+'?parseInt(e[0].slice(1)):0),0)}
+    const xp=S.xp;let r=RANKS[0],nextR=RANKS[1];RANKS.forEach((x,i)=>{if(xp>=x[0]){r=x;nextR=RANKS[i+1]||x}});
+    const lvl=Math.floor(xp/180)+1;const base=r[0],top=nextR[0]===base?base+1000:nextR[0];
+    const doneToday=Object.keys(S.banked).length>0;
+    const fin=U.finale;
+    return {
+      ucTabs:UCS.map((u,i)=>({n:'0'+(i+1),title:u.title,pick:()=>this.go(i,0),border:i===S.uc?K.ink:K.line,bg:i===S.uc?'#131210':'transparent',color:i===S.uc?K.ink:K.i66})),
+      stepNo:S.step+1,stepCount:N,cap:st.cap||U.steps[S.step].cap,sub:U.steps[S.step].sub,cap:U.steps[S.step].cap,
+      dots:U.steps.map((_,i)=>({go:()=>this.go(S.uc,i),c:i<=S.step?K.ink:K.line})),
+      prev:()=>{if(S.step>0)this.go(S.uc,S.step-1)},next:()=>this.next(),
+      playLabel:S.playing?'PAUSE':'PLAY',togglePlay:()=>{if(S.playing){clearInterval(this.pl);this.setState({playing:false})}else{if(S.step>=N-1)this.go(S.uc,0);this.pl=setInterval(()=>this.next(),4200);this.setState({playing:true})}},
+      uc:U,file:st.file,lines,mineCount:mine.size,curLine:st.cur,ranColor:green?K.green:K.i40,g,bar,act,tabs,
+      pSearch:panel==='search',pDoc:panel==='doc',pHint:panel==='hint',
+      qText:st.q||'Where should I look?',qColor:st.q?K.ink:K.i40,noResults:!(st.results&&st.results.length),
+      results:(st.results||[]).map((x,i)=>({...x,bg:'transparent'})),
+      scopes:[{l:'repo'},{l:'offline docs'},{l:'man'},{l:'web'}],
+      doc:st.doc?{...st.doc,body:st.doc.body.map(t=>({t}))}:{src:'',title:'No doc open',body:[{t:'Open a result marked “read here” to read it offline.'}],ex:''},
+      ladder,
+      rank:{k:r[1],name:r[2],lvl},xpPct:Math.min(100,Math.round((xp-base)/(top-base)*100))+'%',xpText:xp.toLocaleString()+' / '+top.toLocaleString()+' XP',
+      evShow:!!st.ev,evText:st.ev?st.ev[0]+' '+st.ev[1]:'',
+      sessXp:sess,multText:mult.toFixed(1),
+      streakN:doneToday?15:14,streak:Array.from({length:14},(_,i)=>({c:i===13?(doneToday?K.ink:'transparent'):([2,6].includes(i)?K.line:'rgba(216,208,197,.55)')})).map((s,i)=>i===13&&!doneToday?{c:'transparent'}:s),
+      finale:st.finale&&S.manual,
+      fin:{tests:fin.tests,stats:fin.stats.map(([l,v])=>({l,v})),xp:fin.xp.map(([l,v])=>({l,v})),total:fin.total,hasBadge:!!fin.badge,badge:fin.badge||{k:'',name:'',d:''}},
+      restart:()=>this.go(S.uc,0),nextUc:()=>this.go((S.uc+1)%UCS.length,0),
+      manBorder:S.manual?K.ink:K.line,manTrack:S.manual?K.ink:'transparent',manKnob:S.manual?'16px':'2px',manKnobBg:S.manual?'#0b0a09':K.i40,
+      toggleManual:()=>this.setState(s=>({manual:!s.manual})),manualOff:!S.manual
+    };
+  }
+}
+</script>
+</body>
+</html>

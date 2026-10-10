@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Regular.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Bold.woff2) format('woff2');font-weight:700}
+@font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk-Variable.woff2) format('woff2');font-weight:300 700}
+@font-face{font-family:'Fraunces';src:url(fonts/Fraunces-Variable.woff2) format('woff2');font-weight:100 900}
+html,body{margin:0;height:100%;background:#0b0a09;color:#d8d0c5;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+a{color:#d8d0c5;text-decoration:underline;text-decoration-color:rgba(216,208,197,.3)}
+a:hover{color:#fff}
+::selection{background:rgba(216,208,197,.25)}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(216,208,197,.12)}::-webkit-scrollbar-track{background:transparent}
+@keyframes haroFade{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+<div style="height:100vh;display:grid;grid-template-rows:48px minmax(0,1fr);grid-template-columns:minmax(0,1fr);background:#0b0a09;color:#d8d0c5;overflow:hidden;position:relative">
+
+  <div style="display:flex;align-items:center;gap:16px;padding:0 16px;min-width:0;border-bottom:1px solid rgba(216,208,197,.12)">
+    <button onClick="{{ goDash }}" style="font-family:'Fraunces',serif;font-size:21px;font-weight:500;letter-spacing:-.01em;color:#d8d0c5">haro.</button>
+    <div style="width:1px;height:18px;background:rgba(216,208,197,.14)"></div>
+    <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(216,208,197,.42);display:flex;gap:8px;min-width:0;flex:1 1 auto;white-space:nowrap;overflow:hidden">
+      <span>{{ crumb1 }}</span>
+      <sc-if value="{{ crumb2 }}" hint-placeholder-val="{{ false }}"><span>/</span><span style="color:#d8d0c5">{{ crumb2 }}</span></sc-if>
+    </div>
+    <button onClick="{{ openPalette }}" style="display:flex;align-items:center;gap:24px;height:30px;padding:0 8px 0 12px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:13px;color:rgba(216,208,197,.42);flex:0 1 260px;min-width:0;justify-content:space-between" style-hover="border-color:rgba(216,208,197,.3)">
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Search or run a command</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;padding:1px 5px;border:1px solid rgba(216,208,197,.14);border-radius:2px">⌘K</span>
+    </button>
+    <button onClick="{{ nextNeed }}" title="Jump to the next workspace that needs you" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:8px;height:30px;padding:0 12px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase" style-hover="border-color:rgba(216,208,197,.3)">
+      <span style="width:7px;height:7px;background:#e0685e"></span><span>{{ needCount }} need you</span><span style="color:rgba(216,208,197,.42);padding-left:4px">⌘J</span>
+    </button>
+    <button onClick="{{ openShortcuts }}" title="Keyboard shortcuts" style="width:30px;height:30px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">?</button>
+    <button onClick="{{ openSettings }}" style="flex:none;height:30px;padding:0 12px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:13px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Settings</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:240px minmax(0,1fr);min-height:0;min-width:0">
+
+    <aside style="border-right:1px solid rgba(216,208,197,.12);display:flex;flex-direction:column;gap:22px;padding:16px 10px;overflow:auto;min-height:0">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button onClick="{{ goDash }}" style="display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:2px;font-size:14px;background:{{ navDashBg }}" style-hover="background:#1b1915">
+          <span>Triage</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ wsCount }}</span>
+        </button>
+        <button onClick="{{ openBacklog }}" style="display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 10px;border-radius:2px;font-size:14px" style-hover="background:#1b1915">
+          <span>Backlog</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">52 open</span>
+        </button>
+      </div>
+      <sc-for list="{{ projects }}" as="p" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:1px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 10px 6px">
+            <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ p.name }}</span>
+            <button onClick="{{ openNew }}" title="New workspace" style="font-family:'Space Mono',monospace;font-size:13px;color:rgba(216,208,197,.42);width:20px" style-hover="color:#d8d0c5">+</button>
+          </div>
+          <sc-for list="{{ p.items }}" as="w" hint-placeholder-count="3">
+            <button onClick="{{ w.open }}" style="display:flex;align-items:center;gap:10px;height:30px;padding:0 10px;border-radius:2px;text-align:left;background:{{ w.bg }};opacity:{{ w.op }}" style-hover="background:#1b1915">
+              <span style="width:7px;height:7px;flex:none;background:{{ w.gBg }};border:1px solid {{ w.gColor }}"></span>
+              <span style="font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">{{ w.name }}</span>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;color:{{ w.gColor }}">{{ w.short }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div style="flex:1"></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button onClick="{{ openNew }}" style="display:flex;align-items:center;justify-content:space-between;height:34px;padding:0 12px;background:#d8d0c5;color:#0b0a09;border-radius:2px;font-size:13.5px;font-weight:500">
+          <span>New workspace</span><span style="font-family:'Space Mono',monospace;font-size:10.5px">⌘N</span>
+        </button>
+        <button onClick="{{ openAdd }}" style="height:32px;padding:0 12px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:13px;color:rgba(216,208,197,.66);text-align:left" style-hover="color:#d8d0c5">Add project</button>
+      </div>
+    </aside>
+
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+      <main style="overflow:auto;position:relative;min-height:0">
+        <div style="position:absolute;left:14px;top:120px;writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.3em;color:rgba(216,208,197,.2);text-transform:uppercase">// haro · test gate · monochrome</div>
+        <div style="position:fixed;right:12px;bottom:-14px;font-size:72px;font-family:'Fraunces',serif;color:rgba(216,208,197,.02);z-index:0;pointer-events:none;letter-spacing:.05em">モノクローム</div>
+        <div style="max-width:1160px;margin:0 auto;padding:44px 56px 120px">
+          <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Triage · {{ wsCount }} workspaces · 2 projects</div>
+          <h1 style="font-weight:500;font-size:38px;letter-spacing:-.02em;line-height:1.1;margin:14px 0 10px">{{ needCount }} workspaces need you.</h1>
+          <p style="margin:0;font-size:16px;color:rgba(216,208,197,.66);max-width:620px;line-height:1.5;text-wrap:pretty">One is red, one has a plan waiting for approval, and one is green with two lines no test ran. Two are running; nothing else needs a decision.</p>
+
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:32px">
+            <sc-for list="{{ filters }}" as="f" hint-placeholder-count="6">
+              <button onClick="{{ f.pick }}" style="display:flex;align-items:center;gap:8px;height:28px;padding:0 11px;border-radius:2px;border:1px solid {{ f.border }};background:{{ f.bg }};color:{{ f.color }};font-size:13px">
+                <span>{{ f.label }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;opacity:.7">{{ f.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+            <section style="margin-top:40px;animation:haroFade .3s ease">
+              <div style="display:flex;align-items:baseline;gap:14px;padding-bottom:10px">
+                <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#d8d0c5">{{ g.title }}</span>
+                <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ g.count }}</span>
+                <span style="font-size:13px;color:rgba(216,208,197,.42)">{{ g.hint }}</span>
+              </div>
+              <div style="border-top:1px solid rgba(216,208,197,.2)">
+                <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="2">
+                  <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:78px minmax(0,1fr) 54px 32px auto;gap:16px;align-items:center;min-height:62px;padding:10px 0;border-bottom:1px solid rgba(216,208,197,.08);cursor:pointer" style-hover="background:#131210">
+                    <div style="display:flex;align-items:center;gap:8px;padding-left:10px">
+                      <span style="width:8px;height:8px;flex:none;background:{{ r.gBg }};border:1px solid {{ r.gColor }}"></span>
+                      <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:{{ r.gColor }}">{{ r.label }}</span>
+                    </div>
+                    <div style="min-width:0;display:flex;flex-wrap:wrap;column-gap:24px;row-gap:3px;align-items:baseline">
+                      <div style="flex:1 1 220px;min-width:0">
+                        <div style="font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+                        <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.project }} · {{ r.branch }}</div>
+                      </div>
+                      <div style="flex:1 1 240px;min-width:0;font-size:13.5px;color:rgba(216,208,197,.66);line-height:1.4">{{ r.detail }}</div>
+                    </div>
+                    <div style="display:flex;gap:3px" title="agent › code › verify › ship">
+                      <sc-for list="{{ r.ticks }}" as="t" hint-placeholder-count="4"><span style="width:12px;height:3px;background:{{ t.c }}"></span></sc-for>
+                    </div>
+                    <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);text-align:right">{{ r.t }}</div>
+                    <div style="display:flex;justify-content:flex-end;padding-right:10px">
+                      <span style="height:28px;display:flex;align-items:center;padding:0 12px;border-radius:2px;font-size:13px;white-space:nowrap;background:{{ r.btnBg }};color:{{ r.btnColor }};border:1px solid {{ r.btnBorder }}">{{ r.next }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+          </sc-for>
+        </div>
+      </main>
+    </sc-if>
+
+    <sc-if value="{{ isWs }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,24vw,296px);min-height:0">
+        <div style="display:flex;flex-direction:column;min-height:0;border-right:1px solid rgba(216,208,197,.12);position:relative">
+
+          <div style="padding:20px 28px 0;display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+            <div style="min-width:0">
+              <div style="font-size:22px;font-weight:500;letter-spacing:-.01em">{{ wsName }}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ wsProject }} · {{ wsBranch }} → main · 15 behind</div>
+            </div>
+            <div style="display:flex;gap:6px;position:relative">
+              <button onClick="{{ toggleOpenWt }}" style="height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:12.5px;color:#d8d0c5;white-space:nowrap">Open worktree in {{ editorName }} ▾</button>
+              <sc-if value="{{ menuWt }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;left:0;top:34px;width:260px;background:#1b1915;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:4px;z-index:30;animation:haroFade .15s ease">
+                  <sc-for list="{{ editorsWt }}" as="ew" hint-placeholder-count="6">
+                    <button onClick="{{ ew.pick }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 10px;border-radius:2px;text-align:left;font-size:13px" style-hover="background:#131210">
+                      <span>{{ ew.name }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ ew.hint }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <button style="height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Rename</button>
+              <button style="height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Archive</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:18px;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12)">
+            <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+              <button onClick="{{ s.go }}" style="text-align:left;min-width:0;padding:12px 14px 13px;border-right:1px solid rgba(216,208,197,.08);border-top:2px solid {{ s.bar }};margin-top:-1px;background:{{ s.bg }}" style-hover="background:#131210">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ s.n }}</span>
+                  <span style="width:6px;height:6px;background:{{ s.dot }}"></span>
+                  <span style="font-size:15px;font-weight:500;color:{{ s.nameColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</span>
+                </div>
+                <div style="font-family:'Space Mono',monospace;font-size:10.5px;margin-top:4px;color:{{ s.subColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.sub }}</div>
+              </button>
+            </sc-for>
+            <div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 16px">
+              <button onClick="{{ next }}" style="height:34px;padding:0 16px;border-radius:2px;background:{{ nextBg }};color:{{ nextColor }};font-size:13.5px;font-weight:500;white-space:nowrap">{{ nextLabel }} →</button>
+            </div>
+          </div>
+
+          <div style="flex:1;min-height:0;overflow:auto">
+
+            <sc-if value="{{ stepVerify }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:880px;margin:0 auto;padding:40px 32px 100px;animation:haroFade .25s ease">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="width:10px;height:10px;background:{{ v.color }}"></span>
+                  <span style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.22em;color:{{ v.color }}">{{ v.key }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">vitest · frontend/ · all tests · {{ v.when }}</span>
+                </div>
+                <div style="font-size:44px;font-weight:500;letter-spacing:-.025em;line-height:1.08;margin-top:16px">{{ v.head }}</div>
+                <p style="font-size:16px;line-height:1.55;color:rgba(216,208,197,.66);max-width:620px;margin:12px 0 0;text-wrap:pretty">{{ v.sub }}</p>
+                <sc-if value="{{ isRunning }}" hint-placeholder-val="{{ false }}">
+                  <div style="height:2px;background:rgba(216,208,197,.12);margin-top:22px;max-width:620px"><div style="height:2px;width:69%;background:#d8d0c5"></div></div>
+                </sc-if>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-top:28px;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12)">
+                  <sc-for list="{{ v.metrics }}" as="m" hint-placeholder-count="5">
+                    <div style="padding:14px 0 16px;border-right:1px solid rgba(216,208,197,.08);padding-left:14px">
+                      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ m.l }}</div>
+                      <div style="font-size:20px;font-weight:500;margin-top:6px;color:{{ m.c }}">{{ m.v }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:20px">
+                  <button onClick="{{ next }}" style="height:36px;padding:0 16px;border-radius:2px;background:{{ nextBg }};color:{{ nextColor }};font-size:14px;font-weight:500">{{ nextLabel }}</button>
+                  <button onClick="{{ rerun }}" style="height:36px;padding:0 14px;border-radius:2px;border:1px solid rgba(216,208,197,.2);font-size:14px;color:rgba(216,208,197,.86)" style-hover="border-color:rgba(216,208,197,.4)">Run again</button>
+                  <button onClick="{{ rerun }}" style="height:36px;padding:0 14px;border-radius:2px;font-size:14px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Impacted tests only</button>
+                </div>
+
+                <sc-if value="{{ tamper }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:40px;padding:18px 20px;border:1px solid #e0685e;border-radius:2px;display:flex;align-items:center;gap:18px;justify-content:space-between;flex-wrap:wrap">
+                    <div style="flex:1 1 320px">
+                      <div style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.2em;color:#e0685e">TAMPER ALARM</div>
+                      <div style="font-size:17px;font-weight:500;margin-top:6px">The agent deleted a test that covered this change.</div>
+                      <div style="font-size:13.5px;color:rgba(216,208,197,.66);margin-top:4px;line-height:1.45">“is free at exactly the $100 boundary” is gone from lib/shipping.test.ts. A passing suite would now prove less than before.</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex:none">
+                      <button onClick="{{ goCode }}" style="height:32px;padding:0 12px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:13px">See deletion</button>
+                      <button onClick="{{ goAgent }}" style="height:32px;padding:0 12px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500">Restore test</button>
+                    </div>
+                  </div>
+                </sc-if>
+                <div style="margin-top:56px;display:flex;align-items:baseline;gap:14px;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)">
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase">{{ lookTitle }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ lookOpen }} open</span>
+                  <span style="font-size:13px;color:rgba(216,208,197,.42)">{{ lookHint }}</span>
+                </div>
+                <sc-if value="{{ lookEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:22px 0;font-size:14px;color:rgba(216,208,197,.42)">{{ lookEmptyText }}</div>
+                </sc-if>
+                <sc-for list="{{ look }}" as="l" hint-placeholder-count="2">
+                  <div style="display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:14px;align-items:start;padding:16px 0;border-bottom:1px solid rgba(216,208,197,.08);opacity:{{ l.op }}">
+                    <button onClick="{{ l.toggle }}" title="Mark reviewed" style="width:16px;height:16px;margin-top:2px;border:1px solid rgba(216,208,197,.42);border-radius:2px;background:{{ l.boxBg }};color:#0b0a09;font-size:11px;line-height:14px;text-align:center">{{ l.tick }}</button>
+                    <div style="min-width:0">
+                      <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:{{ l.kindColor }}">{{ l.kind }}</div>
+                      <div style="font-family:'Space Mono',monospace;font-size:13px;margin-top:5px;word-break:break-all">{{ l.path }}</div>
+                      <div style="font-size:13.5px;color:rgba(216,208,197,.66);margin-top:4px">{{ l.detail }}</div>
+                    </div>
+                    <div style="display:flex;gap:4px">
+                      <button onClick="{{ goCode }}" style="height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.86)" style-hover="border-color:rgba(216,208,197,.4)">Open diff</button>
+                      <button title="Opens at this line" style="height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.86);white-space:nowrap" style-hover="border-color:rgba(216,208,197,.4)">{{ editorName }} ↗</button>
+                      <button onClick="{{ goAgent }}" style="height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.86)" style-hover="border-color:rgba(216,208,197,.4)">Ask agent</button>
+                    </div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ lookHas }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:14px">
+                    <button style="height:30px;padding:0 12px;font-size:13px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Add to backlog</button>
+                    <button onClick="{{ goAgent }}" style="height:30px;padding:0 12px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:13px">Send {{ lookOpen }} to agent</button>
+                  </div>
+                </sc-if>
+
+                <div style="margin-top:56px;display:flex;align-items:baseline;gap:14px;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)">
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase">Evidence</span>
+                  <span style="font-size:13px;color:rgba(216,208,197,.42)">Can you trust green? Start with the first two.</span>
+                </div>
+                <sc-for list="{{ details }}" as="d" hint-placeholder-count="5">
+                  <div style="border-bottom:1px solid rgba(216,208,197,.08)">
+                    <button onClick="{{ d.toggle }}" style="width:100%;display:grid;grid-template-columns:20px 180px minmax(0,1fr);gap:12px;align-items:center;height:48px;text-align:left" style-hover="background:#131210">
+                      <span style="font-family:'Space Mono',monospace;font-size:13px;color:rgba(216,208,197,.42);padding-left:4px">{{ d.sign }}</span>
+                      <span style="font-size:14.5px;color:{{ d.nameColor }}">{{ d.name }}</span>
+                      <span style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)">{{ d.meta }}</span>
+                    </button>
+                    <sc-if value="{{ d.isGrid }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:4px 0 22px 32px">
+                        <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:700px">
+                          <sc-for list="{{ cells }}" as="c" hint-placeholder-count="40"><span title="{{ c.t }}" style="width:9px;height:9px;background:{{ c.bg }}"></span></sc-for>
+                        </div>
+                        <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);margin-top:12px">one square ≈ 3 tests · grouped by file</div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ d.isUntested }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:0 0 22px 32px;display:flex;flex-direction:column;gap:10px;font-family:'Space Mono',monospace;font-size:12.5px">
+                        <div style="display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:16px"><span style="color:rgba(216,208,197,.42)">AgentStream.tsx:212</span><span>if (evt.kind === 'retry') return</span></div>
+                        <div style="display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:16px"><span style="color:rgba(216,208,197,.42)">ProjectSettingsModal.tsx:88–92</span><span>5 lines · no test imports this file</span></div>
+                        <div style="display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:16px"><span style="color:rgba(216,208,197,.42)">main.js:204</span><span>return 0 // OS-assigned fallback</span></div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ d.isImpact }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:0 0 20px 32px;display:flex;flex-direction:column;gap:8px;font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.66)">
+                        <div>desktop/main.test.js · 14 tests</div><div>frontend/src/App.test.tsx · 19 tests</div><div>backend/tests/test_boot.py · 5 tests</div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ d.isCov }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:0 0 22px 32px;max-width:520px;display:flex;flex-direction:column;gap:10px">
+                        <div style="display:grid;grid-template-columns:70px 1fr 50px;gap:12px;align-items:center;font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66)"><span>main</span><span style="height:3px;background:rgba(216,208,197,.12)"><span style="display:block;height:3px;width:89.8%;background:rgba(216,208,197,.42)"></span></span><span>89.8%</span></div>
+                        <div style="display:grid;grid-template-columns:70px 1fr 50px;gap:12px;align-items:center;font-family:'Space Mono',monospace;font-size:11.5px"><span>this tree</span><span style="height:3px;background:rgba(216,208,197,.12)"><span style="display:block;height:3px;width:91.2%;background:#41d183"></span></span><span>91.2%</span></div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ d.isFlaky }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:0 0 20px 32px;font-size:14px;color:rgba(216,208,197,.66);max-width:600px;line-height:1.5">Every test gave the same result across the last 5 runs of this tree. A test that flips between runs would show here and wouldn't count against green.</div>
+                    </sc-if>
+                    <sc-if value="{{ d.isMut }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:0 0 22px 32px;max-width:620px">
+                        <div style="font-size:14px;color:rgba(216,208,197,.66);line-height:1.5">Would the tests notice if this code were wrong? haro made 50 small, deliberate mistakes in the changed lines. The suite caught 41. These survived:</div>
+                        <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;font-family:'Space Mono',monospace;font-size:12px">
+                          <div><span style="color:rgba(216,208,197,.42)">main.js:206</span>  <span style="color:#e0685e">||</span> → <span style="color:#41d183">&amp;&amp;</span> went unnoticed</div>
+                          <div><span style="color:rgba(216,208,197,.42)">main.js:231</span>  timeout 3000 → 0 went unnoticed</div>
+                        </div>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ stepAgent }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:760px;margin:0 auto;padding:36px 32px 32px;display:flex;flex-direction:column;gap:20px;animation:haroFade .25s ease">
+                <sc-if value="{{ streamEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:60px 0 20px">
+                    <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Step 1 · agent</div>
+                    <div style="font-size:30px;font-weight:500;letter-spacing:-.02em;margin-top:12px">What should the agent do?</div>
+                    <p style="font-size:15px;color:rgba(216,208,197,.66);line-height:1.55;max-width:540px">Describe the task below. The agent works in its own copy of the repo, and the gate runs by itself when it finishes. Nothing merges until the tests are green.</p>
+                    <div style="display:flex;flex-direction:column;margin-top:22px;border-top:1px solid rgba(216,208,197,.12)">
+                      <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="3">
+                        <button style="text-align:left;padding:12px 0;border-bottom:1px solid rgba(216,208,197,.08);font-size:14px;color:rgba(216,208,197,.86);display:flex;justify-content:space-between" style-hover="color:#fff">
+                          <span>{{ sg.t }}</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ sg.src }}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ streamHas }}" hint-placeholder-val="{{ true }}">
+                  <div>
+                    <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)">You · 14m ago</div>
+                    <div style="margin-top:8px;padding:14px 16px;background:#131210;border:1px solid rgba(216,208,197,.08);border-radius:2px;font-size:15px;line-height:1.55">Make the desktop app start faster. Profile the boot, fix the slow steps, and keep the backend shutdown clean.</div>
+                  </div>
+                  <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)">Agent · build · sonnet-5 · high</div>
+                  <sc-for list="{{ stream }}" as="e" hint-placeholder-count="6">
+                    <div>
+                      <sc-if value="{{ e.isTool }}" hint-placeholder-val="{{ true }}">
+                        <div style="display:flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.66)">
+                          <span style="width:5px;height:5px;background:rgba(216,208,197,.42)"></span>
+                          <span style="color:#d8d0c5;width:44px">{{ e.verb }}</span><span>{{ e.target }}</span>
+                          <span style="color:#41d183">{{ e.add }}</span><span style="color:#e0685e">{{ e.del }}</span>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ e.isText }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-size:15px;line-height:1.6;color:rgba(216,208,197,.86);text-wrap:pretty">{{ e.text }}</div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid rgba(216,208,197,.08)">
+                    <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">done in 14m 1s · 21 files · $9.89</span>
+                    <button onClick="{{ goCode }}" style="font-size:13px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Review changes in code →</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ stepCode }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:clamp(170px,24%,260px) minmax(0,1fr);height:100%;animation:haroFade .25s ease">
+                <div style="border-right:1px solid rgba(216,208,197,.08);overflow:auto;padding:16px 0">
+                  <div style="padding:0 16px 8px;display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)"><span>Changed</span><span>21</span></div>
+                  <sc-for list="{{ files }}" as="fl" hint-placeholder-count="8">
+                    <button style="width:100%;display:flex;align-items:center;gap:8px;height:28px;padding:0 16px;text-align:left;font-family:'Space Mono',monospace;font-size:12px;background:{{ fl.bg }}" style-hover="background:#131210">
+                      <span style="width:6px;height:6px;flex:none;background:{{ fl.proof }}" title="{{ fl.proofT }}"></span>
+                      <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fl.name }}</span>
+                      <span style="color:#41d183">{{ fl.add }}</span><span style="color:#e0685e">{{ fl.del }}</span>
+                    </button>
+                  </sc-for>
+                  <div style="padding:18px 16px 0;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)">All files ▸</div>
+                </div>
+                <div style="overflow:auto;min-width:0">
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;min-height:44px;padding:8px 20px;border-bottom:1px solid rgba(216,208,197,.08);position:sticky;top:0;z-index:5;background:#0b0a09">
+                    <span style="font-family:'Space Mono',monospace;font-size:12.5px;white-space:nowrap">desktop/main.js <span style="color:#41d183">+211</span> <span style="color:#e0685e">−134</span></span>
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">
+                      <span style="white-space:nowrap"><span style="color:#41d183">●</span> ran</span><span style="white-space:nowrap">○ never ran</span><div style="flex:none;display:flex;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:2px;gap:2px"><button onClick="{{ setDiff }}" style="height:20px;padding:0 8px;border-radius:1px;font-family:'Space Mono',monospace;font-size:11px;background:{{ diffBg }};color:{{ diffColor }}">Diff</button><button onClick="{{ setEdit }}" style="height:20px;padding:0 8px;border-radius:1px;font-family:'Space Mono',monospace;font-size:11px;background:{{ editBg }};color:{{ editColor }}">Edit</button></div><div style="position:relative;flex:none">
+                        <button onClick="{{ toggleOpenFile }}" style="height:24px;padding:0 9px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;color:#d8d0c5;white-space:nowrap" style-hover="border-color:rgba(216,208,197,.4)">Open in {{ editorName }} ▾</button>
+                        <sc-if value="{{ menuFile }}" hint-placeholder-val="{{ false }}">
+                          <div style="position:absolute;right:0;top:30px;width:260px;background:#1b1915;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:4px;z-index:30;animation:haroFade .15s ease">
+                            <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42);padding:8px 10px 6px">main.js at line 202</div>
+                            <sc-for list="{{ editors }}" as="ed" hint-placeholder-count="6">
+                              <button onClick="{{ ed.pick }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 10px;border-radius:2px;text-align:left;font-family:'Space Grotesk',sans-serif;font-size:13px;letter-spacing:0;text-transform:none;color:#d8d0c5" style-hover="background:#131210">
+                                <span>{{ ed.name }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ ed.hint }}</span>
+                              </button>
+                            </sc-for>
+                            <div style="border-top:1px solid rgba(216,208,197,.12);margin-top:4px;padding:8px 10px;font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:0;text-transform:none;color:rgba(216,208,197,.42)">Terminal editors open in haro’s Shell. Default is set in Settings → Display.</div>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </div>
+                  <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;min-height:calc(100% - 44px)">
+                      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(216,208,197,.08);background:#131210;white-space:nowrap;overflow:hidden">
+                        <span style="flex:0 1 260px;min-width:90px;height:26px;display:flex;align-items:center;padding:0 8px;overflow:hidden;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-family:'Space Mono',monospace;font-size:12px">HEALTH_URL<span style="display:inline-block;width:1px;height:14px;background:#d8d0c5;margin-left:1px"></span></span>
+                        <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">1 of 3</span>
+                        <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.66);padding:0 4px">↑ ↓</span>
+                        <span style="font-family:'Space Mono',monospace;font-size:10.5px;padding:2px 5px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.42)">Aa</span>
+                        <span style="font-family:'Space Mono',monospace;font-size:10.5px;padding:2px 5px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.42)">.*</span>
+                        <span style="flex:1"></span>
+                        <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);overflow:hidden;text-overflow:ellipsis">replace ⌘H · close esc</span>
+                      </div>
+                      <div style="flex:1;font-family:'JetBrains Mono','Space Mono',monospace;font-size:13px;line-height:21px;padding:8px 0;overflow-x:auto">
+                        <sc-for list="{{ editLines }}" as="el" hint-placeholder-count="14">
+                          <div style="display:grid;grid-template-columns:52px 18px 6px minmax(0,1fr);background:{{ el.bg }}">
+                            <span style="text-align:right;padding-right:8px;color:{{ el.nc }};user-select:none">{{ el.n }}</span>
+                            <span style="text-align:center;font-size:9px;color:rgba(216,208,197,.42);user-select:none">{{ el.fold }}</span>
+                            <span style="background:{{ el.gut }}"></span>
+                            <span style="white-space:pre;padding-left:10px"><sc-for list="{{ el.toks }}" as="tk" hint-placeholder-count="3"><span style="color:{{ tk.c }};font-style:{{ tk.fs }};font-weight:{{ tk.fw }};background:{{ tk.bg }}">{{ tk.t }}</span></sc-for><sc-if value="{{ el.cursor }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;width:2px;height:16px;background:#d8d0c5;vertical-align:-3px"></span></sc-if></span>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="position:sticky;bottom:0;display:flex;align-items:center;gap:14px;height:30px;padding:0 16px;white-space:nowrap;overflow:hidden;border-top:1px solid rgba(216,208,197,.08);background:#0b0a09;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">
+                        <span>Ln 211, Col 22</span><span>JavaScript</span><span style="overflow:hidden;text-overflow:ellipsis;min-width:0">UTF-8 · LF · 2 spaces</span><span style="flex:1"></span><span style="color:#d8d0c5">● unsaved</span>
+                        <button style="height:22px;padding:0 10px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;flex:none">Save ⌘S</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ isDiff }}" hint-placeholder-val="{{ true }}">
+                  <div style="font-family:'Space Mono',monospace;font-size:12.5px;line-height:22px;padding:10px 0">
+                    <sc-for list="{{ diff }}" as="dl" hint-placeholder-count="12">
+                      <div style="display:grid;grid-template-columns:22px 44px 16px minmax(0,1fr);background:{{ dl.bg }}">
+                        <span style="text-align:center;font-size:9px;color:{{ dl.mc }}">{{ dl.mark }}</span>
+                        <span style="color:rgba(216,208,197,.3);text-align:right;padding-right:10px">{{ dl.n }}</span>
+                        <span style="color:{{ dl.sc }}">{{ dl.sign }}</span>
+                        <span style="white-space:pre;color:{{ dl.tc }}">{{ dl.text }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ stepShip }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:880px;margin:0 auto;padding:40px 32px 100px;animation:haroFade .25s ease">
+                <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Pull request title</div>
+                <div style="font-size:28px;font-weight:500;letter-spacing:-.015em;line-height:1.2;margin-top:10px;padding-bottom:14px;border-bottom:1px solid rgba(216,208,197,.2)">perf(desktop): stable port, async PATH scrape, lazy panels</div>
+                <div style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap">
+                  <span>{{ wsBranch }} → origin/main</span><span>1 commit</span><span><span style="color:#41d183">+367</span> <span style="color:#e0685e">−130</span></span><span>21 files</span>
+                </div>
+
+                <div style="margin-top:32px;padding:22px 24px;border:1px solid {{ ship.border }};border-radius:2px;display:flex;align-items:center;gap:20px;justify-content:space-between">
+                  <div>
+                    <div style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;background:{{ ship.color }}"></span><span style="font-size:18px;font-weight:500">{{ ship.title }}</span></div>
+                    <div style="font-size:14px;color:rgba(216,208,197,.66);margin-top:6px">{{ ship.sub }}</div>
+                  </div>
+                  <div style="display:flex;gap:8px;flex:none">
+                    <sc-if value="{{ ship.canMerge }}" hint-placeholder-val="{{ false }}">
+                      <button style="height:36px;padding:0 14px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:14px">Open pull request</button>
+                      <button onClick="{{ merge }}" style="height:36px;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:14px;font-weight:500">Merge into main</button>
+                    </sc-if>
+                    <sc-if value="{{ ship.blocked }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ goVerify }}" style="height:36px;padding:0 14px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:14px">Go to verify</button>
+                      <span style="height:36px;display:flex;align-items:center;padding:0 16px;border-radius:2px;border:1px dashed rgba(216,208,197,.2);color:rgba(216,208,197,.42);font-size:14px">Merge blocked</span>
+                    </sc-if>
+                    <sc-if value="{{ ship.isMerged }}" hint-placeholder-val="{{ false }}">
+                      <button style="height:36px;padding:0 14px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:14px">View #232 ↗</button>
+                      <button onClick="{{ openNew }}" style="height:36px;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:14px;font-weight:500">Continue on a new branch</button>
+                    </sc-if>
+                  </div>
+                </div>
+
+                <div style="margin-top:48px;display:flex;align-items:baseline;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)">
+                  <div style="display:flex;gap:14px;align-items:baseline"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase">Gate receipt</span><span style="font-size:13px;color:rgba(216,208,197,.42)">What reviewers see on the PR</span></div>
+                  <div style="display:flex;gap:14px;font-size:13px;color:rgba(216,208,197,.66)"><button style-hover="color:#d8d0c5">Copy link</button><button style-hover="color:#d8d0c5">Copy markdown</button><button style="color:#d8d0c5" style-hover="color:#fff">Post to PR</button></div>
+                </div>
+                <div style="margin-top:16px;border:1px solid rgba(216,208,197,.2);border-radius:2px;background:#131210">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+                    <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'Fraunces',serif;font-size:18px">haro.</span><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;color:rgba(216,208,197,.42)">GATE RECEIPT · a41f0c2</span></div>
+                    <span style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;background:{{ v.color }}"></span><span style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.2em;color:{{ v.color }}">{{ v.key }}</span></span>
+                  </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));column-gap:32px;padding:0 20px">
+                  <sc-for list="{{ receipt }}" as="rc" hint-placeholder-count="6">
+                    <div style="display:grid;grid-template-columns:14px 130px minmax(0,1fr);gap:10px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(216,208,197,.08)">
+                      <span style="width:6px;height:6px;background:{{ rc.c }}"></span>
+                      <span style="font-size:14px">{{ rc.l }}</span>
+                      <span style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)">{{ rc.v }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                  <div style="padding:14px 20px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">Ran 594 tests on this exact tree · haro.dev/r/a41f0c2</div>
+                </div>
+
+                <div style="margin-top:48px;display:flex;gap:14px;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)">
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase">Commit</span><span style="font-size:13px;color:rgba(216,208,197,.42)">Working tree is clean · everything is in 1 commit</span>
+                </div>
+                <div style="padding:16px 0;font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.66);display:flex;justify-content:space-between"><span>a41f0c2  perf(desktop): stable port, async PATH scrape…</span><span>14m ago</span></div>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ termOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="height:240px;flex:none;border-top:1px solid rgba(216,208,197,.2);background:#0b0a09;display:flex;flex-direction:column;animation:haroFade .2s ease">
+              <div style="display:flex;align-items:center;gap:18px;height:34px;padding:0 16px;border-bottom:1px solid rgba(216,208,197,.08);font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(216,208,197,.42)">
+                <span>Dev log</span><span style="color:#d8d0c5">Shell</span><span style="flex:1"></span>
+                <button onClick="{{ toggleTerm }}" style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:rgba(216,208,197,.42)" style-hover="color:#d8d0c5">Hide ⌃`</button>
+              </div>
+              <div style="padding:12px 16px;font-family:'Space Mono',monospace;font-size:12.5px;line-height:1.7">
+                <div><span style="font-weight:700">{{ wsSlug }}</span> <span style="color:rgba(216,208,197,.42)">on</span> <span style="color:rgba(216,208,197,.66)">{{ wsBranch }}</span> <span style="color:rgba(216,208,197,.42)">via node v24.16.0</span></div>
+                <div>› <span style="display:inline-block;width:8px;height:14px;background:#d8d0c5;vertical-align:-2px"></span></div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ stepAgent }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:none;padding:14px 28px 18px;border-top:1px solid rgba(216,208,197,.08)">
+              <div style="max-width:760px;margin:0 auto;border:1px solid rgba(216,208,197,.2);border-radius:2px;background:#131210">
+                <textarea rows="3" placeholder="Describe the next task for the agent…" style="width:100%;resize:none;background:transparent;border:0;outline:none;padding:14px 16px 6px;font-family:'Space Mono',monospace;font-size:13px;line-height:1.6;color:#d8d0c5"></textarea>
+                <div style="display:flex;align-items:center;gap:6px;padding:8px 10px 10px">
+                  <button onClick="{{ openRoles }}" style="height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.86)" style-hover="border-color:rgba(216,208,197,.35)">build · sonnet-5 · high ▾</button>
+                  <button onClick="{{ togglePlan }}" style="height:28px;padding:0 10px;border:1px solid {{ planBorder }};border-radius:2px;font-family:'Space Mono',monospace;font-size:11.5px;color:{{ planColor }}">{{ planMark }} plan first</button>
+                  <button style="height:28px;padding:0 10px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">+ attach</button>
+                  <span style="flex:1"></span>
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">/ commands · @ files</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);padding:0 8px">21% context</span>
+                  <button style="height:30px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">Run agent  ⌘↵</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <aside style="display:flex;flex-direction:column;min-height:0;min-width:0;overflow:auto">
+          <button onClick="{{ goVerify }}" style="text-align:left;padding:20px 20px 18px;border-bottom:1px solid rgba(216,208,197,.12)" style-hover="background:#131210">
+            <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Gate</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+              <span style="width:14px;height:14px;background:{{ v.color }}"></span>
+              <span style="font-family:'Space Mono',monospace;font-size:15px;font-weight:700;letter-spacing:.2em;color:{{ v.color }}">{{ v.key }}</span>
+            </div>
+            <div style="font-size:14px;color:rgba(216,208,197,.86);margin-top:10px">{{ v.rail }}</div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);margin-top:4px">{{ v.when }}</div>
+          </button>
+          <button onClick="{{ goVerify }}" style="text-align:left;padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)" style-hover="background:#131210">
+            <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)"><span>Needs your eyes</span><span style="color:#d8d0c5">{{ lookOpen }}</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+              <sc-for list="{{ lookRail }}" as="lr" hint-placeholder-count="2">
+                <div style="font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ lr.s }}</div>
+              </sc-for>
+              <sc-if value="{{ lookEmpty }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:rgba(216,208,197,.42)">Nothing yet</div></sc-if>
+            </div>
+          </button>
+          <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+            <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">App</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+              <span style="font-family:'Space Mono',monospace;font-size:12px">:4500 · <span style="color:rgba(216,208,197,.42)">{{ appLabel }}</span></span>
+              <div style="display:flex;gap:4px">
+                <button onClick="{{ toggleApp }}" style="height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:12.5px">{{ appBtn }}</button>
+                <button style="height:26px;padding:0 8px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.66);white-space:nowrap">Open ↗</button>
+              </div>
+            </div>
+          </div>
+          <div style="padding:18px 20px;border-bottom:1px solid rgba(216,208,197,.12)">
+            <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Run</div>
+            <div style="display:grid;grid-template-columns:70px 1fr;row-gap:7px;margin-top:10px;font-family:'Space Mono',monospace;font-size:11.5px">
+              <span style="color:rgba(216,208,197,.42)">model</span><span>sonnet-5 · high</span>
+              <span style="color:rgba(216,208,197,.42)">spent</span><span>$9.89 · 14m</span>
+              <span style="color:rgba(216,208,197,.42)">context</span><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:3px;background:rgba(216,208,197,.12)"><span style="display:block;width:21%;height:3px;background:rgba(216,208,197,.66)"></span></span>21%</span>
+            </div>
+          </div>
+          <div style="flex:1"></div>
+          <button onClick="{{ toggleTerm }}" style="display:flex;justify-content:space-between;align-items:center;height:44px;padding:0 20px;border-top:1px solid rgba(216,208,197,.12);font-size:13.5px" style-hover="background:#131210">
+            <span>{{ termLabel }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">⌃`</span>
+          </button>
+        </aside>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ isWs }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:256px;bottom:14px;display:flex;align-items:center;gap:4px;padding:4px;background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px;z-index:20">
+      <span style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:rgba(216,208,197,.42);padding:0 8px">PREVIEW STATE</span>
+      <sc-for list="{{ statePicks }}" as="sp" hint-placeholder-count="5">
+        <button onClick="{{ sp.pick }}" style="height:24px;padding:0 9px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;background:{{ sp.bg }};color:{{ sp.color }}">{{ sp.k }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ ovAny }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ close }}" style="position:fixed;inset:0;background:rgba(8,7,6,.8);backdrop-filter:blur(3px);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding-top:9vh;animation:haroFade .18s ease">
+
+      <sc-if value="{{ ovSettings }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ stop }}" style="width:min(980px,94vw);height:min(660px,80vh);background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px;display:grid;grid-template-columns:220px minmax(0,1fr);overflow:hidden">
+          <div style="border-right:1px solid rgba(216,208,197,.12);padding:16px 10px;display:flex;flex-direction:column;gap:18px;overflow:auto">
+            <div style="height:32px;display:flex;align-items:center;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:13px;color:rgba(216,208,197,.42)">Search settings</div>
+            <sc-for list="{{ setNav }}" as="sn" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;gap:1px">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42);padding:0 10px 6px">{{ sn.title }}</div>
+                <sc-for list="{{ sn.items }}" as="si" hint-placeholder-count="4">
+                  <button onClick="{{ si.pick }}" style="height:30px;padding:0 10px;text-align:left;border-radius:2px;font-size:14px;background:{{ si.bg }};color:{{ si.color }}" style-hover="color:#d8d0c5">{{ si.title }}</button>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;min-height:0">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:26px 32px 18px;border-bottom:1px solid rgba(216,208,197,.12)">
+              <div>
+                <div style="font-size:24px;font-weight:500;letter-spacing:-.01em">{{ tab.title }}</div>
+                <div style="font-size:14px;color:rgba(216,208,197,.66);margin-top:6px;max-width:540px;line-height:1.5">{{ tab.intro }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:rgba(216,208,197,.42);padding:4px 8px;border:1px solid rgba(216,208,197,.14);border-radius:2px;white-space:nowrap">{{ tab.scope }}</span>
+                <button onClick="{{ close }}" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.66)">✕</button>
+              </div>
+            </div>
+            <div style="flex:1;overflow:auto;padding:4px 32px 24px">
+              <sc-if value="{{ isGateTab }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:20px;padding:14px 16px;background:#0b0a09;border:1px solid rgba(216,208,197,.12);border-radius:2px;display:flex;gap:12px;align-items:center">
+                  <span style="width:8px;height:8px;background:#41d183;flex:none"></span>
+                  <span style="font-size:14px;line-height:1.5">Green means <b style="font-weight:500">every Vitest test in frontend/ passes</b>. Advisory checks below list what to look at but never block a merge.</span>
+                </div>
+              </sc-if>
+              <sc-for list="{{ tab.rows }}" as="row" hint-placeholder-count="5">
+                <div>
+                  <sc-if value="{{ row.sec }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42);padding:26px 0 4px">{{ row.sec }}</div>
+                  </sc-if>
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(216,208,197,.08)">
+                    <div>
+                      <div style="font-size:14.5px">{{ row.label }}</div>
+                      <div style="font-size:13px;color:rgba(216,208,197,.42);margin-top:3px;line-height:1.45">{{ row.help }}</div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end">
+                      <sc-if value="{{ row.isToggle }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ row.flip }}" style="width:34px;height:18px;border-radius:2px;border:1px solid {{ row.tBorder }};background:{{ row.tBg }};position:relative">
+                          <span style="position:absolute;top:2px;left:{{ row.kLeft }};width:12px;height:12px;border-radius:1px;background:{{ row.kBg }}"></span>
+                        </button>
+                      </sc-if>
+                      <sc-if value="{{ row.isSelect }}" hint-placeholder-val="{{ false }}">
+                        <span style="min-width:180px;height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:13.5px;gap:16px;cursor:pointer"><span>{{ row.value }}</span><span style="color:rgba(216,208,197,.42);font-size:10px">▾</span></span>
+                      </sc-if>
+                      <sc-if value="{{ row.isInput }}" hint-placeholder-val="{{ false }}">
+                        <span style="min-width:260px;height:32px;display:flex;align-items:center;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-family:'Space Mono',monospace;font-size:12.5px;background:#0b0a09">{{ row.value }}</span>
+                      </sc-if>
+                      <sc-if value="{{ row.isValue }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.86)">{{ row.value }}</span>
+                      </sc-if>
+                      <sc-if value="{{ row.isMeter }}" hint-placeholder-val="{{ false }}">
+                        <span style="display:flex;align-items:center;gap:12px;width:260px"><span style="flex:1;height:4px;background:rgba(216,208,197,.12)"><span style="display:block;height:4px;background:#d8d0c5;width:{{ row.pct }}"></span></span><span style="font-family:'Space Mono',monospace;font-size:12px;width:36px;text-align:right">{{ row.pct }}</span></span>
+                      </sc-if>
+                      <sc-if value="{{ row.isSeg }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:2px;gap:2px">
+                          <sc-for list="{{ row.opts }}" as="o" hint-placeholder-count="3">
+                            <button onClick="{{ o.pick }}" style="height:26px;padding:0 10px;border-radius:1px;font-size:12.5px;white-space:nowrap;background:{{ o.bg }};color:{{ o.color }}">{{ o.label }}</button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+                  <sc-if value="{{ row.isCode }}" hint-placeholder-val="{{ false }}">
+                    <pre style="margin:-1px 0 0;padding:14px 16px;min-height:200px;background:#0b0a09;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:12.5px;line-height:1.7;color:rgba(216,208,197,.86);white-space:pre-wrap">{{ row.code }}</pre>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 32px;border-top:1px solid rgba(216,208,197,.2);background:#1b1915;animation:haroFade .2s ease">
+                <span style="font-size:13.5px">Unsaved changes <span style="color:rgba(216,208,197,.42)">· saves to {{ tab.scope }}</span></span>
+                <div style="display:flex;gap:8px">
+                  <button onClick="{{ discard }}" style="height:30px;padding:0 12px;font-size:13px;color:rgba(216,208,197,.66)">Discard</button>
+                  <button onClick="{{ discard }}" style="height:30px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500">Save</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovPalette }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ stop }}" style="width:min(620px,92vw);background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px;overflow:hidden">
+          <input value="{{ palQ }}" onChange="{{ onPalQ }}" autoFocus="{{ true }}" placeholder="Jump to a workspace, run an action, open a setting…" style="width:100%;height:52px;padding:0 18px;background:transparent;border:0;border-bottom:1px solid rgba(216,208,197,.12);outline:none;font-size:16px"></input>
+          <div style="max-height:420px;overflow:auto;padding:6px">
+            <sc-for list="{{ palItems }}" as="pi" hint-placeholder-count="8">
+              <div>
+                <sc-if value="{{ pi.isHead }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42);padding:12px 12px 6px">{{ pi.label }}</div>
+                </sc-if>
+                <sc-if value="{{ pi.isItem }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ pi.run }}" style="width:100%;display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-radius:2px;text-align:left;font-size:14px;background:{{ pi.bg }}" style-hover="background:#1b1915">
+                    <span style="width:7px;height:7px;flex:none;background:{{ pi.gBg }};border:1px solid {{ pi.gColor }}"></span>
+                    <span style="flex:1">{{ pi.label }}</span>
+                    <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ pi.meta }}</span>
+                  </button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:16px;padding:10px 16px;border-top:1px solid rgba(216,208,197,.12);font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)"><span>↑↓ move</span><span>↵ open</span><span>esc close</span></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovShortcuts }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ stop }}" style="width:min(720px,92vw);background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:26px 30px 22px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:22px;font-weight:500">Keyboard shortcuts</span><button onClick="{{ close }}" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.66)">✕</button></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:40px;margin-top:10px">
+            <sc-for list="{{ shortcuts }}" as="sc" hint-placeholder-count="10">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(216,208,197,.08)">
+                <span style="font-size:14px;color:rgba(216,208,197,.86)">{{ sc.l }}</span>
+                <span style="font-family:'Space Mono',monospace;font-size:11px;padding:2px 6px;border:1px solid rgba(216,208,197,.2);border-radius:2px">{{ sc.k }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:12.5px;color:rgba(216,208,197,.42);margin-top:16px">⌘ is the Super key on Linux. Press ? anywhere to open this.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovNew }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ stop }}" style="width:min(580px,92vw);background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px">
+          <div style="padding:24px 28px 0">
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">New workspace · haro</div>
+            <input value="{{ nwTask }}" onChange="{{ onNwTask }}" autoFocus="{{ true }}" placeholder="What's the task?" style="width:100%;margin-top:14px;padding:0 0 12px;background:transparent;border:0;border-bottom:1px solid rgba(216,208,197,.3);outline:none;font-size:24px;font-weight:500;letter-spacing:-.01em"></input>
+            <div style="display:grid;grid-template-columns:110px 1fr;row-gap:14px;align-items:center;margin-top:22px;font-size:13.5px">
+              <span style="color:rgba(216,208,197,.42)">Branch</span>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <sc-for list="{{ prefixes }}" as="px" hint-placeholder-count="5">
+                  <button onClick="{{ px.pick }}" style="height:24px;padding:0 8px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11.5px;border:1px solid {{ px.border }};color:{{ px.color }}">{{ px.p }}</button>
+                </sc-for>
+              </div>
+              <span></span>
+              <span style="font-family:'Space Mono',monospace;font-size:13px">{{ nwBranch }}</span>
+              <span style="color:rgba(216,208,197,.42)">From</span>
+              <span style="font-family:'Space Mono',monospace;font-size:13px">origin/main <span style="color:rgba(216,208,197,.42)">· synced 3m ago ▾</span></span>
+            </div>
+            <button onClick="{{ toggleNwRun }}" style="display:flex;align-items:center;gap:10px;margin-top:22px;font-size:14px;text-align:left">
+              <span style="width:16px;height:16px;border:1px solid rgba(216,208,197,.42);border-radius:2px;background:{{ nwRunBg }};color:#0b0a09;font-size:11px;line-height:14px;text-align:center">{{ nwRunTick }}</span>
+              <span>Start the agent with this task right away</span>
+            </button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 28px;margin-top:24px;border-top:1px solid rgba(216,208,197,.12)">
+            <span style="font-size:12.5px;color:rgba(216,208,197,.42)">Its own worktree. Your main checkout is untouched.</span>
+            <div style="display:flex;gap:8px">
+              <button onClick="{{ close }}" style="height:34px;padding:0 12px;font-size:13.5px;color:rgba(216,208,197,.66)">Cancel</button>
+              <button onClick="{{ createWs }}" style="height:34px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">{{ nwCta }}  ⌘↵</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovAdd }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ stop }}" style="width:min(560px,92vw);background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:24px 28px 26px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:22px;font-weight:500">Add a project</span><button onClick="{{ close }}" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.66)">✕</button></div>
+          <div style="display:flex;flex-direction:column;margin-top:18px;border-top:1px solid rgba(216,208,197,.12)">
+            <sc-for list="{{ addOpts }}" as="ao" hint-placeholder-count="3">
+              <button onClick="{{ openFirst }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 4px;border-bottom:1px solid rgba(216,208,197,.08);text-align:left" style-hover="background:#1b1915">
+                <div><div style="font-size:15px;font-weight:500">{{ ao.t }}</div><div style="font-size:13px;color:rgba(216,208,197,.66);margin-top:3px">{{ ao.d }}</div></div>
+                <span style="color:rgba(216,208,197,.42)">→</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="margin-top:16px;height:64px;border:1px dashed rgba(216,208,197,.2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:13px;color:rgba(216,208,197,.42)">or drop a folder here</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovFirst }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ stop }}" style="width:min(640px,92vw);background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px">
+          <div style="padding:26px 30px 0">
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Adding ~/code/shop-api</div>
+            <div style="font-size:26px;font-weight:500;letter-spacing:-.015em;margin-top:10px">Checking how this project proves itself</div>
+            <div style="font-size:14px;color:rgba(216,208,197,.66);margin-top:6px;line-height:1.5">haro needs a test suite it can trust before any agent’s work can merge. This takes a few seconds.</div>
+            <div style="margin-top:20px;border-top:1px solid rgba(216,208,197,.12)">
+              <sc-for list="{{ firstRun }}" as="fr" hint-placeholder-count="6">
+                <div style="display:grid;grid-template-columns:18px 130px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid rgba(216,208,197,.08)">
+                  <span style="width:8px;height:8px;background:{{ fr.bg }};border:1px solid {{ fr.c }}"></span>
+                  <span style="font-size:14px">{{ fr.l }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)">{{ fr.v }}</span>
+                  <sc-if value="{{ fr.fix }}" hint-placeholder-val="{{ false }}"><button style="height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:12.5px;white-space:nowrap">{{ fr.fix }}</button></sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:22px;flex-wrap:wrap">
+              <span style="width:12px;height:12px;background:#41d183"></span>
+              <span style="font-size:16px;font-weight:500">Gate ready.</span>
+              <span style="font-size:14px;color:rgba(216,208,197,.66)">Green means all 128 Vitest tests in src/ pass.</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 30px;margin-top:24px;border-top:1px solid rgba(216,208,197,.12)">
+            <button onClick="{{ openGateSettings }}" style="font-size:13.5px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Adjust gate settings</button>
+            <button onClick="{{ openNew }}" style="height:34px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">Create first workspace</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ ovBacklog }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ stop }}" style="width:min(1080px,94vw);height:min(660px,80vh);background:#131210;border:1px solid rgba(216,208,197,.2);border-radius:2px;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden">
+          <div style="display:flex;align-items:center;gap:20px;padding:16px 22px;border-bottom:1px solid rgba(216,208,197,.12)">
+            <span style="font-size:20px;font-weight:500">Backlog</span>
+            <div style="display:flex;gap:4px;font-size:13px"><span style="padding:4px 10px;background:#1b1915;border-radius:2px">Todo files 32</span><span style="padding:4px 10px;color:rgba(216,208,197,.66)">GitHub issues 20</span></div>
+            <span style="flex:1"></span>
+            <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">491 / 543 items done</span>
+            <button onClick="{{ close }}" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.66)">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:300px minmax(0,1fr);min-height:0">
+            <div style="border-right:1px solid rgba(216,208,197,.12);overflow:auto;padding:12px 8px">
+              <sc-for list="{{ backlog }}" as="bg" hint-placeholder-count="8">
+                <div>
+                  <sc-if value="{{ bg.isHead }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42);padding:14px 10px 6px">{{ bg.label }}</div></sc-if>
+                  <sc-if value="{{ bg.isItem }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;align-items:center;height:30px;padding:0 10px;border-radius:2px;font-size:13.5px;background:{{ bg.bg }}">
+                      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ bg.label }}</span>
+                      <span style="height:2px;background:rgba(216,208,197,.12)"><span style="display:block;height:2px;background:rgba(216,208,197,.66);width:{{ bg.pct }}"></span></span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="overflow:auto;padding:26px 32px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+                <div>
+                  <div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">backlog/live-gate.md · 19 of 24 done · edit in your editor ↗</div>
+                  <div style="font-size:26px;font-weight:500;letter-spacing:-.015em;margin-top:8px">Live gate: stream results as tests finish</div>
+                </div>
+                <div style="display:flex;gap:6px;flex:none">
+                                    <button onClick="{{ openNew }}" style="height:32px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13px;font-weight:500">Start as workspace</button>
+                </div>
+              </div>
+              <p style="font-size:15px;line-height:1.6;color:rgba(216,208,197,.86);max-width:640px;margin-top:18px">Today the verdict appears only when the whole suite is done. The grid should fill in test by test so the developer can watch the gate resolve, and a first failure should surface immediately instead of at the end.</p>
+              <div style="display:flex;flex-direction:column;margin-top:14px;max-width:640px">
+                <sc-for list="{{ todo }}" as="td" hint-placeholder-count="5">
+                  <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(216,208,197,.08);font-size:14px;color:{{ td.c }}">
+                    <span style="width:14px;height:14px;border:1px solid rgba(216,208,197,.42);border-radius:2px;background:{{ td.bg }};color:#0b0a09;font-size:10px;line-height:12px;text-align:center">{{ td.tick }}</span><span>{{ td.t }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ grain }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.07;mix-blend-mode:overlay;background-image:url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>&quot;)"></div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;first run&quot;,&quot;dashboard&quot;,&quot;workspace&quot;,&quot;settings&quot;],&quot;default&quot;:&quot;first run&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;workspaceState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;running&quot;,&quot;red&quot;,&quot;green&quot;,&quot;merged&quot;],&quot;default&quot;:&quot;green&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;grain&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const K={ink:'#d8d0c5',i86:'rgba(216,208,197,.86)',i66:'rgba(216,208,197,.66)',i40:'rgba(216,208,197,.42)',i20:'rgba(216,208,197,.2)',line:'rgba(216,208,197,.12)',green:'#41d183',red:'#e0685e',lilac:'#b3a0d6',p2:'#1b1915'};
+const ST={red:['RED',K.red,1,'red'],plan:['PLAN',K.ink,0,'plan'],green:['GREEN',K.green,1,'green'],agent:['AGENT',K.ink,0,'agent'],running:['GATE',K.ink,0,'gate'],idle:['IDLE',K.i40,0,''],merged:['MERGED',K.lilac,1,'merged']};
+const TICKS={red:'ddro',plan:'cooo',green:'ddgo',agent:'cooo',running:'ddco',idle:'oooo',merged:'dddm'};
+const TC={d:K.i40,c:K.ink,o:K.line,r:K.red,g:K.green,m:K.lilac};
+const WS=[
+ {id:'free-shipping-threshold',name:'free shipping threshold',project:'gate-sandbox',branch:'feat/free-shipping-threshold',st:'red',g:'need',detail:'3 of 16 tests failing in lib/shipping.test.ts',next:'Send failures to agent',t:'2m'},
+ {id:'linux-attraction',name:'linux attraction',project:'haro',branch:'feat/linux-attraction',st:'plan',g:'need',detail:'Plan ready to approve · 6 steps, 4 files',next:'Review plan',t:'5m'},
+ {id:'electron-optimization',name:'electron optimization',project:'haro',branch:'feat/electron-optimization',st:'green',g:'need',detail:'594 passed · 2 lines no test ran',next:'Review & ship',t:'14m'},
+ {id:'shipping-cost-calculator',name:'shipping cost calculator',project:'gate-sandbox',branch:'feat/shipping-cost-calculator',st:'agent',g:'run',detail:'Agent editing lib/rates.ts · 3m in',next:'Open',t:'now'},
+ {id:'mutation-gate',name:'mutation gate',project:'haro',branch:'feat/mutation-gate',st:'running',g:'run',detail:'Gate 412 / 594 · no failures yet',next:'Watch',t:'now'},
+ {id:'verified-hunks',name:'verified hunks',project:'haro',branch:'feat/verified-hunks',st:'green',g:'ready',detail:'212 passed · nothing to look at',next:'Merge',t:'1h'},
+ {id:'agent-haro',name:'agent-haro',project:'gate-sandbox',branch:'test/agent-haro',st:'idle',g:'idle',detail:'No task yet',next:'Write a task',t:'1d'},
+ {id:'jev-research',name:'jev-research',project:'haro',branch:'docs/jev-research',st:'idle',g:'idle',detail:'No task yet',next:'Write a task',t:'3d'},
+ {id:'kuro-theme',name:'kuro theme',project:'haro',branch:'feat/kuro-theme',st:'merged',g:'done',detail:'Merged #229 into main on green',next:'Archive',t:'1d'},
+ {id:'live-gate',name:'live gate',project:'haro',branch:'feat/live-gate',st:'merged',g:'done',detail:'Merged #226 into main on green',next:'Archive',t:'2d'}];
+const GROUPS=[['need','Needs you','Decide, review or unblock'],['run','Running','Agents and gates at work'],['ready','Ready to ship','Green, nothing to review'],['idle','Idle','Waiting for a task'],['done','Merged','Shipped on a green gate']];
+const TOWS={red:'red',plan:'idle',green:'green',agent:'idle',running:'running',idle:'idle',merged:'merged'};
+const DEFSTEP={idle:'agent',running:'verify',red:'verify',green:'verify',merged:'ship'};
+const STEPNAMES=['agent','code','verify','ship'];
+const DONE='done · 14m', CODE='21 files · +367 −130';
+const STEPS={idle:[['ready for a task','c'],['no changes yet','o'],['runs when agent finishes','o'],['blocked','o']],
+ running:[[DONE,'d'],[CODE,'d'],['running · 412 / 594','c'],['waits for green','o']],
+ red:[[DONE,'d'],[CODE,'d'],['red · 3 failing','r'],['blocked','o']],
+ green:[[DONE,'d'],[CODE,'d'],['green · 594 passed','g'],['ready to merge','c']],
+ merged:[[DONE,'d'],[CODE,'d'],['green · 594 passed','g'],['merged · #232','m']]};
+const M=(a)=>a.map(([l,v,c])=>({l,v,c:c||K.ink}));
+const V={
+ idle:{key:'NOT RUN',color:K.i40,when:'never run',head:'The gate hasn’t run on this tree.',sub:'It starts by itself when the agent finishes. Run it now if you changed files by hand.',rail:'Runs when the agent finishes',next:'Run agent',metrics:M([['Tests','—'],['Duration','—'],['Coverage','—'],['Mutation','—'],['Flaky','—']])},
+ running:{key:'RUNNING',color:K.ink,when:'started 20s ago',head:'412 of 594 tests done',sub:'No failures so far. The first failure shows up here the moment it happens.',rail:'412 / 594 · no failures yet',next:'Gate running',metrics:M([['Tests','412 / 594'],['Duration','20s'],['Coverage','after run',K.i40],['Mutation','after run',K.i40],['Flaky','0']])},
+ red:{key:'RED',color:K.red,when:'2m ago · 2.1s',head:'3 tests are failing',sub:'This branch can’t merge until they pass. Send the failures back to the agent, or fix them yourself in code.',rail:'3 of 594 failing',next:'Send failures to agent',metrics:M([['Tests','591 / 594',K.red],['Duration','2.1s'],['Coverage','90.4%'],['Mutation','—'],['Flaky','0']])},
+ green:{key:'GREEN',color:K.green,when:'4m ago · 2.0s',head:'All 594 tests pass',sub:'This branch is mergeable. Two changed spots weren’t exercised by any test; take a look before you ship.',rail:'594 / 594 passed · mergeable',next:'Review & ship',metrics:M([['Tests','594 / 594',K.green],['Duration','2.0s'],['Coverage','91.2% ↑1.4'],['Mutation','82%'],['Flaky','0']])},
+ merged:{key:'MERGED',color:K.lilac,when:'merged 2h ago',head:'Merged into origin/main',sub:'PR #232 merged on a green gate. The worktree stays until you archive it.',rail:'#232 · merged on green',next:'Continue on a new branch',metrics:M([['Tests','594 / 594',K.green],['Duration','2.0s'],['Coverage','91.2% ↑1.4'],['Mutation','82%'],['Flaky','0']])}};
+const LOOK_G=[{id:'a',kind:'No test ran',path:'frontend/src/components/AgentStream.tsx:212',detail:'1 added line never executed by the suite'},{id:'b',kind:'No test imports',path:'frontend/src/components/ProjectSettingsModal.tsx',detail:'No test file imports this module · 5 added lines'}];
+const LOOK_R=[{id:'r1',kind:'Failed',fail:1,path:'calculateShipping › free threshold › is free at exactly $75',detail:'expected 0, received 499 · lib/shipping.test.ts:52'},{id:'r2',kind:'Failed',fail:1,path:'calculateShipping › free threshold › charges just below $75',detail:'expected 499, received 0 · lib/shipping.test.ts:58'},{id:'r3',kind:'Failed',fail:1,path:'checkout › summary › shows free shipping badge',detail:'unable to find text “Free shipping” · app/checkout.test.tsx:31'},{id:'r4',kind:'Test removed',path:'is free at exactly the $100 boundary',detail:'Deleted from lib/shipping.test.ts · the suite got weaker'}];
+const DET=[['mut','Mutation score','82% · 41 of 50 mistakes caught',1],['untested','Lines no test ran','6 of 367 added lines',1],['grid','Test grid','594 tests · live'],['impact','Impact','38 tests touch this change'],['cov','Coverage','91.2% · up 1.4 from main'],['flaky','Flaky tests','none in the last 5 runs']];
+const STREAM=[{v:'Read',t:'desktop/main.js'},{v:'Bash',t:'HARO_BOOT_TRACE=1 npm run desktop'},{x:'Boot takes 3.4s. Most of it is a blocking PATH scrape from the login shell (~1s) and a 45s health timeout that hides crashes. I’ll make the scrape async and race the health check against the backend’s exit.'},{v:'Edit',t:'desktop/main.js',a:'+211',d:'−134'},{v:'Edit',t:'backend/desktop_app.py',a:'+7',d:'−2'},{v:'Edit',t:'frontend/src/App.tsx',a:'+240',d:'−211'},{v:'Bash',t:'npm test --prefix frontend'},{x:'Done. Root chunk drops from 1,081 kB to 624 kB by lazy-loading six panels, and a backend crash at spawn now reports in about a second. Frontend tests pass locally; the gate will confirm.'}];
+const FILES=[['desktop/main.js','+211','−134','p'],['frontend/src/App.tsx','+240','−211','p'],['backend/haro/main.py','+57','−31','p'],['frontend/…/AgentStream.tsx','+1','','n'],['frontend/…/ProjectSettingsModal.tsx','+5','−1','n'],['backend/desktop_app.py','+7','−2','p'],['haro-backend.spec','+11','−6','p'],['CHANGELOG.md','+47','−4','x'],['SKILL.md','+4','−2','x']];
+const DIFF=[[201,' ','function pickPort() {',''],[202,'-','  return 0',''],[202,'+','  const fixed = Number(process.env.HARO_DESKTOP_PORT || 41417)','y'],[203,'+','  if (isFree(fixed)) return fixed','y'],[204,'+','  return 0 // OS-assigned fallback','n'],[205,' ','}',''],[206,' ','',''],[207,'-','const PATH = scrapeLoginShellSync()',''],[207,'+','const pathReady = scrapeLoginShell()  // async, overlaps window','y'],[208,' ','',''],[209,' ','async function waitForHealth(proc) {',''],[210,'-','  return poll(HEALTH_URL, { timeout: 45_000 })',''],[210,'+','  return Promise.race([','y'],[211,'+','    poll(HEALTH_URL, { timeout: 45_000 }),','y'],[212,'+','    onceExit(proc).then(code => { throw new BootError(code) }),','y'],[213,'+','  ])','y'],[214,' ','}','']];
+const SET={
+ display:{g:'app',title:'Display',intro:'One theme, dark only. These change type and density, never colour.',scope:'This device',rows:[{id:'cf',label:'Coding font',help:'Editor, diff and terminal',type:'seg',value:'JetBrains Mono',options:['JetBrains Mono','Fira Code','IBM Plex Mono','Space Mono']},{id:'dn',label:'Density',help:'Row height in lists and triage',type:'seg',value:'Comfortable',options:['Comfortable','Compact']},{id:'gr',label:'Film grain',help:'The subtle texture on the canvas',type:'toggle',value:true},{id:'ed',label:'Preferred editor',help:'Used by “Open in…”. Only editors found on this machine are listed.',type:'seg',value:'Zed',options:['Zed','VS Code','Cursor','Neovim','Ask']}]},
+ notif:{g:'app',title:'Notifications',intro:'How haro gets your attention when a workspace changes state.',scope:'This device',rows:[{id:'n1',label:'Sound when an agent finishes',help:'Any workspace, not just the open one',type:'toggle',value:true},{id:'n2',label:'Sound',help:'Press to preview',type:'seg',value:'chime',options:['chime','beep','blip','glass']},{id:'n3',label:'Desktop notification',help:'Gate result and agent done, even when haro is in the background',type:'toggle',value:false},{id:'n4',label:'Stay quiet on green',help:'Only interrupt for red gates and plans to approve',type:'toggle',value:false},{id:'n5',label:'Toasts',help:'Where messages appear and for how long',type:'select',value:'Bottom right · 4s'}]},
+ usage:{g:'app',title:'Usage',intro:'Your Claude plan limits, read from your local Claude Code login. haro never changes your sign-in.',scope:'Read only',rows:[{id:'u1',label:'Current session',help:'Resets in 2h 14m',type:'meter',value:42},{id:'u2',label:'This week · all models',help:'Resets Monday 09:00',type:'meter',value:18},{id:'u3',label:'This week · Opus',help:'Resets Monday 09:00',type:'meter',value:7},{id:'u4',label:'Spent through haro this month',help:'10 workspaces',type:'value',value:'$38.20'}]},
+ system:{g:'app',title:'System',intro:'Where haro keeps its state and how it talks to your machine.',scope:'This device',rows:[{id:'s1',label:'Data folder',help:'Worktrees, logs and gate history',type:'input',value:'~/.haro'},{id:'s2',label:'Shell',help:'Terminal and setup scripts',type:'input',value:'/bin/zsh'},{id:'s3',label:'Launch at login',help:'',type:'toggle',value:false},{id:'s4',label:'Updates',help:'haro 0.14.2 · up to date',type:'select',value:'Stable'}]},
+ git:{g:'proj',title:'Git',intro:'Where new workspaces branch from and how step 4 delivers.',scope:'Team · .haro/config.toml',rows:[{id:'g1',label:'Base branch',help:'New workspaces fork from the origin/ tip',type:'select',value:'main'},{id:'g2',label:'Remote',help:'Pushes and pull requests go through origin',type:'value',value:'HaziqLucii/haro · synced 3m ago'},{id:'g3',label:'Ship mode',help:'Which actions the ship step offers',type:'seg',value:'PR + merge',options:['PR only','Merge only','PR + merge']},{id:'g4',label:'Delete branch after merge',help:'',type:'toggle',value:true}]},
+ setup:{g:'proj',title:'Setup',intro:'Commands each new workspace runs. Scripts get $HARO_PORT, $HARO_WORKSPACE_PATH and $HARO_ROOT_PATH.',scope:'Personal · .haro/local.toml',rows:[{id:'st1',label:'Setup',help:'Runs once when the worktree is created',type:'input',value:'npm install --prefix frontend'},{id:'st2',label:'Dev server',help:'Started from the app strip · ⌘R',type:'input',value:'npm --prefix frontend run dev'},{id:'st3',label:'Use login shell',help:'Needed for nvm, asdf, pyenv',type:'toggle',value:true}]},
+ gate:{g:'proj',title:'Gate',intro:'The project’s definition of correct. Every workspace inherits it and can’t merge until it is green.',scope:'Team · .haro/config.toml',rows:[{id:'ga1',sec:'Blocks merge',label:'Runner',help:'JS/TS suite with the live grid',type:'select',value:'Vitest'},{id:'ga2',label:'Run in',help:'Subfolder for monorepos',type:'input',value:'frontend/'},{id:'ga3',label:'Scope',help:'All tests is slower and always trustworthy',type:'seg',value:'All tests',options:['All tests','Impacted only']},{id:'ga4',label:'Test the merge result',help:'Run on the worktree merged onto the latest base',type:'toggle',value:false},{id:'ga5',label:'Flaky guard',help:'Re-run once on red; a pass on retry doesn’t block',type:'toggle',value:false},{id:'ga6',label:'Coverage guard',help:'Block when coverage drops by more than this',type:'select',value:'Off'},{id:'ga7',sec:'Advisory · never blocks',label:'Things to look at',help:'Added lines no test ran, files no test imports, removed tests, touched secrets',type:'toggle',value:true},{id:'ga8',label:'Per-line proof',help:'Mark which added lines the green suite ran in the ship diff',type:'toggle',value:true},{id:'ga9',label:'Mutation score',help:'Plant small mistakes in the diff and check the tests notice',type:'seg',value:'On demand',options:['Off','On demand','Every run']}]},
+ agent:{g:'proj',title:'Agent',intro:'Defaults for every run. A model or effort picked in the composer still wins.',scope:'Team · .haro/config.toml',rows:[{id:'a1',sec:'Model',label:'Backend',help:'',type:'select',value:'Claude Code (cloud)'},{id:'a2',label:'Default model',help:'Opus is ~5× the cost; keep it for hard tasks',type:'seg',value:'Sonnet',options:['Opus','Sonnet','Haiku']},{id:'a3',label:'Effort',help:'More effort spends more thinking tokens',type:'seg',value:'high',options:['low','medium','high']},{id:'a4',sec:'Guardrails',label:'Stop a run above',help:'Hard ceiling per run',type:'input',value:'no limit'},{id:'a5',label:'Warn when a workspace passes',help:'Soft heads-up on total spend',type:'input',value:'$20'},{id:'a6',label:'Agents at once',help:'Extra runs wait in a queue',type:'input',value:'4'},{id:'a7',sec:'Local model',label:'Server URL',help:'OpenAI-compatible endpoint (Ollama, llama.cpp)',type:'input',value:'http://localhost:11434/v1'}]},
+ roles:{g:'proj',title:'Roles',intro:'On by default with sensible picks, so most people never open this page. The composer shows the active role in one line.',scope:'Team · .haro/config.toml',rows:[{id:'r0',label:'Use roles',help:'Off falls back to the single default model',type:'toggle',value:true},{id:'r1',label:'Plan',help:'Runs when “plan first” is on',type:'select',value:'Opus · high'},{id:'r2',label:'Build',help:'Everything else, including “approve plan”',type:'select',value:'Sonnet · high'},{id:'r3',label:'Review',help:'Reads the diff after a green gate',type:'select',value:'Off'},{id:'r4',label:'Scout',help:'Read-only helper that maps the repo first',type:'select',value:'Haiku'}]},
+ env:{g:'proj',title:'Environment',intro:'Seeded into every new workspace’s .env. A fresh worktree doesn’t carry your gitignored secrets, so paste them once here.',scope:'Personal · gitignored',rows:[{id:'e1',label:'.haro/.env',help:'Existing workspaces keep their own copy',type:'code',code:'API_KEY=sk-live-••••••••••••\nDATABASE_URL=postgres://localhost:5432/haro'}]},
+ instr:{g:'proj',title:'Instructions',intro:'A standing prompt appended to every agent run in this project. Team first, then personal.',scope:'Personal · .haro/local.toml',rows:[{id:'i0',label:'Scope',help:'',type:'seg',value:'Personal',options:['Personal','Team']},{id:'i1',label:'Prompt',help:'',type:'code',code:'1. Never commit, merge or open a PR yourself.\n2. When the task is nearly done, update the matching TODO and SKILL files.\n3. Finish with a professional commit message I can copy.'}]}};
+const NAV=[['App',['display','notif','usage','system']],['Project · haro',['git','setup','gate','agent','roles','env','instr']]];
+const SHORT=[['Command palette','⌘K'],['New workspace','⌘N'],['Focus the prompt','⌘I'],['Run agent / commit','⌘↵'],['Go to step 1–4','⌘1–4'],['Run gate','⌘G'],['Go to file','⌘P'],['Run dev server','⌘R'],['Toggle terminal','⌃`'],['Save file','⌘S'],['Open file in your editor','⌘⇧O'],['Next workspace that needs you','⌘J'],['Close / exit','Esc']];
+const BACK=[['h','In progress'],['code-to-check.md',88],['kuro-theme.md',94],['live-gate.md',79,1],['mutation-gate.md',69],['verified-hunks.md',89],['workflow-roles.md',95],['h','Not started'],['anti-vibe-recon.md',0],['desktop.md',0],['h','Done'],['agent-modes.md',100],['autonomy-ladder.md',100],['backlog-v2.md',100]];
+const TODO=[['Stream per-test results over the gate socket',1],['Fill the grid cell as each test reports',1],['Surface the first failure before the run ends',1],['Keep the verdict stable while late tests arrive',0],['Replay a finished run at 4× from the receipt',0]];
+const slug=s=>s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+
+class Component extends DCLogic {
+  state={screen:this.props.startScreen==='dashboard'||!this.props.startScreen||this.props.startScreen==='first run'?'dash':'ws',ws:'electron-optimization',wsState:this.props.workspaceState||'green',step:DEFSTEP[this.props.workspaceState||'green'],overlay:this.props.startScreen==='settings'?'settings':(this.props.startScreen==='first run'||!this.props.startScreen)?'first':null,sTab:'gate',term:false,open:{mut:true},filter:'all',rev:{},tg:{},dirty:false,palQ:'',nwTask:'',nwPre:'feat/',nwRun:true,plan:false,app:false,editor:'Zed',menu:null,codeMode:'diff'};
+  componentDidMount(){this.kd=e=>{const m=e.metaKey||e.ctrlKey;if(m&&e.key==='k'){e.preventDefault();this.setState({overlay:'palette',palQ:''})}else if(m&&e.key==='n'){e.preventDefault();this.setState({overlay:'new'})}else if(e.ctrlKey&&e.key==='`'){this.setState(s=>({term:!s.term}))}else if(m&&e.key==='j'){e.preventDefault();this.nextNeed()}else if(e.key==='Escape'){this.setState({overlay:null,menu:null})}else if(e.key==='?'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){this.setState({overlay:'shortcuts'})}};window.addEventListener('keydown',this.kd)}
+  componentWillUnmount(){window.removeEventListener('keydown',this.kd)}
+  componentDidUpdate(pp){if(pp.workspaceState!==this.props.workspaceState&&this.props.workspaceState)this.setWs(this.props.workspaceState);if(pp.startScreen!==this.props.startScreen){const s=this.props.startScreen;this.setState({screen:s==='dashboard'?'dash':'ws',overlay:s==='settings'?'settings':null})}}
+  nextNeed(){const n=WS.filter(w=>w.g==='need');const i=n.findIndex(w=>w.id===this.state.ws);this.openWs(n[(i+1)%n.length].id)}
+  setWs(s){this.setState({wsState:s,step:DEFSTEP[s]})}
+  openWs(id){const w=WS.find(x=>x.id===id);const s=TOWS[w.st];this.setState({screen:'ws',ws:id,wsState:s,step:DEFSTEP[s],overlay:null})}
+  glyph(st){const [label,c,filled,short]=ST[st];return {label,gColor:c,gBg:filled?c:'transparent',short}}
+  renderVals(){
+    const S=this.state, s=S.wsState, v=V[s], ws=WS.find(w=>w.id===S.ws)||WS[2];
+    const openWs=id=>()=>this.openWs(id);
+    const need=WS.filter(w=>w.g==='need').length;
+    const filters=[['all','All',WS.length]].concat(GROUPS.map(g=>[g[0],g[1],WS.filter(w=>w.g===g[0]).length])).map(([k,l,c])=>{const on=S.filter===k;return {label:l,count:c,pick:()=>this.setState({filter:k}),bg:on?K.ink:'transparent',color:on?'#0b0a09':K.i66,border:on?K.ink:K.line}});
+    const groups=GROUPS.filter(g=>S.filter==='all'||S.filter===g[0]).map(([k,title,hint])=>{const rows=WS.filter(w=>w.g===k).map(w=>{const gl=this.glyph(w.st);const prim=k==='need';return {...w,...gl,open:openWs(w.id),ticks:TICKS[w.st].split('').map(c=>({c:TC[c]})),btnBg:prim?K.ink:'transparent',btnColor:prim?'#0b0a09':K.i86,btnBorder:prim?K.ink:K.i20}});return {title,hint,count:rows.length,rows}}).filter(g=>g.rows.length);
+    const projects=['haro','gate-sandbox'].map(p=>({name:p,items:WS.filter(w=>w.project===p).map(w=>({...w,...this.glyph(w.st),open:openWs(w.id),bg:S.screen==='ws'&&S.ws===w.id?K.p2:'transparent',op:w.st==='merged'?.55:1}))}));
+    const steps=STEPS[s].map(([sub,k],i)=>{const name=STEPNAMES[i];const act=S.step===name;return {n:'0'+(i+1),name,sub,dot:TC[k],go:()=>this.setState({step:name}),bar:act?K.ink:'transparent',bg:act?'#131210':'transparent',nameColor:act?K.ink:K.i66,subColor:k==='r'?K.red:k==='g'?K.green:k==='m'?K.lilac:k==='c'?K.ink:K.i40}});
+    const nextDisabled=s==='running';
+    const next=()=>{if(s==='idle')this.setState({step:'agent'});else if(s==='red')this.setState({step:'agent'});else if(s==='green')this.setState({step:'ship'});else if(s==='merged')this.setState({overlay:'new'})};
+    const lookSrc=s==='red'?LOOK_R:(s==='green'||s==='merged')?LOOK_G:[];
+    const look=lookSrc.map(l=>{const r=S.rev[l.id]||s==='merged';return {...l,op:r?.45:1,boxBg:r?K.ink:'transparent',tick:r?'✓':'',kindColor:l.fail?K.red:K.i66,toggle:()=>this.setState(st=>({rev:{...st.rev,[l.id]:!st.rev[l.id]}}))}});
+    const lookOpen=look.filter(l=>l.op===1).length;
+    const cells=Array.from({length:198},(_,i)=>{let bg=K.line;if(s==='running')bg=i<136?'rgba(65,209,131,.7)':i<140?K.i40:K.line;else if(s==='red')bg=[37,38,121].includes(i)?K.red:'rgba(65,209,131,.7)';else if(s==='green')bg='rgba(65,209,131,.7)';else if(s==='merged')bg='rgba(65,209,131,.4)';return {bg,t:'test '+(i*3+1)}});
+    const details=DET.map(([k,name,meta,pri])=>{const o=!!S.open[k];return {name,nameColor:pri?K.ink:K.i66,isUntested:o&&k==='untested',meta:s==='idle'?'—':(s==='running'&&k!=='grid'&&k!=='impact')?'after the run':meta,sign:o?'−':'+',toggle:()=>this.setState(st=>({open:{...st.open,[k]:!st.open[k]}})),isGrid:o&&k==='grid',isImpact:o&&k==='impact',isCov:o&&k==='cov',isFlaky:o&&k==='flaky',isMut:o&&k==='mut'}});
+    const green=s==='green', merged=s==='merged';
+    const ship={canMerge:green,blocked:!green&&!merged,isMerged:merged,color:green?K.green:merged?K.lilac:s==='red'?K.red:K.i40,border:green?'rgba(65,209,131,.45)':K.i20,
+      title:green?'Gate is green. Ready to merge.':merged?'Merged into origin/main as #232':'Merging is blocked',
+      sub:green?(lookOpen?lookOpen+' thing'+(lookOpen>1?'s':'')+' to look at are still open. They won’t block the merge.':'Everything flagged has been reviewed.'):merged?'Merged 2h ago on a green gate by you.':s==='red'?'3 tests are failing. The gate must be green before this branch can merge.':'The gate hasn’t passed on this tree yet.'};
+    const rc=(l,v,c)=>({l,v,c});
+    const receipt=[rc('Suite',s==='red'?'591 / 594 · 3 failing':s==='running'?'412 / 594 so far':s==='idle'?'not run':'594 / 594 passed',s==='red'?K.red:(green||merged)?K.green:K.i40),rc('Tamper alarm',s==='red'?'1 test removed':'clean',s==='red'?K.red:K.i40),rc('Verified lines',(green||merged)?'361 of 367 added lines ran':'—',K.i40),rc('Mutation',(green||merged)?'82% · 41 / 50 caught':'—',K.i40),rc('Agent','sonnet-5 · high · $9.89',K.i40)];
+    const files=FILES.map(([name,add,del,p],i)=>({name,add,del,proof:p==='p'?K.green:p==='n'?'transparent':K.line,proofT:p==='p'?'all added lines ran':p==='n'?'lines no test ran':'not code',bg:i===0?'#131210':'transparent'}));
+    const diff=DIFF.map(([n,sign,text,ran])=>({n,sign,text,mark:ran==='y'?'●':ran==='n'?'○':'',mc:ran==='y'?K.green:K.i40,bg:sign==='+'?'rgba(65,209,131,.06)':sign==='-'?'rgba(224,104,94,.07)':'transparent',sc:sign==='+'?K.green:sign==='-'?K.red:K.i40,tc:sign==='-'?K.i66:K.ink}));
+    const stream=s==='idle'?[]:STREAM.map(e=>e.x?{isText:true,isTool:false,text:e.x}:{isTool:true,isText:false,verb:e.v,target:e.t,add:e.a||'',del:e.d||''});
+    // settings
+    const tabDef=SET[S.sTab];
+    const rows=tabDef.rows.map(r=>{const val=S.tg[r.id]!==undefined?S.tg[r.id]:r.value;const on=!!val;return {...r,value:typeof val==='boolean'?'':val,sec:r.sec||'',isToggle:r.type==='toggle',isSelect:r.type==='select',isInput:r.type==='input',isValue:r.type==='value',isMeter:r.type==='meter',isSeg:r.type==='seg',isCode:r.type==='code',pct:r.type==='meter'?r.value+'%':'',
+      tBg:on?K.ink:'transparent',tBorder:on?K.ink:K.i40,kBg:on?'#0b0a09':K.i40,kLeft:on?'18px':'2px',flip:()=>this.setState(st=>({dirty:true,tg:{...st.tg,[r.id]:!(st.tg[r.id]!==undefined?st.tg[r.id]:r.value)}})),
+      opts:(r.options||[]).map(o=>({label:o,bg:o===val?K.ink:'transparent',color:o===val?'#0b0a09':K.i66,pick:()=>this.setState(st=>({dirty:true,tg:{...st.tg,[r.id]:o}}))}))}});
+    const setNav=NAV.map(([title,ids])=>({title,items:ids.map(id=>({title:SET[id].title,pick:()=>this.setState({sTab:id}),bg:S.sTab===id?K.p2:'transparent',color:S.sTab===id?K.ink:K.i66}))}));
+    // palette
+    const q=S.palQ.toLowerCase();
+    const act=[['Open this file in '+S.editor,'⌘⇧O',()=>this.setState({overlay:null})],['Open worktree in '+S.editor,'',()=>this.setState({overlay:null})],['Next workspace that needs you','⌘J',()=>{this.setState({overlay:null});this.nextNeed()}],['New workspace','⌘N',()=>this.setState({overlay:'new'})],['Run gate on this workspace','⌘G',()=>this.setState({overlay:null,screen:'ws',wsState:'running',step:'verify'})],['Open backlog','',()=>this.setState({overlay:'backlog'})],['Toggle terminal','⌃`',()=>this.setState(st=>({overlay:null,term:!st.term}))],['Keyboard shortcuts','?',()=>this.setState({overlay:'shortcuts'})]];
+    const sets=[['Gate settings','gate'],['Agent settings','agent'],['Notifications','notif'],['Usage','usage']];
+    const pal=[];let first=true;const push=(head,arr)=>{const f=arr.filter(a=>!q||a.label.toLowerCase().includes(q));if(!f.length)return;pal.push({isHead:true,isItem:false,label:head});f.forEach(a=>{pal.push({...a,isHead:false,isItem:true,bg:first?K.p2:'transparent'});first=false})};
+    push('Workspaces',WS.map(w=>({label:w.name,meta:w.project,...this.glyph(w.st),run:()=>this.openWs(w.id)})));
+    push('Actions',act.map(([label,meta,run])=>({label,meta,run,gBg:'transparent',gColor:K.line})));
+    push('Settings',sets.map(([label,id])=>({label,meta:'settings',gBg:'transparent',gColor:K.line,run:()=>this.setState({overlay:'settings',sTab:id})})));
+    const EDS=[['Zed','zed file:line'],['VS Code','code --goto'],['Cursor','cursor --goto'],['WebStorm','webstorm --line'],['Sublime Text','subl file:line'],['Neovim','in Shell'],['Helix','in Shell'],['File manager','xdg-open']];
+    const pickEd=n=>()=>this.setState(st=>({editor:n==='File manager'?st.editor:n,tg:n==='File manager'?st.tg:{...st.tg,ed:n},menu:null,term:['Neovim','Helix'].includes(n)?true:st.term}));
+    const editors=EDS.filter(e=>e[0]!=='File manager').map(([name,hint])=>({name:name+(name===S.editor?'  ✓':''),hint,pick:pickEd(name)}));
+    const editorsWt=EDS.map(([name,hint])=>({name:name+(name===S.editor?'  ✓':''),hint:hint.replace(' file:line','').replace(' --goto','').replace(' --line',''),pick:pickEd(name)}));
+    const T={kw:['#e8e2d9','normal',700],str:['#c8b59a','normal',400],num:['#c8b59a','normal',400],com:['rgba(216,208,197,.42)','italic',400],fn:['#e8e2d9','normal',400],p:['rgba(216,208,197,.8)','normal',400],hit:['#0b0a09','normal',400]};
+    const SRC=[
+      [201,[['function','kw'],[' ','p'],['pickPort','fn'],['() {','p']],'▾'],
+      [202,[['  ','p'],['const','kw'],[' fixed = ','p'],['Number','fn'],['(process.env.HARO_DESKTOP_PORT || ','p'],['41417','num'],[')','p']]],
+      [203,[['  ','p'],['if','kw'],[' (','p'],['isFree','fn'],['(fixed)) ','p'],['return','kw'],[' fixed','p']]],
+      [204,[['  ','p'],['return','kw'],[' ','p'],['0','num'],[' ','p'],['// OS-assigned fallback','com']]],
+      [205,[['}','p']]],
+      [206,[['','p']]],
+      [207,[['const','kw'],[' pathReady = ','p'],['scrapeLoginShell','fn'],['()  ','p'],['// async, overlaps window','com']]],
+      [208,[['','p']]],
+      [209,[['async','kw'],[' ','p'],['function','kw'],[' ','p'],['waitForHealth','fn'],['(proc) {','p']],'▾'],
+      [210,[['  ','p'],['return','kw'],[' Promise.','p'],['race','fn'],['([','p']],'▾'],
+      [211,[['    ','p'],['poll','fn'],['(','p'],['HEALTH_URL','hit'],[', { timeout: ','p'],['45_000','num'],[' }),','p']],'',1],
+      [212,[['    ','p'],['onceExit','fn'],['(proc).','p'],['then','fn'],['(code => { ','p'],['throw','kw'],[' ','p'],['new','kw'],[' ','p'],['BootError','fn'],['(code) }),','p']]],
+      [213,[['  ','p'],['])','p']]],
+      [214,[['}','p']]],
+      [215,[['','p']]],
+      [216,[['module','p'],['.exports = { ','p'],['pickPort','fn'],[', ','p'],['waitForHealth','fn'],[' }','p']]]];
+    const CHG={202:'a',203:'a',204:'a',207:'m',210:'a',211:'a',212:'a',213:'a'};
+    const editLines=SRC.map(([n,toks,fold,cur])=>({n,fold:fold||'',cursor:!!cur,bg:cur?'#161412':'transparent',nc:cur?'#d8d0c5':'rgba(216,208,197,.3)',gut:CHG[n]==='a'?'rgba(65,209,131,.55)':CHG[n]==='m'?'rgba(216,208,197,.42)':'transparent',
+      toks:toks.map(([t,k])=>({t,c:T[k][0],fs:T[k][1],fw:T[k][2],bg:k==='hit'?'#c8b59a':'transparent'}))}));
+    const nwBranch=S.nwPre+(slug(S.nwTask)||'task-name');
+    return {
+      grain:this.props.grain!==false,
+      editLines, isEdit:S.codeMode==='edit', isDiff:S.codeMode==='diff',
+      setDiff:()=>this.setState({codeMode:'diff'}), setEdit:()=>this.setState({codeMode:'edit'}),
+      diffBg:S.codeMode==='diff'?K.ink:'transparent', diffColor:S.codeMode==='diff'?'#0b0a09':K.i66,
+      editBg:S.codeMode==='edit'?K.ink:'transparent', editColor:S.codeMode==='edit'?'#0b0a09':K.i66,
+      editorName:(S.tg.ed&&S.tg.ed!=='Ask')?S.tg.ed:S.editor, editors, editorsWt, menuFile:S.menu==='file', menuWt:S.menu==='wt',
+      toggleOpenFile:()=>this.setState(st=>({menu:st.menu==='file'?null:'file'})), toggleOpenWt:()=>this.setState(st=>({menu:st.menu==='wt'?null:'wt'})),
+      crumb1:S.screen==='dash'?'Triage':ws.project, crumb2:S.screen==='dash'?'':ws.name,
+      isDash:S.screen==='dash', isWs:S.screen==='ws', navDashBg:S.screen==='dash'?K.p2:'transparent',
+      needCount:need, wsCount:WS.length, filters, groups, projects,
+      goDash:()=>this.setState({screen:'dash',overlay:null}),
+      openPalette:()=>this.setState({overlay:'palette',palQ:''}), openShortcuts:()=>this.setState({overlay:'shortcuts'}),
+      openSettings:()=>this.setState({overlay:'settings'}), openRoles:()=>this.setState({overlay:'settings',sTab:'roles'}),
+      openNew:()=>this.setState({overlay:'new'}), openAdd:()=>this.setState({overlay:'add'}), openBacklog:()=>this.setState({overlay:'backlog'}),
+      wsName:ws.name, wsProject:ws.project, wsBranch:ws.branch, wsSlug:ws.id,
+      steps, next, nextLabel:v.next, nextBg:nextDisabled?'transparent':K.ink, nextColor:nextDisabled?K.i40:'#0b0a09',
+      stepAgent:S.step==='agent', stepCode:S.step==='code', stepVerify:S.step==='verify', stepShip:S.step==='ship',
+      goAgent:()=>this.setState({step:'agent'}), goCode:()=>this.setState({step:'code'}), goVerify:()=>this.setState({step:'verify'}),
+      v, isRunning:s==='running', rerun:()=>this.setWs('running'),
+      look, lookOpen, lookHas:look.length>0, lookEmpty:look.length===0,
+      lookTitle:s==='red'?'Failing & flagged':'Needs your eyes', lookHint:s==='red'?'Failures block the merge':'Advisory · never blocks the merge',
+      lookEmptyText:s==='running'?'Appears when the run finishes.':'Nothing to review until the gate has run.',
+      lookRail:look.filter(l=>l.op===1).slice(0,3).map(l=>({s:(l.fail?'✕ ':'○ ')+l.path.split('/').pop()})),
+      details, cells, ship, receipt, merge:()=>this.setWs('merged'), files, diff,
+      stream, streamEmpty:stream.length===0, streamHas:stream.length>0,
+      suggestions:[{t:'Add a multiply helper to lib/math with tests',src:'backlog'},{t:'Fix: shipping total rounds half-cents down',src:'issue #41'},{t:'Document the gate receipt format in docs/',src:'backlog'}],
+      planBorder:S.plan?K.ink:K.line, planColor:S.plan?K.ink:K.i66, planMark:S.plan?'●':'○', togglePlan:()=>this.setState(st=>({plan:!st.plan})),
+      termOpen:S.term, termLabel:S.term?'Hide terminal':'Terminal', toggleTerm:()=>this.setState(st=>({term:!st.term})),
+      appLabel:S.app?'running':'stopped', appBtn:S.app?'Stop':'Run', toggleApp:()=>this.setState(st=>({app:!st.app})),
+      statePicks:['idle','running','red','green','merged'].map(k=>({k,pick:()=>this.setWs(k),bg:s===k?K.ink:'transparent',color:s===k?'#0b0a09':K.i66})),
+      ovAny:!!S.overlay, ovSettings:S.overlay==='settings', ovPalette:S.overlay==='palette', ovShortcuts:S.overlay==='shortcuts', ovNew:S.overlay==='new', ovAdd:S.overlay==='add', ovBacklog:S.overlay==='backlog', ovFirst:S.overlay==='first', openFirst:()=>this.setState({overlay:'first'}), openGateSettings:()=>this.setState({overlay:'settings',sTab:'gate'}), nextNeed:()=>this.nextNeed(), tamper:s==='red',
+      firstRun:[['Git repository','main · origin linked',K.green,1],['Test runner','Vitest in src/ · 128 tests',K.green,1],['Baseline run','all 128 pass on main · 1.4s',K.green,1],['Dev server','npm run dev · port 4500',K.i66,1],['Coverage','no provider found',K.i40,0,'Install'],['Secrets','.env is gitignored',K.i40,0,'Copy to Environment']].map(([l,v,c,f,fix])=>({l,v,c,bg:f?c:'transparent',fix:fix||''})),
+      close:()=>this.setState({overlay:null}), stop:e=>e.stopPropagation(),
+      tab:{title:tabDef.title,intro:tabDef.intro,scope:tabDef.scope,rows}, setNav, isGateTab:S.sTab==='gate', dirty:S.dirty, discard:()=>this.setState({dirty:false,tg:{}}),
+      palQ:S.palQ, onPalQ:e=>this.setState({palQ:e.target.value}), palItems:pal,
+      shortcuts:SHORT.map(([l,k])=>({l,k})),
+      nwTask:S.nwTask, onNwTask:e=>this.setState({nwTask:e.target.value}), nwBranch,
+      prefixes:['feat/','fix/','chore/','docs/','refactor/','test/'].map(p=>({p,pick:()=>this.setState({nwPre:p}),border:S.nwPre===p?K.ink:K.line,color:S.nwPre===p?K.ink:K.i66})),
+      nwRunBg:S.nwRun?K.ink:'transparent', nwRunTick:S.nwRun?'✓':'', toggleNwRun:()=>this.setState(st=>({nwRun:!st.nwRun})), nwCta:S.nwRun?'Create & run agent':'Create workspace',
+      createWs:()=>this.setState({overlay:null,screen:'ws',ws:'agent-haro',wsState:'idle',step:'agent'}),
+      addOpts:[{t:'Open a folder on disk',d:'Any git repo you already have'},{t:'Clone from GitHub',d:'Paste a URL or pick from your repos'},{t:'Start a new project',d:'Make a folder, git init, optionally link a remote'}],
+      backlog:BACK.map(b=>b[0]==='h'?{isHead:true,isItem:false,label:b[1]}:{isHead:false,isItem:true,label:b[0],pct:b[1]+'%',bg:b[2]?K.p2:'transparent'}),
+      todo:TODO.map(([t,d])=>({t,tick:d?'✓':'',bg:d?K.ink:'transparent',c:d?K.i40:K.ink}))
+    };
+  }
+}
+</script>
+</body>
+</html>

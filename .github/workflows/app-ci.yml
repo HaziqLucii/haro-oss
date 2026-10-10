@@ -1,0 +1,58 @@
+name: app-ci
+
+# The Flutter client's suite: `flutter analyze` and `flutter test`. Split from ci.yml because
+# it is the expensive one: about ten minutes on the 2-core runner a private repo gets, against
+# about two for the backend, and the repo is on the Free plan (2,000 Linux minutes a month,
+# spending limit $0, so running out blocks runs instead of billing). Read the COST NOTE in
+# ci.yml for the rest of the reasoning; what is specific to this workflow:
+#
+#   paths                Runs only when app/ (or this file) changed. A backend, docs,
+#                        backlog or notes commit never pays for it.
+#   no push to main      A PR run already tested the same code, and the post-merge run
+#                        would pay ten more minutes for the same answer. The public mirror
+#                        runs this workflow for free after every publish
+#                        (scripts/publish-oss.sh), and `flutter test` takes about a minute
+#                        locally before a PR. Start it by hand from the Actions tab
+#                        (workflow_dispatch) when you want a run on main.
+#   timeout-minutes      A run takes about ten minutes; a hung one dies at fifteen.
+#   flutter-version      The same pin as release.yml, so CI and the release build cannot
+#                        drift.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/app-ci.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: app · flutter analyze + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.5
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
