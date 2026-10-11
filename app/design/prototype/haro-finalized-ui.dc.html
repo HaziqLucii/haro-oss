@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Regular.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Bold.woff2) format('woff2');font-weight:700}
+@font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk-Variable.woff2) format('woff2');font-weight:300 700}
+@font-face{font-family:'Fraunces';src:url(fonts/Fraunces-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:'Kanji';src:url(fonts/NotoSerifJP-kanji.woff2) format('woff2')}
+html,body{margin:0;background:#050404;color:#d8d0c5;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#d8d0c5}a:hover{color:#fff}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:inherit}
+@keyframes haroFade{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+<div style="min-height:100vh;padding:24px max(16px,2vw) 40px;display:flex;flex-direction:column;gap:14px">
+  <div style="max-width:1440px;width:100%;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px">
+    <div>
+      <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(216,208,197,.42)">HARO · FINALIZED UI · LIVE PROTOTYPE</div>
+      <div style="font-size:24px;font-weight:500;letter-spacing:-.015em;margin-top:8px">Every part of haro, clickable. Open a workspace and take a task from agent to ship.</div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.66)">
+      <span>⌘K commands</span><span>⌘N new workspace</span><span>⌘1–4 steps</span><span>⌘S save</span><span>? all shortcuts</span>
+    </div>
+  </div>
+
+  <div ref="{{ wrapRef }}" style="max-width:1440px;width:100%;margin:0 auto;height:{{ wrapH }}">
+  <div ref="{{ frameRef }}" style="width:1440px;height:860px;transform:scale({{ scale }});transform-origin:0 0;border:1px solid rgba(216,208,197,.2);border-radius:2px;overflow:hidden;background:#0b0a09;position:relative;display:flex;flex-direction:column">
+
+    <sc-if value="{{ chrome }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:none">
+        <div style="height:46px;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid rgba(216,208,197,.12)">
+          <button onClick="{{ toggleNav }}" title="Toggle sidebar" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:2px;color:rgba(216,208,197,.66)" style-hover="background:#1b1915;color:#d8d0c5">{{ navIcon }}</button>
+          <span style="font-family:'Fraunces',serif;font-size:20px;font-weight:500">haro.</span>
+          <span style="width:1px;height:16px;background:rgba(216,208,197,.14)"></span>
+          <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ crumbA }}<span style="color:#d8d0c5">{{ crumbB }}</span></span>
+          <span style="flex:1"></span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;color:rgba(216,208,197,.42)">WHO WRITES THE CODE</span>
+            <div style="display:flex;border:1px solid rgba(216,208,197,.25);border-radius:2px;padding:2px;gap:2px">
+              <sc-for list="{{ modeOpts }}" as="mo" hint-placeholder-count="2"><button onClick="{{ mo.pick }}" title="{{ mo.t }}" style="height:24px;padding:0 10px;border-radius:1px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;background:{{ mo.bg }};color:{{ mo.c }}">{{ mo.l }}</button></sc-for>
+            </div>
+          </div>
+          <button onClick="{{ openPalette }}" style="display:flex;align-items:center;justify-content:space-between;gap:24px;height:28px;padding:0 8px 0 12px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.42);min-width:230px" style-hover="border-color:rgba(216,208,197,.3)"><span>Search or run a command</span><span style="font-family:'Space Mono',monospace;font-size:10px">⌘K</span></button>
+          <button onClick="{{ goTriage }}" style="display:flex;align-items:center;gap:8px;height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.08em" style-hover="border-color:rgba(216,208,197,.3)"><span style="width:7px;height:7px;background:#e0685e"></span>{{ needTxt }}</button>
+          <button onClick="{{ openShortcuts }}" title="Keyboard shortcuts (?)" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">?</button>
+          <button onClick="{{ openSettings }}" title="Settings ⌘," style="height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Settings</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ focus }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none;height:34px;display:flex;align-items:center;gap:14px;padding:0 12px 0 16px;border-bottom:1px solid rgba(216,208,197,.12);animation:haroFade .25s ease">
+        <span style="font-family:'Fraunces',serif;font-size:16px;font-weight:500">haro.</span>
+        <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:rgba(216,208,197,.42)">STOP DOUBLE CREDITS · 02 CODE · FOCUS</span>
+        <span style="flex:1"></span>
+        <span style="display:flex;align-items:center;gap:7px;font-family:'Space Mono',monospace;font-size:10.5px"><span style="width:7px;height:7px;background:{{ g.color }}"></span><span style="color:{{ g.color }};letter-spacing:.14em">{{ g.key }}</span><span style="color:rgba(216,208,197,.42)">{{ g.count }}</span></span>
+        <button onClick="{{ toggleFocus }}" style="height:24px;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-family:'Space Mono',monospace;font-size:10.5px" style-hover="border-color:rgba(216,208,197,.45)">Exit focus ⎋</button>
+      </div>
+    </sc-if>
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:{{ navW }} minmax(0,1fr)">
+      <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ true }}">
+        <aside style="border-right:1px solid rgba(216,208,197,.12);padding:14px 8px;display:flex;flex-direction:column;gap:18px;min-height:0;overflow:auto;animation:haroFade .2s ease">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <button onClick="{{ goTriage }}" style="display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 10px;border-radius:2px;font-size:13.5px;background:{{ triBg }}" style-hover="background:#131210"><span>Triage</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ wsCount }}</span></button>
+            <button onClick="{{ openBacklog }}" style="display:flex;justify-content:space-between;align-items:center;height:30px;padding:0 10px;border-radius:2px;font-size:13.5px" style-hover="background:#131210"><span>Backlog</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">4 open</span></button>
+          </div>
+          <sc-for list="{{ navProjects }}" as="np" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:1px">
+              <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42);padding:0 10px 5px">{{ np.name }}</div>
+              <sc-for list="{{ np.items }}" as="w" hint-placeholder-count="3">
+                <div onClick="{{ w.open }}" style="display:flex;align-items:center;gap:9px;height:28px;padding:0 10px;border-radius:2px;cursor:pointer;background:{{ w.bg }}" style-hover="background:#131210">
+                  <span style="width:7px;height:7px;flex:none;background:{{ w.fill }};border:1px solid {{ w.c }}"></span>
+                  <span style="font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.n }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:9.5px;color:{{ w.c }}">{{ w.s }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          <div style="flex:1"></div>
+          <button onClick="{{ openNew }}" style="display:flex;align-items:center;justify-content:space-between;height:34px;padding:0 12px;background:#d8d0c5;color:#0b0a09;border-radius:2px;font-size:13.5px;font-weight:500;flex:none"><span>New workspace</span><span style="font-family:'Space Mono',monospace;font-size:10.5px">⌘N</span></button>
+          <sc-if value="{{ showXpFooter }}" hint-placeholder-val="{{ true }}"><div style="flex:none;margin:2px -8px -14px;padding:14px 16px 14px;border-top:1px solid rgba(216,208,197,.12);display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:28px;height:28px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid rgba(216,208,197,.35);border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;font-weight:700">{{ lvl }}</span>
+              <div style="flex:1;min-width:0"><div style="font-size:13px">{{ rankName }}</div><div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">{{ xpTxt }}</div></div>
+              <button onClick="{{ toggleXp }}" title="How XP works" style="width:22px;height:22px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">?</button>
+            </div>
+            <span style="height:3px;background:rgba(216,208,197,.12)"><span style="display:block;height:3px;width:{{ xpPct }};background:#d8d0c5"></span></span>
+            <div style="display:flex;align-items:center;gap:8px"><div style="display:flex;gap:2px;flex:1"><sc-for list="{{ streak }}" as="sk" hint-placeholder-count="14"><span style="flex:1;height:12px;background:{{ sk.c }}"></span></sc-for></div><span style="font-family:'Space Mono',monospace;font-size:10px;white-space:nowrap">{{ streakN }}d</span></div>
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;line-height:1.5;color:rgba(216,208,197,.66)"><span style="color:#d8d0c5">{{ xpLast }}</span> {{ xpLastWhy }}</div>
+          </div></sc-if>
+        </aside>
+      </sc-if>
+      <sc-if value="{{ navMini }}" hint-placeholder-val="{{ false }}">
+        <aside style="border-right:1px solid rgba(216,208,197,.12);display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0;animation:haroFade .2s ease">
+          <button onClick="{{ toggleNav }}" title="Expand sidebar" style="width:32px;height:28px;border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)" style-hover="background:#1b1915;color:#d8d0c5">»</button>
+          <span style="width:24px;height:1px;background:rgba(216,208,197,.12);margin:4px 0"></span>
+          <sc-for list="{{ navFlat }}" as="nf" hint-placeholder-count="7">
+            <span onClick="{{ nf.open }}" title="{{ nf.t }}" style="cursor:pointer;width:32px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:2px;background:{{ nf.bg }};margin-top:{{ nf.mt }}"><span style="width:8px;height:8px;background:{{ nf.fill }};border:1px solid {{ nf.c }}"></span></span>
+          </sc-for>
+          <span style="flex:1"></span>
+          <button onClick="{{ toggleXp }}" title="{{ rankName }} · level {{ lvl }}" style="width:32px;height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700">{{ lvl }}<span style="width:18px;height:2px;background:rgba(216,208,197,.12)"><span style="display:block;width:{{ xpPct }};height:2px;background:#d8d0c5"></span></span></button>
+          <span onClick="{{ openNew }}" title="New workspace ⌘N" style="cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:#d8d0c5;color:#0b0a09;border-radius:2px;font-family:'Space Mono',monospace;font-size:15px">+</span>
+        </aside>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;min-height:0;min-width:0">
+        <sc-if value="{{ chromeWs }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:none">
+        <div style="padding:12px 22px 10px;display:flex;align-items:flex-end;justify-content:space-between">
+          <div><div style="font-size:18px;font-weight:500">{{ wsTitle }}</div><div style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42);margin-top:3px">{{ wsSub }}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat({{ stepN }},minmax(0,1fr)) auto;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12)">
+          <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+            <button onClick="{{ s.go }}" style="text-align:left;padding:10px 18px;border-right:1px solid rgba(216,208,197,.08);border-top:2px solid {{ s.top }};margin-top:-1px;background:{{ s.bg }}" style-hover="background:#131210">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ s.n }}</span><span style="width:6px;height:6px;background:{{ s.dot }}"></span><span style="font-size:15px;font-weight:500;color:{{ s.nc }}">{{ s.name }}</span></div>
+              <div style="font-family:'Space Mono',monospace;font-size:10.5px;margin-top:3px;color:{{ s.sc }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.sub }}</div>
+            </button>
+          </sc-for>
+          <div style="display:flex;align-items:center;padding:0 16px"><button onClick="{{ nx.go }}" style="height:34px;display:flex;align-items:center;padding:0 16px;border-radius:2px;background:{{ nx.bg }};color:{{ nx.c }};border:1px solid {{ nx.b }};font-size:13.5px;font-weight:500;white-space:nowrap">{{ nx.l }}</button></div>
+        </div>
+          </div>
+        </sc-if>
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:{{ gridCols }}">
+<sc-if value="{{ isOther }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-rows:minmax(0,1fr) auto {{ panelH }};min-height:0;min-width:0;animation:haroFade .25s ease">
+        <div style="overflow:auto;min-height:0">
+          <sc-if value="{{ isTriage }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:1100px;margin:0 auto;padding:40px 48px 80px">
+              <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(216,208,197,.42)">TRIAGE · {{ wsCount }} WORKSPACES · 3 PROJECTS</div>
+              <div style="font-size:34px;font-weight:500;letter-spacing:-.02em;margin-top:12px">{{ triHead }}</div>
+              <div style="font-size:15px;color:rgba(216,208,197,.66);margin-top:8px;max-width:620px;line-height:1.5">Sorted by what needs a decision. Click a row to open it.</div>
+              <sc-for list="{{ triGroups }}" as="tg" hint-placeholder-count="3">
+                <div style="margin-top:32px">
+                  <div style="display:flex;gap:12px;align-items:baseline;padding-bottom:8px;border-bottom:1px solid rgba(216,208,197,.2)"><span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em">{{ tg.t }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ tg.n }}</span><span style="font-size:13px;color:rgba(216,208,197,.42)">{{ tg.hint }}</span></div>
+                  <sc-for list="{{ tg.rows }}" as="tr" hint-placeholder-count="2">
+                    <div onClick="{{ tr.open }}" style="display:grid;grid-template-columns:92px minmax(0,1.1fr) minmax(0,1.3fr) 70px auto;gap:18px;align-items:center;min-height:58px;padding:8px 0;border-bottom:1px solid rgba(216,208,197,.08);cursor:pointer" style-hover="background:#131210">
+                      <span style="display:flex;align-items:center;gap:8px;padding-left:8px"><span style="width:8px;height:8px;background:{{ tr.fill }};border:1px solid {{ tr.c }}"></span><span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;color:{{ tr.c }}">{{ tr.s }}</span></span>
+                      <div style="min-width:0"><div style="font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ tr.n }}</div><div style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42);margin-top:3px">{{ tr.p }} · {{ tr.mode }}</div></div>
+                      <div style="font-size:13.5px;color:rgba(216,208,197,.66)">{{ tr.d }}</div>
+                      <div style="display:flex;gap:3px"><sc-for list="{{ tr.ticks }}" as="tk" hint-placeholder-count="4"><span style="width:12px;height:3px;background:{{ tk.c }}"></span></sc-for></div>
+                      <span style="height:28px;display:flex;align-items:center;padding:0 12px;border-radius:2px;font-size:13px;white-space:nowrap;background:{{ tr.bbg }};color:{{ tr.bc }};border:1px solid {{ tr.bb }};margin-right:8px">{{ tr.a }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isAgentStep }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:760px;margin:0 auto;padding:30px 32px 30px;display:flex;flex-direction:column;gap:18px">
+              <sc-if value="{{ agentEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:40px 0 10px">
+                  <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(216,208,197,.42)">STEP 1 · AGENT</div>
+                  <div style="font-size:28px;font-weight:500;letter-spacing:-.02em;margin-top:10px">What should the agent do?</div>
+                  <div style="font-size:15px;color:rgba(216,208,197,.66);line-height:1.55;margin-top:8px;max-width:540px">Describe the task below. The agent works in its own copy of the repo, and the gate runs by itself when it finishes.</div>
+                  <div style="display:flex;flex-direction:column;margin-top:20px;border-top:1px solid rgba(216,208,197,.12)">
+                    <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="3"><button onClick="{{ sg.use }}" style="display:flex;justify-content:space-between;text-align:left;padding:12px 0;border-bottom:1px solid rgba(216,208,197,.08);font-size:14px;color:rgba(216,208,197,.86)" style-hover="color:#fff"><span>{{ sg.t }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ sg.src }}</span></button></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-for list="{{ stream }}" as="ev" hint-placeholder-count="4">
+                <div style="animation:haroFade .3s ease">
+                  <sc-if value="{{ ev.isUser }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.42)">YOU</div><div style="margin-top:8px;padding:13px 15px;background:#131210;border:1px solid rgba(216,208,197,.08);border-radius:2px;font-size:14.5px;line-height:1.55">{{ ev.t }}</div></sc-if>
+                  <sc-if value="{{ ev.isLabel }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.42)">{{ ev.t }}</div></sc-if>
+                  <sc-if value="{{ ev.isTool }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.66)"><span style="width:5px;height:5px;background:rgba(216,208,197,.42)"></span><span style="color:#d8d0c5;width:44px">{{ ev.v }}</span><span>{{ ev.t }}</span><span style="color:#41d183">{{ ev.a }}</span><span style="color:#e0685e">{{ ev.d }}</span></div></sc-if>
+                  <sc-if value="{{ ev.isText }}" hint-placeholder-val="{{ false }}"><div style="font-size:15px;line-height:1.6;color:rgba(216,208,197,.86)">{{ ev.t }}</div></sc-if>
+                </div>
+              </sc-for>
+              <sc-if value="{{ agentBusy }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px;font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.66)"><span style="width:6px;height:6px;background:#d8d0c5"></span>working… <button onClick="{{ stopAgent }}" style="font-family:'Space Mono',monospace;font-size:11px;padding:2px 8px;border:1px solid rgba(216,208,197,.2);border-radius:2px">Stop</button></div></sc-if>
+              <sc-if value="{{ agentDoneLine }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid rgba(216,208,197,.08);font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)"><span>done · the gate runs by itself</span><button onClick="{{ goCode }}" style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Review changes in code →</button></div></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isVerifyStep }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:880px;margin:0 auto;padding:36px 32px 80px">
+              <div style="display:flex;align-items:center;gap:10px"><span style="width:10px;height:10px;background:{{ g.color }}"></span><span style="font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.22em;color:{{ g.color }}">{{ g.key }}</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">vitest · all tests · {{ g.when }}</span></div>
+              <div style="font-size:40px;font-weight:500;letter-spacing:-.025em;line-height:1.1;margin-top:14px">{{ g.head }}</div>
+              <div style="font-size:15.5px;line-height:1.55;color:rgba(216,208,197,.66);max-width:620px;margin-top:10px">{{ g.sub }}</div>
+              <sc-if value="{{ g.isRun }}" hint-placeholder-val="{{ false }}"><div style="height:2px;background:rgba(216,208,197,.12);margin-top:20px;max-width:620px"><div style="height:2px;width:{{ g.pct }};background:#d8d0c5"></div></div></sc-if>
+              <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:26px;border-top:1px solid rgba(216,208,197,.12);border-bottom:1px solid rgba(216,208,197,.12)">
+                <sc-for list="{{ metrics }}" as="mt" hint-placeholder-count="5"><div style="padding:13px 0 15px 14px;border-right:1px solid rgba(216,208,197,.08)"><div style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:rgba(216,208,197,.42)">{{ mt.l }}</div><div style="font-size:19px;font-weight:500;margin-top:5px;color:{{ mt.c }}">{{ mt.v }}</div></div></sc-for>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:18px">
+                <button onClick="{{ nx.go }}" style="height:36px;padding:0 16px;border-radius:2px;background:{{ nx.bg }};color:{{ nx.c }};border:1px solid {{ nx.b }};font-size:14px;font-weight:500">{{ nx.l }}</button>
+                <button onClick="{{ rerun }}" style="height:36px;padding:0 14px;border-radius:2px;border:1px solid rgba(216,208,197,.2);font-size:14px" style-hover="border-color:rgba(216,208,197,.4)">Run again</button>
+                <button onClick="{{ rerun }}" style="height:36px;padding:0 14px;font-size:14px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Impacted tests only</button>
+              </div>
+              <sc-if value="{{ hasFails }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:44px;display:flex;gap:14px;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;color:#e0685e">FAILING</span><span style="font-size:13px;color:rgba(216,208,197,.42)">These block the merge</span></div>
+                <sc-for list="{{ fails }}" as="fl" hint-placeholder-count="2"><div style="padding:14px 0;border-bottom:1px solid rgba(216,208,197,.08)"><div style="font-family:'Space Mono',monospace;font-size:12.5px">{{ fl.t }}</div><div style="font-size:13.5px;color:rgba(216,208,197,.66);margin-top:4px">{{ fl.d }}</div></div></sc-for>
+              </sc-if>
+              <div style="margin-top:44px;display:flex;gap:14px;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em">NEEDS YOUR EYES</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ eyesOpenN }} open</span><span style="font-size:13px;color:rgba(216,208,197,.42)">Advisory · never blocks · +5 XP each</span></div>
+              <sc-if value="{{ eyesEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 0;font-size:14px;color:rgba(216,208,197,.42)">{{ eyesEmptyTxt }}</div></sc-if>
+              <sc-for list="{{ eyes }}" as="ey" hint-placeholder-count="2">
+                <div style="display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:15px 0;border-bottom:1px solid rgba(216,208,197,.08);opacity:{{ ey.op }}">
+                  <button onClick="{{ ey.toggle }}" style="width:16px;height:16px;margin-top:2px;border:1px solid rgba(216,208,197,.42);border-radius:2px;background:{{ ey.bg }};color:#0b0a09;font-size:11px;line-height:14px;text-align:center">{{ ey.tick }}</button>
+                  <div><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(216,208,197,.66)">{{ ey.k }}</div><div style="font-family:'Space Mono',monospace;font-size:12.5px;margin-top:5px">{{ ey.p }}</div><div style="font-size:13.5px;color:rgba(216,208,197,.66);margin-top:3px">{{ ey.d }}</div></div>
+                  <button onClick="{{ ey.open }}" style="height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.16);border-radius:2px;font-size:12.5px" style-hover="border-color:rgba(216,208,197,.4)">Open in code</button>
+                </div>
+              </sc-for>
+              <div style="margin-top:44px;display:flex;gap:14px;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em">EVIDENCE</span><span style="font-size:13px;color:rgba(216,208,197,.42)">Open any row</span></div>
+              <sc-for list="{{ evidence }}" as="dv" hint-placeholder-count="5">
+                <div style="border-bottom:1px solid rgba(216,208,197,.08)">
+                  <button onClick="{{ dv.toggle }}" style="width:100%;display:grid;grid-template-columns:20px 170px minmax(0,1fr);gap:12px;align-items:center;height:46px;text-align:left" style-hover="background:#131210"><span style="font-family:'Space Mono',monospace;font-size:13px;color:rgba(216,208,197,.42);padding-left:4px">{{ dv.sign }}</span><span style="font-size:14.5px">{{ dv.n }}</span><span style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)">{{ dv.m }}</span></button>
+                  <sc-if value="{{ dv.isGrid }}" hint-placeholder-val="{{ false }}"><div style="padding:4px 0 20px 32px"><div style="display:flex;flex-wrap:wrap;gap:3px;max-width:700px"><sc-for list="{{ cells }}" as="ce" hint-placeholder-count="40"><span style="width:9px;height:9px;background:{{ ce.bg }}"></span></sc-for></div><div style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);margin-top:10px">one square ≈ 3 tests</div></div></sc-if>
+                  <sc-if value="{{ dv.isText }}" hint-placeholder-val="{{ false }}"><div style="padding:0 0 18px 32px;font-size:14px;line-height:1.55;color:rgba(216,208,197,.66);max-width:620px">{{ dv.body }}</div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isShipStep }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:880px;margin:0 auto;padding:36px 32px 80px">
+              <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(216,208,197,.42)">PULL REQUEST TITLE</div>
+              <input value="{{ prTitle }}" onChange="{{ onPrTitle }}" style="width:100%;margin-top:8px;padding:0 0 12px;background:transparent;border:0;border-bottom:1px solid rgba(216,208,197,.25);outline:none;font-size:26px;font-weight:500;letter-spacing:-.015em"></input>
+              <div style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66);margin-top:12px">{{ wsSub }}</div>
+              <div style="margin-top:28px;padding:20px 22px;border:1px solid {{ ship.border }};border-radius:2px;display:flex;align-items:center;justify-content:space-between;gap:18px">
+                <div><div style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;background:{{ ship.color }}"></span><span style="font-size:18px;font-weight:500">{{ ship.title }}</span></div><div style="font-size:14px;color:rgba(216,208,197,.66);margin-top:6px">{{ ship.sub }}</div></div>
+                <div style="display:flex;gap:8px;flex:none">
+                  <sc-if value="{{ ship.canMerge }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openPr }}" style="height:36px;padding:0 14px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:14px">{{ prBtn }}</button><button onClick="{{ merge }}" style="height:36px;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:14px;font-weight:500">Merge into main</button></sc-if>
+                  <sc-if value="{{ ship.blocked }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goVerify }}" style="height:36px;padding:0 14px;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:14px">Go to verify</button><span style="height:36px;display:flex;align-items:center;padding:0 16px;border:1px dashed rgba(216,208,197,.2);border-radius:2px;font-size:14px;color:rgba(216,208,197,.42)">Merge blocked</span></sc-if>
+                  <sc-if value="{{ ship.merged }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openNew }}" style="height:36px;padding:0 16px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:14px;font-weight:500">Continue on a new branch</button></sc-if>
+                </div>
+              </div>
+              <div style="margin-top:40px;display:flex;justify-content:space-between;align-items:baseline;padding-bottom:10px;border-bottom:1px solid rgba(216,208,197,.2)"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em">GATE RECEIPT</span><button onClick="{{ copyReceipt }}" style="font-size:13px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">Copy markdown</button></div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px">
+                <sc-for list="{{ receipt }}" as="rc" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:12px 130px minmax(0,1fr);gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(216,208,197,.08)"><span style="width:6px;height:6px;background:{{ rc.c }}"></span><span style="font-size:14px">{{ rc.l }}</span><span style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)">{{ rc.v }}</span></div></sc-for>
+              </div>
+              <div style="margin-top:36px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(216,208,197,.42)">COMMIT MESSAGE</div>
+              <textarea value="{{ commitMsg }}" onChange="{{ onCommit }}" rows="6" style="width:100%;margin-top:8px;padding:12px 14px;background:#131210;border:1px solid rgba(216,208,197,.14);border-radius:2px;outline:none;resize:vertical;font-family:'Space Mono',monospace;font-size:12.5px;line-height:1.7;color:#d8d0c5"></textarea>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ isAgentStep }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:12px 32px 16px;border-top:1px solid rgba(216,208,197,.08)">
+            <div style="max-width:760px;margin:0 auto;border:1px solid rgba(216,208,197,.22);border-radius:2px;background:#131210">
+              <textarea value="{{ compose }}" onChange="{{ onCompose }}" onKeyDown="{{ onComposeKey }}" rows="3" placeholder="Describe the task for the agent…  (⌘↵ to run)" style="width:100%;resize:none;background:transparent;border:0;outline:none;padding:13px 15px 6px;font-family:'Space Mono',monospace;font-size:13px;line-height:1.6;color:#d8d0c5"></textarea>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 10px 10px">
+                <button onClick="{{ cycleModel }}" title="Change model" style="height:28px;padding:0 10px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-family:'Space Mono',monospace;font-size:11.5px" style-hover="border-color:rgba(216,208,197,.35)">{{ modelLabel }} ▾</button>
+                <button onClick="{{ togglePlanFirst }}" style="height:28px;padding:0 10px;border:1px solid {{ pfB }};border-radius:2px;font-family:'Space Mono',monospace;font-size:11.5px;color:{{ pfC }}">{{ pfMark }} plan first</button>
+                <span style="flex:1"></span>
+                <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">@ files · / commands</span>
+                <button onClick="{{ runAgent }}" style="height:30px;padding:0 14px;border-radius:2px;background:{{ runBg }};color:{{ runC }};font-size:13.5px;font-weight:500">Run agent ⌘↵</button>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid rgba(216,208,197,.14);display:grid;grid-template-rows:32px minmax(0,1fr);min-height:0">
+            <div style="display:flex;align-items:center;padding:0 10px;border-bottom:1px solid rgba(216,208,197,.06)"><span style="height:32px;display:flex;align-items:center;padding:0 10px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;border-bottom:1px solid #d8d0c5">TERMINAL</span><span style="flex:1"></span><button onClick="{{ togglePanel }}" style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)" style-hover="color:#d8d0c5">hide ⌃`</button></div>
+            <div style="overflow:auto;padding:10px 16px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.75">
+                <sc-for list="{{ termLines }}" as="tl" hint-placeholder-count="3"><div style="color:{{ tl.c }};white-space:pre-wrap">{{ tl.t }}</div></sc-for>
+                <div style="display:flex;gap:8px;align-items:center"><span>›</span><input value="{{ termIn }}" onChange="{{ onTermIn }}" onKeyDown="{{ onTermKey }}" placeholder="try: npm test · git status · npm run dev · help" style="flex:1;min-width:0;background:transparent;border:0;outline:none;font-family:'Space Mono',monospace;font-size:12px;color:#d8d0c5"></input></div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isCodeStep }}" hint-placeholder-val="{{ true }}">
+      <div style="border-right:1px solid rgba(216,208,197,.12);display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0">
+        <sc-for list="{{ acts }}" as="a" hint-placeholder-count="4">
+          <button onClick="{{ a.pick }}" title="{{ a.t }}" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:2px;position:relative;color:{{ a.c }};background:{{ a.bg }}" style-hover="color:#d8d0c5">
+            <span style="position:absolute;left:-6px;top:6px;bottom:6px;width:2px;background:{{ a.bar }}"></span>{{ a.icon }}
+            <sc-if value="{{ a.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:1px;bottom:2px;min-width:14px;height:13px;padding:0 3px;background:#d8d0c5;color:#0b0a09;border-radius:1px;font-family:'Space Mono',monospace;font-size:8.5px;line-height:13px;text-align:center">{{ a.badge }}</span></sc-if>
+          </button>
+        </sc-for>
+        <span style="flex:1"></span>
+        <button onClick="{{ toggleFocus }}" title="Focus the editor ⌘⇧↵" style="width:36px;height:36px;border-radius:2px;font-family:'Space Mono',monospace;font-size:14px;color:{{ focusC }};border:1px solid {{ focusB }}" style-hover="color:#d8d0c5">{{ focusIcon }}</button>
+      </div>
+
+      <sc-if value="{{ sideOpen }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0;border-right:1px solid rgba(216,208,197,.12);position:relative">
+          <div style="padding:0 10px 10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;height:36px;padding-left:4px">
+              <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">{{ sideTitle }}</span>
+              <sc-if value="{{ vFiles }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:2px">
+                  <button onClick="{{ newFile }}" title="New file" style="width:24px;height:24px;border-radius:2px;font-family:'Space Mono',monospace;font-size:13px;color:rgba(216,208,197,.66)" style-hover="background:#1b1915;color:#d8d0c5">+</button>
+                  <button onClick="{{ collapseAll }}" title="Collapse all" style="width:24px;height:24px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.66)" style-hover="background:#1b1915;color:#d8d0c5">⊟</button>
+                  <button onClick="{{ revealActive }}" title="Reveal open file" style="width:24px;height:24px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.66)" style-hover="background:#1b1915;color:#d8d0c5">◎</button>
+                </div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ vFiles }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;border:1px solid rgba(216,208,197,.16);border-radius:2px;padding:2px;gap:2px">
+                  <sc-for list="{{ views }}" as="v" hint-placeholder-count="2"><button onClick="{{ v.pick }}" style="flex:1;height:24px;border-radius:1px;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;background:{{ v.bg }};color:{{ v.c }}">{{ v.l }}<span style="font-family:'Space Mono',monospace;font-size:10px;opacity:.7">{{ v.n }}</span></button></sc-for>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;height:28px;padding:0 9px;border:1px solid rgba(216,208,197,.14);border-radius:2px;background:#131210">
+                  <span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">⌕</span>
+                  <input value="{{ filter }}" onChange="{{ onFilter }}" placeholder="Filter files" style="flex:1;min-width:0;background:transparent;border:0;outline:none;font-family:'Space Mono',monospace;font-size:11.5px"></input>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ vSearch }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 9px;border:1px solid rgba(216,208,197,.25);border-radius:2px;background:#131210"><input value="{{ sq }}" onChange="{{ onSq }}" placeholder="Search in files" style="flex:1;min-width:0;background:transparent;border:0;outline:none;font-family:'Space Mono',monospace;font-size:11.5px"></input><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">Aa .*</span></div>
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">{{ sCount }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ vChanges }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px solid rgba(216,208,197,.2);border-radius:2px;background:#131210">
+                <div style="padding:9px 10px 6px;font-family:'Space Mono',monospace;font-size:11.5px;color:rgba(216,208,197,.42);min-height:52px">fix(billing): dedupe Stripe webhook events (#412)</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-top:1px solid rgba(216,208,197,.08)"><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">6 staged</span><span style="height:24px;display:flex;align-items:center;padding:0 10px;background:#d8d0c5;color:#0b0a09;border-radius:2px;font-size:12px;font-weight:500">Commit ⌘↵</span></div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div onKeyDown="{{ onTreeKey }}" tabIndex="0" style="overflow:auto;padding-bottom:10px;outline:none">
+            <sc-if value="{{ vFiles }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="18">
+                <div onClick="{{ r.click }}" onContextMenu="{{ r.menu }}" style="display:flex;align-items:center;gap:6px;height:{{ rowH }};padding:0 12px 0 {{ r.pad }};cursor:pointer;background:{{ r.bg }};box-shadow:inset 2px 0 0 {{ r.bar }}" style-hover="background:#131210">
+                  <span style="width:10px;flex:none;text-align:center;font-family:'Space Mono',monospace;font-size:8.5px;color:rgba(216,208,197,.42)">{{ r.chev }}</span>
+                  <span style="width:16px;height:16px;flex:none;display:flex;align-items:center;justify-content:center;color:{{ r.ic }}">{{ r.icon }}</span>
+                  <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:{{ r.nc }}">{{ r.name }}<span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ r.dir }}</span></span>
+                  <span style="font-family:'Space Mono',monospace;font-size:10px;color:#41d183">{{ r.add }}</span>
+                  <span style="width:12px;flex:none;text-align:right;font-family:'Space Mono',monospace;font-size:10.5px;color:{{ r.gitC }}">{{ r.git }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ vSearch }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ sResults }}" as="sr" hint-placeholder-count="4">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;font-size:13px"><span style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(216,208,197,.42)">▾</span><span>{{ sr.name }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sr.dir }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.66)">{{ sr.n }}</span></div>
+                  <sc-for list="{{ sr.hits }}" as="hit" hint-placeholder-count="2">
+                    <div onClick="{{ hit.go }}" style="display:flex;gap:8px;height:24px;align-items:center;padding:0 12px 0 34px;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;white-space:nowrap;overflow:hidden" style-hover="background:#131210"><span style="color:rgba(216,208,197,.42);width:22px;text-align:right;flex:none">{{ hit.ln }}</span><span style="color:rgba(216,208,197,.66);overflow:hidden;text-overflow:ellipsis">{{ hit.pre }}<span style="color:#0b0a09;background:#d8d0c5">{{ hit.m }}</span>{{ hit.post }}</span></div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ vChanges }}" hint-placeholder-val="{{ false }}">
+              <sc-for list="{{ chRows }}" as="c" hint-placeholder-count="6">
+                <div onClick="{{ c.go }}" style="display:flex;align-items:center;gap:8px;height:28px;padding:0 12px;cursor:pointer;background:{{ c.bg }}" style-hover="background:#131210">
+                  <span style="width:13px;height:13px;border:1px solid rgba(216,208,197,.42);border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:9px;line-height:11px;text-align:center;flex:none">✓</span>
+                  <span style="font-size:13px">{{ c.name }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.dir }}</span>
+                  <span style="font-family:'Space Mono',monospace;font-size:10px;color:#41d183">{{ c.add }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:{{ c.gitC }}">{{ c.git }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 14px;font-size:13px;color:rgba(216,208,197,.42)">No files match.</div></sc-if>
+          </div>
+
+          <div style="border-top:1px solid rgba(216,208,197,.12);padding:9px 12px;display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;gap:12px;font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(216,208,197,.42)"><span><span style="color:#41d183">A</span> added</span><span><span style="color:#d8d0c5">M</span> modified</span><span><span style="color:#d8d0c5">•</span> has changes</span></div>
+            <button onClick="{{ toggleExt }}" style="display:flex;justify-content:space-between;align-items:center;height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.12);border-radius:2px;font-size:12px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5"><span>Also open in… Zed</span><span style="font-family:'Space Mono',monospace;font-size:10px">▾</span></button>
+          </div>
+          <div onMouseDown="{{ startResize }}" title="Drag to resize" style="position:absolute;top:0;right:-3px;width:6px;height:100%;cursor:col-resize;z-index:2" style-hover="background:rgba(216,208,197,.14)"></div>
+        </div>
+      </sc-if>
+
+      <div style="display:grid;grid-template-rows:36px minmax(0,1fr) {{ panelH }};min-height:0;min-width:0">
+        <div style="display:flex;align-items:stretch;border-bottom:1px solid rgba(216,208,197,.08);overflow:hidden;background:#0b0a09">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+            <div onClick="{{ t.go }}" onDoubleClick="{{ t.pin }}" style="display:flex;align-items:center;gap:9px;padding:0 8px 0 14px;border-right:1px solid rgba(216,208,197,.08);background:{{ t.bg }};border-top:1px solid {{ t.top }};cursor:pointer;white-space:nowrap">
+              <span style="font-family:'Space Mono',monospace;font-size:11.5px;color:{{ t.c }};font-style:{{ t.fs }}">{{ t.n }}</span>
+              <span style="font-family:'Space Mono',monospace;font-size:10px;color:{{ t.gitC }}">{{ t.git }}</span><span style="color:#d8d0c5;font-size:10px">{{ t.dirty }}</span>
+              <button onClick="{{ t.close }}" style="width:16px;height:16px;border-radius:2px;font-size:10px;color:rgba(216,208,197,.42)" style-hover="background:#1b1915;color:#d8d0c5">✕</button>
+            </div>
+          </sc-for>
+          <span style="flex:1"></span>
+          <div style="display:flex;align-items:center;gap:4px;padding:0 10px">
+            <sc-for list="{{ modes }}" as="m" hint-placeholder-count="2"><button onClick="{{ m.pick }}" style="height:22px;padding:0 9px;border-radius:2px;font-family:'Space Mono',monospace;font-size:10.5px;background:{{ m.bg }};color:{{ m.c }}">{{ m.l }}</button></sc-for>
+            <span style="width:1px;height:14px;background:rgba(216,208,197,.14);margin:0 4px"></span>
+            <button onClick="{{ toggleSplit }}" title="Split right ⌘\" style="height:22px;padding:0 8px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;color:{{ splitC }}" style-hover="color:#d8d0c5">◫</button>
+            <button onClick="{{ toggleRail }}" title="Toggle right rail" style="height:22px;padding:0 6px;border-radius:2px;display:flex;align-items:center;color:{{ railC }}" style-hover="color:#d8d0c5">{{ railIcon }}</button>
+            <button onClick="{{ toggleFocus }}" title="Focus ⌘⇧↵" style="height:22px;padding:0 8px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">{{ focusIcon }}</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:{{ paneCols }};min-height:0">
+          <sc-for list="{{ panes }}" as="p" hint-placeholder-count="1">
+            <div style="display:grid;grid-template-rows:28px minmax(0,1fr);min-height:0;min-width:0;border-left:1px solid {{ p.bl }}">
+              <div style="display:flex;align-items:center;gap:8px;padding:0 14px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42);border-bottom:1px solid rgba(216,208,197,.05)">
+                <sc-for list="{{ p.crumbs }}" as="c" hint-placeholder-count="3"><span style="display:flex;gap:8px;white-space:nowrap"><span style="color:{{ c.c }}">{{ c.t }}</span><span>{{ c.sep }}</span></span></sc-for>
+                <span style="flex:1"></span>
+                <sc-if value="{{ p.closable }}" hint-placeholder-val="{{ false }}"><button onClick="{{ p.close }}" style="font-size:10px;color:rgba(216,208,197,.42)" style-hover="color:#d8d0c5">✕</button></sc-if>
+              </div>
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) {{ miniW }};min-height:0">
+                <div style="overflow:auto;padding:8px 0 40px;font-family:'Space Mono',monospace;font-size:{{ fontSize }};line-height:{{ lineH }}">
+                  <sc-for list="{{ p.lines }}" as="l" hint-placeholder-count="20">
+                    <div onClick="{{ l.click }}" style="display:grid;grid-template-columns:3px 18px 42px minmax(0,1fr);background:{{ l.bg }};cursor:text">
+                      <span style="background:{{ l.chg }}"></span>
+                      <span style="text-align:center;font-size:8px;color:{{ l.mc }}">{{ l.mark }}</span>
+                      <span style="text-align:right;padding-right:16px;color:{{ l.nc }}">{{ l.n }}</span>
+                      <sc-if value="{{ l.editing }}" hint-placeholder-val="{{ false }}"><input value="{{ l.raw }}" onChange="{{ l.onEdit }}" onKeyDown="{{ l.onKey }}" autoFocus="{{ true }}" spellCheck="false" style="width:100%;min-width:0;background:rgba(216,208,197,.06);border:0;outline:none;padding:0;font-family:'Space Mono',monospace;font-size:inherit;line-height:inherit;color:#d8d0c5;caret-color:#d8d0c5"></input></sc-if><sc-if value="{{ l.notEditing }}" hint-placeholder-val="{{ true }}"><span style="white-space:pre;position:relative"><sc-for list="{{ l.guides }}" as="ig" hint-placeholder-count="0"><span style="position:absolute;top:0;bottom:0;left:{{ ig.x }};border-left:1px solid rgba(216,208,197,.07)"></span></sc-for><sc-for list="{{ l.toks }}" as="tk" hint-placeholder-count="3"><span style="color:{{ tk.c }};font-weight:{{ tk.w }}">{{ tk.t }}</span></sc-for><sc-if value="{{ l.caret }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;width:2px;height:15px;background:#d8d0c5;vertical-align:-3px;margin-left:1px"></span></sc-if></span></sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ minimap }}" hint-placeholder-val="{{ true }}">
+                  <div style="border-left:1px solid rgba(216,208,197,.06);padding:10px 8px;display:flex;flex-direction:column;gap:1px;position:relative;overflow:hidden">
+                    <div style="position:absolute;left:0;right:0;top:8px;height:{{ p.viewH }};background:rgba(216,208,197,.05);border-top:1px solid rgba(216,208,197,.1);border-bottom:1px solid rgba(216,208,197,.1)"></div>
+                    <sc-for list="{{ p.mini }}" as="mm" hint-placeholder-count="20"><span style="height:2px;width:{{ mm.w }};margin-left:{{ mm.ml }};background:{{ mm.c }}"></span></sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="border-top:1px solid rgba(216,208,197,.14);display:grid;grid-template-rows:32px minmax(0,1fr);min-height:0;animation:haroFade .2s ease">
+            <div style="display:flex;align-items:center;gap:4px;padding:0 10px;border-bottom:1px solid rgba(216,208,197,.06)">
+              <sc-for list="{{ ptabs }}" as="pt" hint-placeholder-count="3"><button onClick="{{ pt.pick }}" style="height:32px;padding:0 10px;font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:{{ pt.c }};border-bottom:1px solid {{ pt.u }}">{{ pt.l }}</button></sc-for>
+              <span style="flex:1"></span>
+              <button onClick="{{ togglePanel }}" style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)" style-hover="color:#d8d0c5">hide ⌃`</button>
+            </div>
+            <div style="overflow:auto;padding:10px 16px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.75">
+              <sc-if value="{{ ptTerm }}" hint-placeholder-val="{{ true }}">
+                <sc-for list="{{ termLines }}" as="tl" hint-placeholder-count="3"><div style="color:{{ tl.c }};white-space:pre-wrap">{{ tl.t }}</div></sc-for>
+                <div style="display:flex;gap:8px;align-items:center"><span>›</span><input value="{{ termIn }}" onChange="{{ onTermIn }}" onKeyDown="{{ onTermKey }}" placeholder="try: npm test · git status · npm run dev · help" style="flex:1;min-width:0;background:transparent;border:0;outline:none;font-family:'Space Mono',monospace;font-size:12px;color:#d8d0c5"></input></div>
+              </sc-if>
+              <sc-if value="{{ ptGate }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;align-items:center"><span style="width:8px;height:8px;background:{{ g.color }}"></span><span style="color:{{ g.color }};letter-spacing:.14em">{{ g.key }}</span><span>{{ g.line }}</span></div>
+                <div style="color:rgba(216,208,197,.66)">This file: {{ fileProof }}</div>
+                <div style="color:rgba(216,208,197,.42)">The gate re-runs on save. Tests touching this file: 14.</div>
+              </sc-if>
+              <sc-if value="{{ ptProb }}" hint-placeholder-val="{{ false }}">
+                <div style="color:rgba(216,208,197,.66)">0 type errors · 0 lint errors</div>
+                <div>◇ webhooks.ts:22 · mutant survived earlier, now caught <span style="color:rgba(216,208,197,.42)">· resolved</span></div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+      <sc-if value="{{ railOpen }}" hint-placeholder-val="{{ true }}">
+        <aside style="border-left:1px solid rgba(216,208,197,.12);display:flex;flex-direction:column;min-height:0;animation:haroFade .2s ease">
+          <div style="padding:16px 18px 14px;border-bottom:1px solid rgba(216,208,197,.12)">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">GATE</span><button onClick="{{ toggleRail }}" title="Minimize rail" style="width:24px;height:22px;border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.42)" style-hover="background:#1b1915;color:#d8d0c5">»</button></div>
+            <button onClick="{{ goVerify }}" style="display:block;width:100%;text-align:left" title="Open verify">
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="width:13px;height:13px;background:{{ g.color }}"></span><span style="font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:.2em;color:{{ g.color }}">{{ g.key }}</span></div>
+            <div style="font-size:13.5px;margin-top:8px">{{ g.rail }}</div>
+            <sc-if value="{{ g.isRun }}" hint-placeholder-val="{{ false }}"><div style="height:2px;background:rgba(216,208,197,.12);margin-top:8px"><div style="height:2px;width:{{ g.pct }};background:#d8d0c5"></div></div></sc-if>
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42);margin-top:4px">{{ g.when }}</div></button>
+          </div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+          <sc-if value="{{ isAgent }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;overflow:auto;display:flex;flex-direction:column">
+              <div style="padding:16px 18px;border-bottom:1px solid rgba(216,208,197,.12)">
+                <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)"><span>NEEDS YOUR EYES</span><span style="color:#d8d0c5">{{ eyesOpenN }}</span></div>
+                <button onClick="{{ goVerify }}" style="display:block;text-align:left;font-size:13px;color:rgba(216,208,197,.66);margin-top:8px;line-height:1.5" style-hover="color:#d8d0c5">{{ eyesRailTxt }}</button>
+              </div>
+              <div style="padding:16px 18px;border-bottom:1px solid rgba(216,208,197,.12)">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">APP</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px"><span style="font-family:'Space Mono',monospace;font-size:12px;display:flex;align-items:center;gap:7px"><span style="width:6px;height:6px;background:{{ appDot }}"></span>:3000 · <span style="color:rgba(216,208,197,.42)">{{ appLabel }}</span></span>
+                  <div style="display:flex;gap:4px"><button onClick="{{ toggleApp }}" style="height:26px;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;font-size:12.5px">{{ appBtn }}</button><button onClick="{{ openBrowser }}" style="height:26px;padding:0 8px;border:1px solid rgba(216,208,197,.14);border-radius:2px;font-size:12.5px;color:rgba(216,208,197,.66)">Open ↗</button></div></div>
+              </div>
+              <div style="padding:16px 18px;border-bottom:1px solid rgba(216,208,197,.12)">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">LAST AGENT RUN</div>
+                <div style="display:grid;grid-template-columns:64px 1fr;row-gap:7px;margin-top:10px;font-family:'Space Mono',monospace;font-size:11.5px">
+                  <span style="color:rgba(216,208,197,.42)">model</span><span>sonnet · high</span>
+                  <span style="color:rgba(216,208,197,.42)">spent</span><span>$0.41 · 4m 12s</span>
+                  <span style="color:rgba(216,208,197,.42)">context</span><span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:3px;background:rgba(216,208,197,.12)"><span style="display:block;width:18%;height:3px;background:rgba(216,208,197,.66)"></span></span>18%</span>
+                </div>
+              </div>
+              <div style="padding:16px 18px">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42)">ASK THE AGENT</div>
+                <textarea value="{{ ask }}" onChange="{{ onAsk }}" onKeyDown="{{ onAskKey }}" rows="3" placeholder="Change this file… (@ adds the open file)" style="width:100%;margin-top:10px;border:1px solid rgba(216,208,197,.16);border-radius:2px;background:#131210;padding:9px 10px;font-family:'Space Mono',monospace;font-size:11.5px;color:#d8d0c5;outline:none;resize:none"></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">Sends to the agent step · ⌘↵</span><button onClick="{{ sendAsk }}" style="height:24px;padding:0 10px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:12px;font-weight:500">Send</button></div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isManual }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;border-bottom:1px solid rgba(216,208,197,.12)">
+              <sc-for list="{{ rtabs }}" as="rt" hint-placeholder-count="3"><button onClick="{{ rt.pick }}" style="flex:1;height:36px;font-size:13px;color:{{ rt.c }};border-bottom:2px solid {{ rt.u }}">{{ rt.l }}<span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);margin-left:6px">{{ rt.b }}</span></button></sc-for>
+            </div>
+            <div style="flex:1;overflow:auto;padding:14px 18px">
+              <sc-if value="{{ rPlan }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)"><span>PLAN BY HARO · CODE BY YOU</span><span>6 / 6</span></div>
+                <div style="display:flex;flex-direction:column;margin-top:8px;border-top:1px solid rgba(216,208,197,.12)">
+                  <sc-for list="{{ planItems }}" as="pl" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:20px minmax(0,1fr);gap:6px;padding:8px 0;border-bottom:1px solid rgba(216,208,197,.08)"><span style="width:14px;height:14px;margin-top:1px;border:1px solid rgba(216,208,197,.42);border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:10px;line-height:12px;text-align:center">✓</span><span style="font-size:13px;line-height:1.45;color:rgba(216,208,197,.66)">{{ pl.t }}</span></div></sc-for>
+                </div>
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);margin-top:10px">Saved as plan-412.md in Docs</div>
+              </sc-if>
+              <sc-if value="{{ rSearch }}" hint-placeholder-val="{{ false }}">
+                <input value="{{ rq }}" onChange="{{ onRq }}" onKeyDown="{{ onRqKey }}" placeholder="Ask where to look…" style="width:100%;height:34px;padding:0 10px;border:1px solid rgba(216,208,197,.2);border-radius:2px;background:#131210;outline:none;font-family:'Space Mono',monospace;font-size:11.5px;color:#d8d0c5"></input>
+                <div style="font-size:13px;line-height:1.5;color:rgba(216,208,197,.86);margin-top:10px">{{ rAnswer }}</div>
+                <sc-for list="{{ research }}" as="rs" hint-placeholder-count="3"><div onClick="{{ rs.go }}" style="padding:10px 0;border-bottom:1px solid rgba(216,208,197,.08);cursor:pointer"><div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.1em;color:rgba(216,208,197,.42)"><span>{{ rs.src }}</span><span>{{ rs.how }}</span></div><div style="font-size:13.5px;margin-top:4px">{{ rs.t }}</div></div></sc-for>
+              </sc-if>
+              <sc-if value="{{ rDocs }}" hint-placeholder-val="{{ false }}">
+                <sc-for list="{{ docList }}" as="dl" hint-placeholder-count="5"><div onClick="{{ dl.pick }}" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;height:28px;padding:0 8px;border-radius:2px;background:{{ dl.bg }};font-family:'Space Mono',monospace;font-size:11.5px"><span style="color:{{ dl.c }}">{{ dl.n }}</span><span style="font-size:9.5px;color:rgba(216,208,197,.42)">{{ dl.m }}</span></div></sc-for>
+                <div style="font-family:'Space Mono',monospace;font-size:15px;font-weight:700;margin-top:16px">{{ docT }}</div>
+                <div style="font-size:13px;line-height:1.6;color:rgba(216,208,197,.86);margin-top:8px">{{ docB }}</div>
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);margin-top:10px">{{ docS }}</div>
+              </sc-if>
+            </div>
+            <div style="padding:10px 18px;border-top:1px solid rgba(216,208,197,.12);display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)"><span>AI: plan and research only</span><span>0 lines of code</span></div>
+          </sc-if>
+          </div>
+          <button onClick="{{ togglePanel }}" style="display:flex;justify-content:space-between;align-items:center;height:40px;padding:0 18px;border-top:1px solid rgba(216,208,197,.12);font-size:13px;flex:none" style-hover="background:#131210"><span>{{ termLabel }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">⌃`</span></button>
+        </aside>
+      </sc-if>
+      <sc-if value="{{ railMini }}" hint-placeholder-val="{{ false }}">
+        <aside style="border-left:1px solid rgba(216,208,197,.12);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;animation:haroFade .2s ease">
+          <button onClick="{{ toggleRail }}" title="Expand rail" style="width:30px;height:28px;border-radius:2px;font-family:'Space Mono',monospace;font-size:12px;color:rgba(216,208,197,.66)" style-hover="background:#1b1915;color:#d8d0c5">«</button>
+          <span style="width:22px;height:1px;background:rgba(216,208,197,.12)"></span>
+          <span onClick="{{ goVerify }}" title="Gate" style="cursor:pointer;width:12px;height:12px;background:{{ g.color }}"></span>
+          <span title="Needs your eyes" style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.66)">{{ eyesOpenN }}</span>
+          <span title="{{ miniModeT }}" style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.08em;writing-mode:vertical-rl;color:rgba(216,208,197,.42);margin-top:6px">{{ miniMode }}</span>
+          <span style="flex:1"></span>
+          <button onClick="{{ togglePanel }}" title="Terminal ⌃`" style="width:30px;height:28px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.66)" style-hover="background:#1b1915;color:#d8d0c5">&gt;_</button>
+        </aside>
+      </sc-if>
+    </div>
+
+    <div style="flex:none;height:24px;display:flex;align-items:center;gap:16px;padding:0 12px;border-top:1px solid rgba(216,208,197,.12);font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.66)">
+      <span>⎇ fix/412-stripe-replay</span><button onClick="{{ goVerify }}" style="display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.66)"><span style="width:6px;height:6px;background:{{ g.color }}"></span>gate {{ g.low }}</button><button onClick="{{ togglePanel }}" style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.66)" style-hover="color:#d8d0c5">⌃` terminal</button>
+      <span style="flex:1"></span>
+      <span>ln {{ ln }}, col {{ col }}</span><span>spaces: 2</span><span>{{ lang }}</span><span>utf-8 · lf</span><span style="color:{{ saveC }}">{{ saveTxt }}</span><span style="color:rgba(216,208,197,.42)">re_editor</span>
+    </div>
+      </div>
+    </div>
+
+    <sc-if value="{{ palOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position:absolute;inset:0;z-index:40;background:rgba(8,7,6,.72);display:flex;justify-content:center;padding-top:80px;animation:haroFade .15s ease">
+        <div onClick="{{ stop }}" style="width:620px;height:max-content;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px;overflow:hidden">
+          <input value="{{ palQ }}" onChange="{{ onPalQ }}" onKeyDown="{{ onPalKey }}" autoFocus="{{ true }}" placeholder="Jump to a workspace, run an action, open a setting…" style="width:100%;height:50px;padding:0 18px;background:transparent;border:0;border-bottom:1px solid rgba(216,208,197,.12);outline:none;font-size:15.5px"></input>
+          <div style="max-height:420px;overflow:auto;padding:6px">
+            <sc-for list="{{ palItems }}" as="pi" hint-placeholder-count="8">
+              <div>
+                <sc-if value="{{ pi.isHead }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42);padding:12px 12px 6px">{{ pi.l }}</div></sc-if>
+                <sc-if value="{{ pi.isItem }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pi.run }}" style="width:100%;display:flex;align-items:center;gap:10px;height:34px;padding:0 12px;border-radius:2px;text-align:left;font-size:14px;background:{{ pi.bg }}" style-hover="background:#1b1915"><span style="width:7px;height:7px;flex:none;background:{{ pi.fill }};border:1px solid {{ pi.c }}"></span><span style="flex:1">{{ pi.l }}</span><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42)">{{ pi.k }}</span></button></sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:16px;padding:9px 16px;border-top:1px solid rgba(216,208,197,.12);font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)"><span>↑↓ move</span><span>↵ run</span><span>esc close</span></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ nwOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position:absolute;inset:0;z-index:40;background:rgba(8,7,6,.72);display:flex;justify-content:center;padding-top:90px;animation:haroFade .15s ease">
+        <div onClick="{{ stop }}" style="width:580px;height:max-content;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px">
+          <div style="padding:24px 28px 0">
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:rgba(216,208,197,.42)">NEW WORKSPACE · TESSERA-API</div>
+            <input value="{{ nwTask }}" onChange="{{ onNwTask }}" onKeyDown="{{ onNwKey }}" autoFocus="{{ true }}" placeholder="What’s the task?" style="width:100%;margin-top:14px;padding:0 0 12px;background:transparent;border:0;border-bottom:1px solid rgba(216,208,197,.3);outline:none;font-size:22px;font-weight:500"></input>
+            <div style="display:grid;grid-template-columns:120px 1fr;row-gap:16px;align-items:center;margin-top:20px;font-size:13.5px">
+              <span style="color:rgba(216,208,197,.42)">Branch</span><span style="font-family:'Space Mono',monospace;font-size:13px">{{ nwBranch }}</span>
+              <span style="color:rgba(216,208,197,.42)">From</span><span style="font-family:'Space Mono',monospace;font-size:13px">origin/main <span style="color:rgba(216,208,197,.42)">· synced 1m ago</span></span>
+              <span style="color:rgba(216,208,197,.42)">Who writes it</span>
+              <div style="display:flex;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:2px;gap:2px;width:max-content"><sc-for list="{{ nwWho }}" as="nw" hint-placeholder-count="2"><button onClick="{{ nw.pick }}" style="height:30px;padding:0 12px;border-radius:1px;font-size:13px;background:{{ nw.bg }};color:{{ nw.c }}">{{ nw.l }}</button></sc-for></div>
+            </div>
+            <div style="margin-top:14px;font-size:13px;color:rgba(216,208,197,.66);line-height:1.5">{{ nwHint }}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 28px;margin-top:22px;border-top:1px solid rgba(216,208,197,.12)"><span style="font-size:12.5px;color:rgba(216,208,197,.42)">Its own worktree. Your main checkout is untouched.</span><div style="display:flex;gap:8px"><button onClick="{{ closeAll }}" style="height:34px;padding:0 12px;font-size:13.5px;color:rgba(216,208,197,.66)">Cancel</button><button onClick="{{ createWs }}" style="height:34px;padding:0 14px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:13.5px;font-weight:500">{{ nwCta }}</button></div></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ setOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position:absolute;inset:0;z-index:40;background:rgba(8,7,6,.72);display:flex;justify-content:center;padding-top:70px;animation:haroFade .15s ease">
+        <div onClick="{{ stop }}" style="width:900px;height:600px;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px;display:grid;grid-template-columns:210px minmax(0,1fr);overflow:hidden">
+          <div style="border-right:1px solid rgba(216,208,197,.12);padding:16px 10px;display:flex;flex-direction:column;gap:2px">
+            <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;color:rgba(216,208,197,.42);padding:0 10px 8px">SETTINGS</div>
+            <sc-for list="{{ setTabs }}" as="stb" hint-placeholder-count="4"><button onClick="{{ stb.pick }}" style="height:30px;padding:0 10px;text-align:left;border-radius:2px;font-size:14px;background:{{ stb.bg }};color:{{ stb.c }}" style-hover="color:#d8d0c5">{{ stb.l }}</button></sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;min-height:0">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:24px 30px 16px;border-bottom:1px solid rgba(216,208,197,.12)"><div><div style="font-size:22px;font-weight:500">{{ setTitle }}</div><div style="font-size:13.5px;color:rgba(216,208,197,.66);margin-top:5px">Changes apply right away.</div></div><button onClick="{{ closeAll }}" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.66)">✕</button></div>
+            <div style="flex:1;overflow:auto;padding:4px 30px 24px">
+              <sc-for list="{{ setRows }}" as="sr" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(216,208,197,.08)">
+                  <div><div style="font-size:14.5px">{{ sr.l }}</div><div style="font-size:12.5px;color:rgba(216,208,197,.42);margin-top:3px">{{ sr.h }}</div></div>
+                  <div>
+                    <sc-if value="{{ sr.isToggle }}" hint-placeholder-val="{{ false }}"><button onClick="{{ sr.flip }}" style="width:34px;height:18px;border-radius:2px;border:1px solid {{ sr.tb }};background:{{ sr.tbg }};position:relative"><span style="position:absolute;top:2px;left:{{ sr.kl }};width:12px;height:12px;background:{{ sr.kbg }}"></span></button></sc-if>
+                    <sc-if value="{{ sr.isSeg }}" hint-placeholder-val="{{ false }}"><div style="display:flex;border:1px solid rgba(216,208,197,.2);border-radius:2px;padding:2px;gap:2px"><sc-for list="{{ sr.opts }}" as="so" hint-placeholder-count="3"><button onClick="{{ so.pick }}" style="height:26px;padding:0 10px;border-radius:1px;font-size:12.5px;background:{{ so.bg }};color:{{ so.c }}">{{ so.l }}</button></sc-for></div></sc-if>
+                    <sc-if value="{{ sr.isValue }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Space Mono',monospace;font-size:12.5px;color:rgba(216,208,197,.86)">{{ sr.v }}</span></sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ scOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position:absolute;inset:0;z-index:40;background:rgba(8,7,6,.72);display:flex;justify-content:center;padding-top:90px;animation:haroFade .15s ease">
+        <div onClick="{{ stop }}" style="width:700px;height:max-content;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px;padding:24px 28px 20px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:21px;font-weight:500">Keyboard shortcuts</span><button onClick="{{ closeAll }}" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.66)">✕</button></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:36px;margin-top:8px"><sc-for list="{{ shortcuts }}" as="sh" hint-placeholder-count="12"><div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(216,208,197,.08)"><span style="font-size:13.5px;color:rgba(216,208,197,.86)">{{ sh.l }}</span><span style="font-family:'Space Mono',monospace;font-size:11px;padding:2px 6px;border:1px solid rgba(216,208,197,.2);border-radius:2px">{{ sh.k }}</span></div></sc-for></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ blOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position:absolute;inset:0;z-index:40;background:rgba(8,7,6,.72);display:flex;justify-content:center;padding-top:90px;animation:haroFade .15s ease">
+        <div onClick="{{ stop }}" style="width:720px;height:max-content;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px">
+          <div style="display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid rgba(216,208,197,.12)"><span style="font-size:19px;font-weight:500">Backlog</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">GitHub issues · todo files</span><span style="flex:1"></span><button onClick="{{ closeAll }}" style="width:28px;height:28px;border:1px solid rgba(216,208,197,.14);border-radius:2px;color:rgba(216,208,197,.66)">✕</button></div>
+          <div style="padding:6px 22px 18px">
+            <sc-for list="{{ backlog }}" as="bi" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:70px minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid rgba(216,208,197,.08)"><span style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(216,208,197,.42)">{{ bi.n }}</span><span style="font-size:14px">{{ bi.t }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.66)">{{ bi.tag }}</span><button onClick="{{ bi.start }}" style="height:28px;padding:0 12px;border-radius:2px;background:#d8d0c5;color:#0b0a09;font-size:12.5px;font-weight:500">Start</button></div></sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ xpOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ toggleXp }}" style="position:absolute;inset:0;z-index:22">
+        <div onClick="{{ stop }}" style="position:absolute;left:{{ xpLeft }};bottom:36px;width:340px;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px;padding:18px 18px 16px;animation:haroFade .15s ease">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:16px;font-weight:500">How XP works</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">{{ xpToNext }}</span></div>
+          <sc-for list="{{ xpRules }}" as="xr" hint-placeholder-count="3">
+            <div style="margin-top:14px">
+              <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;color:{{ xr.hc }}"><span>{{ xr.h }}</span><span>{{ xr.tag }}</span></div>
+              <sc-for list="{{ xr.rows }}" as="xx" hint-placeholder-count="3"><div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(216,208,197,.08);font-size:13px"><span style="color:rgba(216,208,197,.86)">{{ xx.t }}</span><span style="font-family:'Space Mono',monospace;font-size:11.5px;white-space:nowrap">{{ xx.v }}</span></div></sc-for>
+            </div>
+          </sc-for>
+          <div style="font-size:12px;color:rgba(216,208,197,.42);margin-top:12px;line-height:1.5">Streak: any day you merge on green. Only merges count, so busywork earns nothing.</div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeMenu }}" onContextMenu="{{ closeMenu }}" style="position:absolute;inset:0;z-index:20">
+        <div onClick="{{ stop }}" style="position:absolute;left:{{ menuX }};top:{{ menuY }};width:240px;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px;padding:4px;animation:haroFade .12s ease">
+          <div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42);padding:6px 10px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ menuPath }}</div>
+          <sc-for list="{{ menuItems }}" as="mi" hint-placeholder-count="8">
+            <div>
+              <sc-if value="{{ mi.sep }}" hint-placeholder-val="{{ false }}"><div style="height:1px;background:rgba(216,208,197,.1);margin:4px 0"></div></sc-if>
+              <sc-if value="{{ mi.item }}" hint-placeholder-val="{{ true }}"><button onClick="{{ mi.run }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;height:28px;padding:0 10px;border-radius:2px;font-size:13px;text-align:left;color:{{ mi.c }}" style-hover="background:#1b1915"><span>{{ mi.l }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">{{ mi.k }}</span></button></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ extOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ toggleExt }}" style="position:absolute;inset:0;z-index:20">
+        <div onClick="{{ stop }}" style="position:absolute;left:58px;bottom:80px;width:250px;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px;padding:4px;animation:haroFade .12s ease">
+          <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;color:rgba(216,208,197,.42);padding:6px 10px">OPEN WORKTREE IN</div>
+          <sc-for list="{{ editors }}" as="ed" hint-placeholder-count="5"><button onClick="{{ toggleExt }}" style="width:100%;display:flex;justify-content:space-between;height:28px;align-items:center;padding:0 10px;border-radius:2px;font-size:13px" style-hover="background:#1b1915"><span>{{ ed.l }}</span><span style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)">{{ ed.k }}</span></button></sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ quickOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeQuick }}" style="position:absolute;inset:0;z-index:25;background:rgba(8,7,6,.7);display:flex;justify-content:center;padding-top:80px;animation:haroFade .15s ease">
+        <div onClick="{{ stop }}" style="width:600px;height:max-content;background:#131210;border:1px solid rgba(216,208,197,.25);border-radius:2px;overflow:hidden">
+          <input value="{{ qq }}" onChange="{{ onQq }}" onKeyDown="{{ onQqKey }}" autoFocus="{{ true }}" placeholder="Go to file…" style="width:100%;height:46px;padding:0 16px;background:transparent;border:0;border-bottom:1px solid rgba(216,208,197,.12);outline:none;font-family:'Space Mono',monospace;font-size:14px"></input>
+          <div style="padding:6px;max-height:380px;overflow:auto">
+            <sc-for list="{{ qResults }}" as="qr" hint-placeholder-count="8">
+              <button onClick="{{ qr.run }}" style="width:100%;display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:2px;text-align:left;background:{{ qr.bg }}" style-hover="background:#1b1915">
+                <span style="font-family:'Space Mono',monospace;font-size:8.5px;width:28px;color:rgba(216,208,197,.42)">{{ qr.ext }}</span><span style="font-size:13.5px">{{ qr.name }}</span>
+                <span style="font-family:'Space Mono',monospace;font-size:10.5px;color:rgba(216,208,197,.42);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ qr.dir }}</span>
+                <span style="font-family:'Space Mono',monospace;font-size:10px;color:{{ qr.gitC }}">{{ qr.git }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:16px;padding:9px 14px;border-top:1px solid rgba(216,208,197,.12);font-family:'Space Mono',monospace;font-size:10px;color:rgba(216,208,197,.42)"><span>changed files first</span><span>↑↓ ↵ open</span><span>esc close</span></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;right:18px;bottom:36px;z-index:30;padding:10px 14px;background:#131210;border:1px solid rgba(216,208,197,.3);border-radius:2px;font-size:13px;animation:haroFade .2s ease">{{ toast }}</div>
+    </sc-if>
+  </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;agent&quot;,&quot;manual&quot;],&quot;default&quot;:&quot;agent&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;startFocused&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;minimap&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;fontSize&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:11,&quot;max&quot;:16,&quot;step&quot;:1,&quot;default&quot;:13,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;comfortable&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const K={ink:'#d8d0c5',i86:'rgba(216,208,197,.86)',i66:'rgba(216,208,197,.66)',i40:'rgba(216,208,197,.42)',line:'rgba(216,208,197,.12)',green:'#41d183',red:'#e0685e'};
+const WH=["import type Stripe from 'stripe'","import { prisma } from '../db'","import { sendReceipt } from '../mail/receipts'","import { credit } from './ledger'","","export async function handleStripeEvent(evt: Stripe.Event) {","  switch (evt.type) {","    case 'invoice.paid': {","      const inv = evt.data.object as Stripe.Invoice","      const fresh = await prisma.$transaction(async (tx) => {","        const seen = await tx.processedEvent.createMany({","          data: [{ stripeEventId: evt.id }],","          skipDuplicates: true,","        })","        if (seen.count === 0) return false  // Stripe retry, already handled","        await tx.invoice.update({ where: { stripeId: inv.id }, data: { status: 'paid' } })","        await tx.ledgerEntry.create({ data: credit(inv) })","        return true","      })","      if (fresh) void sendReceipt(inv.customer_email, inv.id)  // off the hot path","      return","    }","    case 'invoice.payment_failed': {","      const inv = evt.data.object as Stripe.Invoice","      await prisma.invoice.update({ where: { stripeId: inv.id }, data: { status: 'failed' } })","      return","    }","    default:","      return","  }","}"];
+const FILES={
+ 'src/billing/webhooks.ts':{git:'M',add:'+14',del:'−4',proof:'ran',code:WH,chg:{9:'m',10:'a',11:'a',12:'a',13:'a',14:'a',17:'a',18:'m',19:'m'},sym:'handleStripeEvent'},
+ 'test/billing/webhooks.test.ts':{git:'M',add:'+9',del:'',proof:'ran',code:["import { describe, it, expect, vi } from 'vitest'","import { handleStripeEvent } from '../../src/billing/webhooks'","import { mockPrisma, fakeEvent } from '../helpers/prisma'","import { sendReceipt } from '../../src/mail/receipts'","","vi.mock('../../src/mail/receipts')","","describe('invoice.paid', () => {","  it('credits the ledger once per invoice', async () => {","    await handleStripeEvent(fakeEvent('invoice.paid', 'in_1PqX'))","    expect(mockPrisma.ledgerEntry.create).toHaveBeenCalledTimes(1)","  })","","  it('ignores a replayed event (#412)', async () => {","    const evt = fakeEvent('invoice.paid', 'in_1PqX')","    await handleStripeEvent(evt)","    await handleStripeEvent(evt)  // Stripe retry","    expect(mockPrisma.ledgerEntry.create).toHaveBeenCalledTimes(1)","    expect(sendReceipt).toHaveBeenCalledTimes(1)","  })","})"],chg:{12:'a',13:'a',14:'a',15:'a',16:'a',17:'a',18:'a',19:'a'},sym:"describe('invoice.paid')"},
+ 'test/helpers/prisma.ts':{git:'M',add:'+12',del:'',proof:'ran',code:["import { vi } from 'vitest'","","export const mockPrisma = {","  invoice: { update: vi.fn() },","  ledgerEntry: { create: vi.fn() },","  processedEvent: { createMany: vi.fn(seenOnce()) },","  $transaction: vi.fn((fn) => fn(mockPrisma)),","}","","function seenOnce() {","  const ids = new Set<string>()","  return ({ data }) => {","    const fresh = data.filter((d) => !ids.has(d.stripeEventId))","    fresh.forEach((d) => ids.add(d.stripeEventId))","    return { count: fresh.length }","  }","}"],chg:{5:'a',8:'a',9:'a',10:'a',11:'a',12:'a',13:'a',14:'a',15:'a',16:'a'},sym:'mockPrisma'},
+ 'prisma/migrations/20260929_processed_events/migration.sql':{git:'A',add:'+5',del:'',proof:'none',code:["-- 20260929_processed_events","CREATE TABLE \"ProcessedEvent\" (","  \"stripeEventId\" TEXT PRIMARY KEY,","  \"processedAt\"   TIMESTAMPTZ NOT NULL DEFAULT now()",");"],chg:{0:'a',1:'a',2:'a',3:'a',4:'a'}},
+ 'prisma/schema.prisma':{git:'M',add:'+4',del:'',proof:'none',code:["model Invoice {","  id        String @id @default(cuid())","  stripeId  String @unique","  status    String","}","","model ProcessedEvent {","  stripeEventId String   @id","  processedAt   DateTime @default(now())","}"],chg:{6:'a',7:'a',8:'a',9:'a'},sym:'ProcessedEvent'},
+ 'docs/plans/plan-412.md':{git:'A',add:'+14',del:'',proof:'none',code:["# #412 double credits on Stripe retry","","- [x] Reproduce #412 with a replay test","- [x] Find why Stripe retries","- [x] Add a processed_events table","- [x] Dedupe inside the transaction","- [x] Move the receipt off the hot path","- [x] Teach the shared Prisma mock the new table"],chg:{0:'a',1:'a',2:'a',3:'a',4:'a',5:'a',6:'a',7:'a'}}};
+const ALL=['.haro/config.toml','.env.example','README.md','package.json','tsconfig.json','vitest.config.ts','docs/plans/plan-412.md','docs/adr/0007-ledger.md','prisma/schema.prisma','prisma/migrations/20260829_init/migration.sql','prisma/migrations/20260929_processed_events/migration.sql','src/index.ts','src/db.ts','src/api/routes.ts','src/api/errors.ts','src/auth/limits.ts','src/auth/session.ts','src/billing/webhooks.ts','src/billing/ledger.ts','src/billing/invoices.ts','src/billing/stripe.ts','src/mail/receipts.ts','src/mail/templates/receipt.mjml','src/reports/export.ts','test/billing/webhooks.test.ts','test/billing/ledger.test.ts','test/billing/invoices.test.ts','test/helpers/prisma.ts','test/auth/limits.test.ts'];
+const STUBS={'src/billing/ledger.ts':["import type Stripe from 'stripe'","","export function credit(inv: Stripe.Invoice) {","  return {","    customerId: inv.customer as string,","    amount: inv.amount_paid,","    currency: inv.currency,","    source: 'stripe:' + inv.id,","  }","}"],'src/db.ts':["import { PrismaClient } from '@prisma/client'","","export const prisma = new PrismaClient()"],'package.json':['{','  "name": "tessera-api",','  "private": true,','  "scripts": {','    "dev": "tsx watch src/index.ts",','    "test": "vitest run"','  }','}']};
+const stub=p=>STUBS[p]||(p.endsWith('.md')?['# '+p.split('/').pop().replace('.md',''),'','Notes for the tessera-api team.']:["// "+p,"","export {}"]);
+const codeOf=p=>FILES[p]?FILES[p].code:stub(p);
+function buildTree(){const root={name:'',path:'',dir:true,kids:{}};ALL.forEach(p=>{const parts=p.split('/');let n=root;parts.forEach((part,i)=>{const path=parts.slice(0,i+1).join('/');if(!n.kids[part])n.kids[part]={name:part,path,dir:i<parts.length-1,kids:{}};n=n.kids[part]})});return root}
+const TREE=buildTree();
+const sortKids=n=>Object.values(n.kids).sort((a,b)=>(b.dir-a.dir)||a.name.localeCompare(b.name));
+const EXT=n=>{if(!n.includes('.'))return '';const e=n.split('.').pop();return {ts:'ts',sql:'sql',md:'md',json:'{}',prisma:'db',toml:'cfg',mjml:'mjml',example:'env'}[e]||e};
+const LANG=p=>({ts:'TypeScript',sql:'SQL',md:'Markdown',json:'JSON',prisma:'Prisma',toml:'TOML',mjml:'MJML'})[(p||'').split('.').pop()]||'Plain text';
+const KW=/^(import|from|export|const|async|await|function|return|if|switch|case|default|describe|it|expect|type|void|true|false|new|model|CREATE|TABLE|TEXT|PRIMARY|KEY|NOT|NULL|DEFAULT|TIMESTAMPTZ|String|DateTime)$/;
+function toks(line){const out=[];const re=/(\/\/.*$|--.*$|^#.*$|`[^`]*`|'[^']*'|"[^"]*"|@\w+|\b\d+(?:\.\d+)?\b|\b[A-Za-z_$]+\b)/g;let i=0,m;while((m=re.exec(line))){if(m.index>i)out.push({t:line.slice(i,m.index),c:'rgba(216,208,197,.62)',w:400});const s=m[0];let c='rgba(216,208,197,.84)',w=400;if(/^(\/\/|--|#)/.test(s))c=K.i40;else if(/^['`"]/.test(s))c=K.i66;else if(s[0]==='@')c=K.i66;else if(KW.test(s)){c=K.ink;w=700}else if(/^\d/.test(s))c=K.ink;out.push({t:s,c,w});i=m.index+s.length}if(i<line.length)out.push({t:line.slice(i),c:'rgba(216,208,197,.62)',w:400});return out}
+const e=React.createElement;
+const SV=(kids,s)=>e('svg',{width:s||18,height:s||18,viewBox:'0 0 18 18',fill:'none',stroke:'currentColor',style:{display:'block'}},...kids.map((k,i)=>e(k[0],{key:i,...k[1]})));
+const IC={
+ files:()=>SV([['path',{d:'M5.5 2.5h5l3 3v10h-8z'}],['path',{d:'M10.5 2.5v3h3'}],['path',{d:'M3.5 5.5v11h8'}]]),
+ search:()=>SV([['circle',{cx:8,cy:8,r:4.5}],['path',{d:'M11.5 11.5l4 4'}]]),
+ changes:()=>SV([['circle',{cx:5,cy:4,r:1.8}],['circle',{cx:5,cy:14,r:1.8}],['circle',{cx:13,cy:6,r:1.8}],['path',{d:'M5 6v6'}],['path',{d:'M13 8c0 3-4 3-7.2 4.6'}]]),
+ gate:()=>SV([['rect',{x:3,y:3,width:12,height:12}],['path',{d:'M6 9.2l2.2 2.2 4-4.6'}]]),
+ menu:()=>SV([['path',{d:'M3 5h12M3 9h12M3 13h12'}]],16),
+ panel:()=>SV([['rect',{x:2.5,y:3.5,width:13,height:11}],['path',{d:'M6.5 3.5v11'}]],16),
+ folder:o=>SV(o?[['path',{d:'M2 5.5h5l1.5 1.5H16v7.5H2z'}],['path',{d:'M2 8.5h14'}]]:[['path',{d:'M2 4.5h5l1.5 1.5H16v8.5H2z'}]],15),
+ file:()=>SV([['path',{d:'M4.5 2h6l3 3v11h-9z'}],['path',{d:'M10.5 2v3h3'}]],15)};
+const U=t=>({k:'user',t}),LB=t=>({k:'label',t:t||'AGENT · BUILD · SONNET · HIGH'}),TL=(v,t,a,d)=>({k:'tool',v,t,a:a||'',d:d||''}),TX=t=>({k:'text',t});
+const WSD=[
+ {id:'sdc',n:'stop double credits',p:'tessera-api',br:'fix/412-stripe-replay',title:'Stop double credits on Stripe retry',step:'code',gate:'green',total:412,files:'6 files · +58 −4',pr:'fix(billing): dedupe Stripe webhook events (#412)',commit:"fix(billing): dedupe Stripe webhook events (#412)\n\nRecord each Stripe event id in processed_events inside the\ntransaction and skip replays. Receipt send moved off the hot path.",
+  stream:[U('Stop double credits when Stripe retries invoice.paid (#412). Follow docs/plans/plan-412.md.'),LB(),TL('Read','src/billing/webhooks.ts'),TL('Read','docs/plans/plan-412.md'),TX('Stripe retries invoice.paid when the handler takes longer than 10s, and since #388 it sends the receipt inline. I’ll dedupe by event id inside the transaction.'),TL('Edit','prisma/schema.prisma','+4'),TL('Edit','src/billing/webhooks.ts','+14','−4'),TL('Edit','test/helpers/prisma.ts','+12'),TL('Bash','npm test -- billing'),TX('Done. Replayed events are skipped and the receipt no longer blocks the response.')],
+  eyes:[{id:'e1',k:'NO TEST RAN',p:'src/billing/webhooks.ts:23',d:'The invoice.payment_failed branch: 3 lines no test executed',f:'src/billing/webhooks.ts',ln:23},{id:'e2',k:'LOOKS LIKE A SECRET',p:'.env.example:4',d:'STRIPE_WEBHOOK_SECRET has a real-looking value',f:'.env.example',ln:1}]},
+ {id:'ipl',n:'invoice pdf locale',p:'tessera-api',br:'feat/invoice-pdf-locale',title:'Localize invoice PDFs',step:'verify',gate:'green',total:412,files:'3 files · +64 −12',pr:'feat(invoices): localize PDF dates and currency',commit:'feat(invoices): localize PDF dates and currency',
+  stream:[U('Localize invoice PDF dates and currency by the customer’s locale.'),LB(),TL('Edit','src/billing/invoices.ts','+38','−9'),TL('Edit','src/mail/templates/receipt.mjml','+26','−3'),TL('Bash','npm test -- invoices'),TX('Done. Dates and amounts use Intl with the customer’s locale. Tests cover en-GB and de-DE.')],
+  eyes:[{id:'e3',k:'NO TEST RAN',p:'src/billing/invoices.ts:88',d:'Fallback when a customer has no locale set',f:'src/billing/invoices.ts',ln:1}]},
+ {id:'rll',n:'rate-limit login',p:'tessera-api',br:'feat/login-rate-limit',title:'Rate-limit the login endpoint',step:'verify',gate:'running',done:190,total:412,files:'2 files · +52',pr:'feat(auth): rate-limit POST /login',commit:'feat(auth): rate-limit POST /login',stream:[U('Rate-limit POST /login to 5 attempts per minute per IP.'),LB(),TL('Edit','src/auth/limits.ts','+44'),TL('Edit','test/auth/limits.test.ts','+8'),TX('Done. Six attempts in a minute now return 429 with a Retry-After header.')],eyes:[]},
+ {id:'onb',n:'onboarding emails',p:'tessera-api',br:'feat/onboarding-emails',title:'Onboarding email sequence',step:'agent',gate:'idle',total:412,files:'no changes yet',pr:'feat(mail): onboarding sequence',commit:'',plan:true,stream:[U('Plan an onboarding email sequence for new workspaces.'),LB('AGENT · PLAN · OPUS · HIGH'),TX('Plan ready: 5 steps across 3 files. Say “approve” to build it.')],eyes:[]},
+ {id:'bps',n:'billing page skeletons',p:'tessera-web',br:'feat/billing-skeletons',title:'Loading skeletons on the billing page',step:'verify',gate:'running',done:120,total:344,files:'4 files · +90 −31',pr:'feat(web): billing skeletons',commit:'',stream:[U('Add loading skeletons to the billing page.'),LB(),TL('Edit','app/billing/page.tsx','+61','−31'),TX('Done.')],eyes:[]},
+ {id:'a11y',n:'a11y: focus traps',p:'tessera-web',br:'fix/focus-traps',title:'Fix focus traps in dialogs',step:'agent',gate:'idle',total:344,files:'no changes yet',pr:'fix(web): focus traps in dialogs',commit:'',stream:[],eyes:[]},
+ {id:'mt',n:'merge train',p:'haro',br:'feat/merge-train',title:'Merge train for green workspaces',step:'verify',gate:'red',total:594,files:'2 files · +140',pr:'feat: merge train',commit:'',stream:[U('Add a merge train that re-runs the gate on each merged tree.'),LB(),TL('Edit','src/train.ts','+120'),TL('Edit','src/train.test.ts','+20'),TX('Done, but two tests fail: the train doesn’t re-run the gate after rebasing.')],eyes:[],
+  fails:[{t:'mergeTrain › re-runs the gate on the merged tree',d:'expected 3 gate runs, received 2 · train.test.ts:44'},{t:'mergeTrain › stops the train on the first red',d:'expected status “stopped”, received “merged” · train.test.ts:71'}]}];
+function initWs(mode){const m={};WSD.forEach(w=>{m[w.id]={...w,mode:w.id==='sdc'?mode:'agent',gate:{st:w.gate,done:w.done||0},stream:w.stream.slice(),eyesDone:{},busy:false,merged:false,reviewed:false,fixed:false}});return m}
+const DOCS=[['plan-412.md','yours','# #412 double credits on Stripe retry','Six steps, all done: replay test, find the cause, processed_events table, dedupe in the transaction, receipt off the hot path, shared mock.','docs/plans · planned by haro'],['Stripe API','web · pinned','Handle duplicate events','Webhook endpoints can receive the same event more than once. Record the event ids you have processed and skip ones you have seen.','stripe.com/docs · opens in your browser'],['Prisma 5.x','offline','createMany({ skipDuplicates })','Inserts several rows in one query. With skipDuplicates, rows that would break a unique key are skipped. On PostgreSQL it compiles to INSERT … ON CONFLICT DO NOTHING.','Prisma 5.x · offline docset'],['PostgreSQL 16','offline','INSERT … ON CONFLICT','ON CONFLICT DO NOTHING skips a row that would violate a unique constraint instead of raising an error.','PostgreSQL 16 · offline docset'],['man pages','offline','git-blame(1)','Show what revision and author last modified each line of a file.','man · offline']];
+const RANK=x=>x<800?['Novice',800]:x<2000?['Journeyman',2000]:x<4000?['Craftsman',4000]:['Master',8000];
+const slugify=t=>t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').split('-').slice(0,5).join('-');
+const dirOf=p=>p.split('/').slice(0,-1).join('/');
+function fuzzy(s,t){let j=0;for(let i=0;i<s.length&&j<t.length;i++)if(s[i]===t[j])j++;return j===t.length}
+class Component extends DCLogic {
+  state={w:1440,nav:true,xp:false,mode:this.props.mode==='manual'?'manual':'agent',wsId:'sdc',wsMap:initWs(this.props.mode==='manual'?'manual':'agent'),screen:'ws',xpN:1240,xpL:'+15',xpW:'reviewed the diff yourself',mergedToday:false,code:{},hand:{},dirty:{},edit:null,term:[{t:'tessera-api on fix/412-stripe-replay via node v22',c:'rgba(216,208,197,.66)'},{t:'type help for demo commands',c:'rgba(216,208,197,.42)'}],termIn:'',compose:'',model:0,planFirst:false,pal:false,palQ:'',palI:0,nw:null,settings:false,setTab:'editor',fs:this.props.fontSize||13,mm:this.props.minimap!==false,dn:this.props.density||'comfortable',runOnSave:true,mut:'On demand',showXp:true,remind:true,sc:false,bl:false,det:{grid:true},ask:'',rq:'',rAns:'Stripe retries webhooks that don’t answer in time, so handlers must be safe to run twice.',docI:2,pr:false,rail:true,rtab:'plan',app:false,open:new Set(['src','src/billing','test','test/billing','test/helpers','prisma','prisma/migrations','prisma/migrations/20260929_processed_events','docs','docs/plans']),sel:'src/billing/webhooks.ts',tabs:['src/billing/webhooks.ts','test/billing/webhooks.test.ts','test/helpers/prisma.ts'],active:'src/billing/webhooks.ts',preview:null,split:null,view:'all',side:'files',filter:'',sq:'processedEvent',menu:null,quick:false,qq:'',qi:0,ext:false,sideW:250,cmode:'edit',panel:false,ptab:'term',focus:!!this.props.startFocused,cur:{'src/billing/webhooks.ts':[11,40]},toast:''};
+  wrapRef=React.createRef();frameRef=React.createRef();
+  componentDidMount(){if(this.state.mode!=='agent'&&this.state.mode!=='manual')this.setState({mode:'agent',cmode:'edit'});const el=this.wrapRef.current;if(el&&window.ResizeObserver){this.ro=new ResizeObserver(()=>this.setState({w:el.clientWidth}));this.ro.observe(el)}
+    this.kd=e=>{const m=e.metaKey||e.ctrlKey;if(m&&e.key.toLowerCase()==='p'){e.preventDefault();this.setState({quick:true,qq:'',qi:0})}else if(m&&e.key.toLowerCase()==='b'){e.preventDefault();this.setState(s=>({side:s.side?null:'files'}))}else if(e.ctrlKey&&e.key==='`'){e.preventDefault();this.setState(s=>({panel:!s.panel}))}else if(m&&e.shiftKey&&e.key==='Enter'){e.preventDefault();this.setState(s=>({focus:!s.focus}))}else if(e.key==='Escape'){if(this.state.quick||this.state.menu||this.state.ext)this.setState({quick:false,menu:null,ext:false});else if(this.state.focus)this.setState({focus:false})}};window.addEventListener('keydown',this.kd);this.kd2=e=>this.globalKey(e);window.addEventListener('keydown',this.kd2);const w=this.ws();if(w.gate.st==='running')this.runGate(w.id,w.gate.done)}
+  componentWillUnmount(){window.removeEventListener('keydown',this.kd2);Object.values(this.gt||{}).forEach(clearInterval);clearInterval(this.at);this.ro&&this.ro.disconnect();window.removeEventListener('keydown',this.kd);clearTimeout(this.tt)}
+  componentDidUpdate(pp){if(pp.startFocused!==this.props.startFocused)this.setState({focus:!!this.props.startFocused})}
+  say(t){this.setState({toast:t});clearTimeout(this.tt);this.tt=setTimeout(()=>this.setState({toast:''}),1800)}
+  openFile(p,pin,line){this.setState(s=>{let tabs=s.tabs.slice();let preview=s.preview;if(!tabs.includes(p)){if(pin){tabs.push(p)}else{if(preview&&tabs.includes(preview))tabs=tabs.filter(t=>t!==preview);tabs.push(p);preview=p}}else if(pin&&preview===p)preview=null;const cur={...s.cur};if(line!==undefined)cur[p]=[line,1];return {tabs,active:p,sel:p,preview,cur}})}
+  reveal(p){const o=new Set(this.state.open);const parts=p.split('/');for(let i=1;i<parts.length;i++)o.add(parts.slice(0,i).join('/'));this.setState({open:o,sel:p,side:'files',view:'all',filter:''})}
+  toggleDir(p,force){this.setState(s=>{const o=new Set(s.open);const want=force===undefined?!o.has(p):force;want?o.add(p):o.delete(p);return {open:o,sel:p}})}
+  rowsList(){const S=this.state;const f=S.filter.trim().toLowerCase();
+    if(S.view==='changes'){const ch=Object.keys(FILES).filter(p=>!f||p.toLowerCase().includes(f));const groups={};ch.forEach(p=>{(groups[dirOf(p)]=groups[dirOf(p)]||[]).push(p)});const out=[];Object.keys(groups).sort().forEach(d=>{out.push({path:'#'+d,name:d,dir:true,depth:0,group:true});groups[d].forEach(p=>out.push({path:p,name:p.split('/').pop(),dir:false,depth:1}))});return out}
+    const out=[];const match=n=>n.dir?sortKids(n).some(match):n.path.toLowerCase().includes(f);
+    const walk=(n,d)=>sortKids(n).forEach(k=>{if(f&&!match(k))return;out.push({path:k.path,name:k.name,dir:k.dir,depth:d});if(k.dir&&(f||S.open.has(k.path)))walk(k,d+1)});walk(TREE,0);return out}
+  ws(id){return this.state.wsMap[id||this.state.wsId]}
+  upWs(id,fn){this.setState(s=>({wsMap:{...s.wsMap,[id]:{...s.wsMap[id],...fn(s.wsMap[id])}}}))}
+  codeFor(p){return this.state.code[p]||codeOf(p)}
+  award(n,why,bonus){const man=this.ws().mode==='manual'&&bonus;const v=n*(man?2:1);this.setState(s=>({xpN:s.xpN+v,xpL:'+'+v,xpW:why+(man?' · ×2 manual':'')}));this.say('+'+v+' XP · '+why+(man?' · ×2 manual':''))}
+  runGate(id,from){clearInterval((this.gt=this.gt||{})[id]);const w=this.state.wsMap[id];const tot=w.total;let d=from||0;this.upWs(id,()=>({gate:{st:'running',done:d}}));
+    this.gt[id]=setInterval(()=>{d=Math.min(tot,d+Math.ceil(tot/28));if(d>=tot){clearInterval(this.gt[id]);const ww=this.state.wsMap[id];const red=id==='mt'&&!ww.fixed;this.upWs(id,()=>({gate:{st:red?'red':'green',done:tot}}));
+      if(id===this.state.wsId){this.say(red?'Gate red · 2 failing':'Gate green · '+tot+' / '+tot);if(!red&&this.pendingHand){this.pendingHand=false;this.award(5,'saved and verified by hand',true)}}}
+      else this.upWs(id,()=>({gate:{st:'running',done:d}}))},110)}
+  runAgent(text){const id=this.state.wsId;const w=this.ws();if(!text.trim()||w.busy)return;const A=this.state.active||'src/billing/webhooks.ts';
+    const ev=w.plan&&/approve/i.test(text)?[TL('Edit','src/mail/onboarding.ts','+86'),TL('Edit','src/mail/templates/welcome.mjml','+40'),TL('Bash','npm test -- mail'),TX('Built the 5-step plan. Three emails, sent on day 0, 2 and 7.')]:[TL('Read',A),TX('Looking at '+A.split('/').pop()+' and the tests that touch it.'),TL('Edit',A,'+'+(3+Math.floor(Math.random()*9)),'−'+Math.floor(Math.random()*4)),TL('Bash','npm test -- '+(A.split('/')[1]||'')),TX('Done. The gate will confirm.')];
+    this.upWs(id,x=>({busy:true,stream:x.stream.concat([U(text),LB('AGENT · BUILD · '+['SONNET','OPUS','HAIKU'][this.state.model]+' · HIGH')])}));this.setState({compose:''});
+    let i=0;clearInterval(this.at);this.at=setInterval(()=>{if(i<ev.length){const e=ev[i++];this.upWs(id,x=>({stream:x.stream.concat([e])}))}else{clearInterval(this.at);this.upWs(id,x=>({busy:false,fixed:true,plan:false,files:x.files==='no changes yet'?'1 file · +'+(10+i):x.files}));this.runGate(id)}},650)}
+  save(){const A=this.state.active;if(!A||!this.state.dirty[A]){this.say('Nothing to save');return}this.setState(s=>({dirty:{...s.dirty,[A]:false},edit:null}));this.say('Saved '+A.split('/').pop());if(this.ws().mode==='manual')this.pendingHand=true;if(this.state.runOnSave)this.runGate(this.state.wsId)}
+  editLine(p,k,v){this.setState(s=>{const c=(s.code[p]||codeOf(p)).slice();c[k]=v;return {code:{...s.code,[p]:c},dirty:{...s.dirty,[p]:true},hand:{...s.hand,[p]:{...(s.hand[p]||{}),[k]:true}}}})}
+  shiftHand(hm,k,dir){const o={};Object.keys(hm||{}).forEach(x=>{x=+x;if(dir>0)o[x>k?x+1:x]=true;else{if(x<k)o[x]=true;else if(x>k)o[x-1]=true}});return o}
+  lineKey(p,k,e){const c=this.codeFor(p);const pos=e.target.selectionStart;
+    if(e.key==='Enter'){e.preventDefault();const l=c[k];const ind=(l.match(/^ */)||[''])[0];const n=c.slice();n.splice(k,1,l.slice(0,pos),ind+l.slice(pos));this.setState(s=>{const hm=this.shiftHand(s.hand[p],k,1);hm[k]=true;hm[k+1]=true;return {code:{...s.code,[p]:n},dirty:{...s.dirty,[p]:true},hand:{...s.hand,[p]:hm},edit:{p,k:k+1},cur:{...s.cur,[p]:[k+2,ind.length+1]}}})}
+    else if(e.key==='Backspace'&&pos===0&&e.target.selectionEnd===0&&k>0){e.preventDefault();const n=c.slice();n.splice(k-1,2,c[k-1]+c[k]);this.setState(s=>{const hm=this.shiftHand(s.hand[p],k,-1);hm[k-1]=true;return {code:{...s.code,[p]:n},dirty:{...s.dirty,[p]:true},hand:{...s.hand,[p]:hm},edit:{p,k:k-1},cur:{...s.cur,[p]:[k,1]}}})}
+    else if(e.key==='ArrowUp'&&k>0){e.preventDefault();this.setState(s=>({edit:{p,k:k-1},cur:{...s.cur,[p]:[k,pos+1]}}))}
+    else if(e.key==='ArrowDown'&&k<c.length-1){e.preventDefault();this.setState(s=>({edit:{p,k:k+1},cur:{...s.cur,[p]:[k+2,pos+1]}}))}
+    else if(e.key==='Tab'){e.preventDefault();const l=c[k];this.editLine(p,k,l.slice(0,pos)+'  '+l.slice(pos))}
+    else if(e.key==='Escape'){e.stopPropagation();this.setState({edit:null})}
+    else this.setState(s=>({cur:{...s.cur,[p]:[k+1,pos+1]}}))}
+  goStep(st){this.setState({screen:'ws',focus:st==='code'?this.state.focus:false,edit:null});this.upWs(this.state.wsId,()=>({step:st}))}
+  openWs(id){const w=this.state.wsMap[id];this.setState({wsId:id,screen:'ws',mode:w.mode,pal:false,focus:false,edit:null});if(w.gate.st==='running'&&!(this.gt&&this.gt[id]))setTimeout(()=>this.runGate(id,w.gate.done),50)}
+  termRun(cmd){const out=[];const c=cmd.trim();const push=(t,col)=>out.push({t,c:col||'rgba(216,208,197,.66)'});const w=this.ws();
+    if(c==='help')push('npm test · git status · git log · npm run dev · ls · pwd · clear');
+    else if(c==='clear'){this.setState({term:[],termIn:''});return}
+    else if(/^(npm (run )?test|npx vitest|vitest)/.test(c)){push('vitest run · '+w.total+' tests');this.runGate(w.id)}
+    else if(c==='git status'){push('On branch '+w.br);Object.keys(FILES).forEach(p=>push('  modified:   '+p,'#d8d0c5'));Object.keys(this.state.dirty).filter(p=>this.state.dirty[p]).forEach(p=>push('  unsaved:    '+p,'#e0685e'))}
+    else if(c==='git log'){push('a41f0c2  fix(billing): dedupe Stripe webhook events (#412)');push('9be21d0  chore: bump prisma to 5.19')}
+    else if(c==='npm run dev'){push('ready on http://localhost:3000','#41d183');this.setState({app:true})}
+    else if(c==='ls')push('docs  prisma  src  test  package.json  README.md  tsconfig.json  vitest.config.ts');
+    else if(c==='pwd')push('~/.haro/worktrees/tessera-api/'+w.id);
+    else if(c)push(c.split(' ')[0]+': not available in this demo','rgba(216,208,197,.42)');
+    this.setState(s=>({term:s.term.concat([{t:'› '+c,c:'#d8d0c5'}],out),termIn:''}))}
+  closeAll(){this.setState({pal:false,nw:null,settings:false,sc:false,bl:false,xp:false})}
+  globalKey(e){const m=e.metaKey||e.ctrlKey;const inField=/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||'');
+    if(m&&e.key.toLowerCase()==='s'){e.preventDefault();this.save()}
+    else if(m&&e.key.toLowerCase()==='k'){e.preventDefault();this.setState({pal:true,palQ:'',palI:0})}
+    else if(m&&e.key.toLowerCase()==='n'){e.preventDefault();this.setState({nw:{task:'',who:this.ws().mode}})}
+    else if(m&&e.key===','){e.preventDefault();this.setState({settings:true})}
+    else if(m&&/^[1-4]$/.test(e.key)){e.preventDefault();const st=(this.ws().mode==='manual'?['code','verify','ship']:['agent','code','verify','ship'])[+e.key-1];if(st)this.goStep(st)}
+    else if(e.key==='?'&&!inField){this.setState({sc:true})}
+    else if(e.key==='Escape'){this.closeAll()}}
+  extraVals(base){const S=this.state;const w=this.ws();const man=w.mode==='manual';const tri=S.screen==='triage';
+    let step=w.step;if(man&&step==='agent')step='code';const code=!tri&&step==='code';const focus=S.focus&&code;
+    const gs=w.gate.st,tot=w.total;const eyesAll=w.eyes||[];const eyesOpen=eyesAll.filter(x=>!w.eyesDone[x.id]);
+    const G={green:{key:'GREEN',color:K.green,count:tot+' / '+tot,head:'All '+tot+' tests pass',sub:eyesOpen.length?'Mergeable. '+eyesOpen.length+' thing'+(eyesOpen.length>1?'s':'')+' to look at below; they won’t block.':'Mergeable. Nothing flagged.',rail:tot+' / '+tot+' passed · mergeable',when:'3.2s · re-runs on save',low:'green'},
+      red:{key:'RED',color:K.red,count:(tot-2)+' / '+tot,head:'2 tests are failing',sub:'This branch can’t merge until they pass. Send the failures to the agent, or fix them in code.',rail:'2 of '+tot+' failing',when:'1.9s',low:'red'},
+      running:{key:'RUNNING',color:K.ink,count:w.gate.done+' / '+tot,head:w.gate.done+' of '+tot+' tests done',sub:'No failures so far. The first failure shows here the moment it happens.',rail:w.gate.done+' / '+tot+' · no failures yet',when:'running…',low:'running'},
+      idle:{key:'NOT RUN',color:K.i40,count:'—',head:'The gate hasn’t run on this tree',sub:'It starts by itself when the agent finishes, or when you save.',rail:'Runs when the agent finishes',when:'never run',low:'not run'}}[gs];
+    const g={...G,isRun:gs==='running',pct:Math.round(w.gate.done/tot*100)+'%',line:G.rail};
+    const green=gs==='green';
+    const dirtyA=S.active&&S.dirty[S.active];const anyDirty=Object.values(S.dirty).some(Boolean);
+    const stepDefs=man?[['code',anyDirty?'unsaved changes':w.files],['verify',G.low+(gs==='running'?' · '+w.gate.done+' / '+tot:'')],['ship',w.merged?'merged · #419':green?'ready to merge':'locked until green']]:[['agent',w.busy?'running…':w.stream.length?(w.plan?'plan ready':'done'):'ready for a task'],['code',anyDirty?'unsaved changes':w.files],['verify',G.low+(gs==='running'?' · '+w.gate.done+' / '+tot:'')],['ship',w.merged?'merged · #419':green?'ready to merge':'locked until green']];
+    const dotOf=(k)=>k==='verify'?G.color:k==='ship'?(w.merged?'#b3a0d6':green?K.ink:K.line):k==='agent'?(w.busy?K.ink:w.stream.length?K.i40:K.ink):(anyDirty?K.ink:K.i40);
+    const steps=stepDefs.map(([name,sub],k)=>{const on=name===step;const d=dotOf(name);return {n:'0'+(k+1),name,sub,dot:d,go:()=>this.goStep(name),top:on?K.ink:'transparent',bg:on?'#131210':'transparent',nc:on?K.ink:K.i66,sc:d===K.green?K.green:d===K.red?K.red:on?K.ink:K.i40}});
+    const P=(l,go,dis)=>({l,go:dis?()=>{}:go,bg:dis?'transparent':K.ink,c:dis?K.i40:'#0b0a09',b:dis?K.line:K.ink});
+    const merge=()=>{if(!green||w.merged)return;this.upWs(w.id,()=>({merged:true}));this.setState({mergedToday:true});this.award(10,'merged on a green gate',true)};
+    const nx=step==='agent'?(w.busy?P('Agent running',null,1):w.stream.length&&!w.plan?P('Review code →',()=>this.goStep('code')):P('Run agent ⌘↵',()=>this.runAgent(S.compose||(w.plan?'approve':'')))):
+      step==='code'?(dirtyA?P('Save & run gate ⌘S',()=>this.save()):gs==='running'?P('Gate running',null,1):P('Verify →',()=>this.goStep('verify'))):
+      step==='verify'?(green?P('Ship →',()=>this.goStep('ship')):gs==='red'?(man?P('Back to code',()=>this.goStep('code')):P('Send failures to agent',()=>{this.setState({compose:'Fix the 2 failing tests in train.test.ts. Don’t weaken them.'});this.goStep('agent')})):gs==='running'?P('Gate running',null,1):P('Run gate',()=>this.runGate(w.id))):
+      (w.merged?P('Continue on a new branch',()=>this.setState({nw:{task:'',who:w.mode}})):green?P('Merge into main',merge):P('Go to verify',()=>this.goStep('verify')));
+    const stOf=x=>x.merged?['MERGED','#b3a0d6',1]:x.busy?['AGENT',K.ink,0]:x.gate.st==='red'?['RED',K.red,1]:x.gate.st==='running'?['GATE',K.ink,0]:x.plan?['PLAN',K.ink,0]:x.gate.st==='green'?['GREEN',K.green,1]:['IDLE',K.i40,0];
+    const order=Object.keys(S.wsMap);const all=order.map(id=>S.wsMap[id]);
+    const navProjects=['tessera-api','tessera-web','haro'].map(p=>({name:p,items:all.filter(x=>x.p===p).map(x=>{const [s,c,f]=stOf(x);return {n:x.n,s,c,fill:f?c:'transparent',bg:!tri&&x.id===w.id?'#1b1915':'transparent',open:()=>this.openWs(x.id)}})}));
+    const navFlat=all.map((x,i)=>{const [s,c,f]=stOf(x);return {t:x.n+' · '+s,c,fill:f?c:'transparent',bg:!tri&&x.id===w.id?'#1b1915':'transparent',mt:i>0&&all[i-1].p!==x.p?'8px':'0',open:()=>this.openWs(x.id)}});
+    const needOf=x=>!x.merged&&(x.gate.st==='red'||x.plan||(x.gate.st==='green'&&(x.eyes||[]).some(e=>!x.eyesDone[e.id])));
+    const grpOf=x=>x.merged?'done':needOf(x)?'need':(x.busy||x.gate.st==='running')?'run':x.gate.st==='green'?'ready':'idle';
+    const detOf=x=>x.merged?'Merged #419 on green':x.gate.st==='red'?'2 failing · '+((x.fails||[])[0]||{t:''}).t.split(' › ')[0]:x.plan?'Plan ready to approve':x.gate.st==='running'?'Gate '+x.gate.done+' / '+x.total:x.gate.st==='green'?((x.eyes||[]).filter(e=>!x.eyesDone[e.id]).length?(x.eyes||[]).filter(e=>!x.eyesDone[e.id]).length+' thing(s) need your eyes':'Green · nothing to review'):'No task yet';
+    const actOf=x=>x.merged?'Archive':x.gate.st==='red'?'Fix':x.plan?'Review plan':x.gate.st==='green'?'Review & ship':x.gate.st==='running'?'Watch':'Write a task';
+    const TK={agent:x=>x.stream.length?K.i40:K.line,code:x=>x.stream.length?K.i40:K.line,verify:x=>x.gate.st==='green'?K.green:x.gate.st==='red'?K.red:x.gate.st==='running'?K.ink:K.line,ship:x=>x.merged?'#b3a0d6':K.line};
+    const triGroups=[['need','NEEDS YOU','Decide, review or unblock'],['run','RUNNING','Agents and gates at work'],['ready','READY TO SHIP','Green, nothing to review'],['idle','IDLE','Waiting for a task'],['done','MERGED','Shipped on green']].map(([k,t,hint])=>{const rows=all.filter(x=>grpOf(x)===k).map(x=>{const [s,c,f]=stOf(x);const prim=k==='need';return {s,c,fill:f?c:'transparent',n:x.n,p:x.p,mode:x.mode==='manual'?'manual':'agent',d:detOf(x),a:actOf(x),ticks:['agent','code','verify','ship'].map(z=>({c:TK[z](x)})),bbg:prim?K.ink:'transparent',bc:prim?'#0b0a09':K.i86,bb:prim?K.ink:'rgba(216,208,197,.2)',open:()=>this.openWs(x.id)}});return {t,hint,n:rows.length,rows}}).filter(x=>x.rows.length);
+    const needN=all.filter(needOf).length;
+    const eyes=eyesAll.map(x=>{const d=!!w.eyesDone[x.id];return {...x,op:d?.45:1,bg:d?K.ink:'transparent',tick:d?'✓':'',toggle:()=>{this.upWs(w.id,y=>({eyesDone:{...y.eyesDone,[x.id]:!d}}));if(!d)this.award(5,'resolved a needs-your-eyes item',true)},open:()=>{this.openFile(x.f,true,x.ln);this.goStep('code')}}});
+    const cells=Array.from({length:Math.round(tot/3)},(_,i)=>{const n=Math.round(tot/3);let bg=K.line;if(gs==='running')bg=i<n*w.gate.done/tot?'rgba(65,209,131,.7)':K.line;else if(gs==='red')bg=[37,91].includes(i)?K.red:'rgba(65,209,131,.7)';else if(gs==='green')bg='rgba(65,209,131,.7)';return {bg}});
+    const evd=[['grid','Test grid',tot+' tests · live',''],['impact','Impact','38 tests touch this change','desktop and API suites: test/billing/*.test.ts (14), test/helpers (all), test/auth (0).'],['cov','Coverage','91.2% · up 1.4 from main','main 89.8% → this tree 91.2%. The lines that dropped are listed under Needs your eyes.'],['flaky','Flaky tests','none in the last 5 runs','Every test gave the same result across the last 5 runs of this tree.'],['mut','Mutation score',S.mut==='Off'?'off in settings':'100% · 0 of 50 survived','haro planted 50 small mistakes in the changed lines. The tests caught all of them.']].map(([k,n,m,body])=>{const o=!!S.det[k];return {n,m:gs==='idle'?'—':m,body,sign:o?'−':'+',isGrid:o&&k==='grid',isText:o&&k!=='grid',toggle:()=>this.setState(s=>({det:{...s.det,[k]:!s.det[k]}}))}});
+    const metrics=[['TESTS',gs==='idle'?'—':g.count,gs==='red'?K.red:green?K.green:K.ink],['DURATION',gs==='running'?'…':gs==='idle'?'—':'3.2s',K.ink],['COVERAGE',green?'91.2%':'—',K.ink],['MUTATION',green&&S.mut!=='Off'?'100%':'—',K.ink],['FLAKY','0',K.ink]].map(([l,v,c])=>({l,v,c}));
+    const ship={canMerge:green&&!w.merged,blocked:!green&&!w.merged,merged:w.merged,color:w.merged?'#b3a0d6':green?K.green:gs==='red'?K.red:K.i40,border:green&&!w.merged?'rgba(65,209,131,.45)':'rgba(216,208,197,.2)',
+      title:w.merged?'Merged into main as #419':green?'Gate is green. Ready to merge.':'Merging is blocked',sub:w.merged?'Merged on a green gate. Archive the workspace when you’re done.':green?(eyesOpen.length?eyesOpen.length+' advisory item(s) still open. They won’t block.':'Everything flagged has been reviewed.'):gs==='red'?'2 tests are failing. The gate must be green first.':'The gate hasn’t passed on this tree yet.'};
+    const receipt=[['Suite',gs==='idle'?'not run':g.count+(green?' passed':''),green?K.green:gs==='red'?K.red:K.i40],['Written by',man?'you · by hand':Object.keys(S.hand).length?'agent + your edits':'agent · sonnet',K.ink],['Needs your eyes',eyesOpen.length+' open · '+(eyesAll.length-eyesOpen.length)+' resolved',K.i40],['Mutation',S.mut==='Off'?'off':'100% · 0 survived',K.i40],['Tamper alarm','clean',K.i40],['Diff reviewed',w.reviewed||man?'yes, by you':'not yet',K.i40]].map(([l,v,c])=>({l,v,c}));
+    const stream=w.stream.map(e=>({...e,isUser:e.k==='user',isLabel:e.k==='label',isTool:e.k==='tool',isText:e.k==='text',v:e.v||'',a:e.a||'',d:e.d||''}));
+    const lvl=Math.floor(S.xpN/180)+1;const [rk,nxt]=RANK(S.xpN);const base0=nxt===800?0:nxt===2000?800:nxt===4000?2000:4000;
+    // palette
+    const q=S.palQ.toLowerCase();const acts=[['New workspace','⌘N',()=>this.setState({pal:false,nw:{task:'',who:w.mode}})],['Run the gate','⌘G',()=>{this.setState({pal:false});this.runGate(w.id)}],['Switch to '+(man?'Agent':'Manual')+' mode','',()=>{this.setState({pal:false});this.setMode(man?'agent':'manual')}],['Toggle focus mode','⌘⇧↵',()=>{this.goStep('code');this.setState({pal:false,focus:!S.focus})}],['Go to file','⌘P',()=>this.setState({pal:false,quick:true,qq:''})],['Toggle terminal','⌃`',()=>this.setState(s=>({pal:false,panel:!s.panel}))],['Open backlog','',()=>this.setState({pal:false,bl:true})],['Settings','⌘,',()=>this.setState({pal:false,settings:true})],['Keyboard shortcuts','?',()=>this.setState({pal:false,sc:true})],['Go to triage','',()=>this.setState({pal:false,screen:'triage'})]];
+    const palRaw=[];const addG=(head,arr)=>{const f=arr.filter(x=>!q||x.l.toLowerCase().includes(q));if(f.length){palRaw.push({isHead:true,isItem:false,l:head});f.forEach(x=>palRaw.push({...x,isHead:false,isItem:true}))}};
+    addG('WORKSPACES',all.map(x=>{const [s,c,f]=stOf(x);return {l:x.n,k:x.p,c,fill:f?c:'transparent',run:()=>this.openWs(x.id)}}));
+    addG('ACTIONS',acts.map(([l,k,run])=>({l,k,c:K.line,fill:'transparent',run})));
+    let ii=-1;const palItems=palRaw.map(x=>{if(x.isItem)ii++;return {...x,bg:x.isItem&&ii===S.palI?'#1b1915':'transparent'}});const runnable=palRaw.filter(x=>x.isItem);
+    // settings
+    const T=(l,hh,key)=>({l,h:hh,isToggle:true,isSeg:false,isValue:false,tbg:S[key]?K.ink:'transparent',tb:S[key]?K.ink:K.i40,kbg:S[key]?'#0b0a09':K.i40,kl:S[key]?'18px':'2px',flip:()=>this.setState(s=>({[key]:!s[key]}))});
+    const SG=(l,hh,key,opts,lab)=>({l,h:hh,isToggle:false,isSeg:true,isValue:false,opts:opts.map((o,oi)=>({l:lab?lab[oi]:String(o),bg:S[key]===o?K.ink:'transparent',c:S[key]===o?'#0b0a09':K.i66,pick:()=>this.setState({[key]:o})}))});
+    const VL=(l,hh,v)=>({l,h:hh,v,isToggle:false,isSeg:false,isValue:true});
+    const SET={editor:['Editor',[SG('Font size','Editor, diff and terminal','fs',[12,13,14,15],['12','13','14','15']),T('Minimap','Overview of the file on the right edge','mm'),SG('Density','Row height in the file tree','dn',['comfortable','compact'],['Comfortable','Compact']),VL('Also open in','Secondary option in the file tree','Zed')]],gate:['Gate',[VL('Runner','Blocks merge when red','Vitest · all tests'),T('Run on save','The gate re-runs when you save a file','runOnSave'),SG('Mutation score','Would the tests notice a mistake?','mut',['Off','On demand','Every run'])]],agent:['Agent',[SG('Default model','A pick in the composer still wins','model',[0,1,2],['Sonnet','Opus','Haiku']),T('Plan first by default','Opus drafts a plan before building','planFirst')]],manual:['Manual & XP',[T('Show XP in the sidebar','Rank, streak and latest reward','showXp'),T('Streak reminder','A nudge in triage if today has no merge','remind'),VL('Manual multiplier','Applied to manual-mode rewards','× 2')]]};
+    const [setTitle,setRows]=SET[S.setTab];
+    const nw=S.nw||{task:'',who:'agent'};
+    return {
+      crumbA:tri?'triage':w.p+' / ',crumbB:tri?'':w.n,needTxt:needN+' NEED YOU',goTriage:()=>this.setState({screen:'triage',focus:false}),triBg:tri?'#1b1915':'transparent',wsCount:all.length,
+      openPalette:()=>this.setState({pal:true,palQ:'',palI:0}),openShortcuts:()=>this.setState({sc:true}),openSettings:()=>this.setState({settings:true}),openBacklog:()=>this.setState({bl:true}),openNew:()=>this.setState({nw:{task:'',who:w.mode}}),
+      navProjects,navFlat,
+      lvl,rankName:rk,xpTxt:S.xpN.toLocaleString()+' / '+nxt.toLocaleString()+' XP',xpPct:Math.round((S.xpN-base0)/(nxt-base0)*100)+'%',xpToNext:(nxt-S.xpN)+' XP to '+RANK(nxt)[0],xpLast:S.xpL,xpLastWhy:S.xpW,streakN:S.mergedToday?15:14,
+      streak:Array.from({length:14},(_,k)=>({c:k===13?(S.mergedToday?K.ink:'transparent'):[3,8].includes(k)?K.line:'rgba(216,208,197,.55)'})),
+      wsTitle:w.title,wsSub:w.br+' → main · '+w.files,steps,stepN:steps.length,nx,
+      chrome:!focus,focus,chromeWs:!focus&&!tri,navOpen:S.nav&&!focus,navMini:!S.nav&&!focus,navW:focus?'0px':S.nav?'220px':'52px',
+      railOpen:S.rail&&!focus&&!tri,railMini:!S.rail&&!focus&&!tri,
+      gridCols:tri?'minmax(0,1fr)':code?('48px '+base.sideW+' minmax(0,1fr) '+base.railW):('minmax(0,1fr) '+(focus?'0px':S.rail?'290px':'44px')),
+      isCodeStep:code,isOther:!code,isTriage:tri,isAgentStep:!tri&&step==='agent',isVerifyStep:!tri&&step==='verify',isShipStep:!tri&&step==='ship',
+      triHead:needN?needN+' workspace'+(needN>1?'s':'')+' need you.':'Nothing needs you right now.',triGroups,
+      g,eyes,eyesOpenN:eyesOpen.length,eyesEmpty:eyesAll.length===0,eyesEmptyTxt:gs==='running'?'Appears when the run finishes.':gs==='idle'?'Nothing to review until the gate has run.':'Nothing flagged on this tree.',eyesRailTxt:eyesOpen.length?eyesOpen.map(x=>'○ '+x.p).join('  ·  '):'Nothing open.',
+      hasFails:gs==='red',fails:w.fails||[],metrics,evidence:evd,cells,rerun:()=>this.runGate(w.id),
+      ship,merge,openPr:()=>{this.setState({pr:true});this.say('Pull request #419 opened on GitHub')},prBtn:S.pr?'View PR #419 ↗':'Open pull request',receipt,copyReceipt:()=>this.say('Receipt copied as markdown'),
+      prTitle:w.pr,onPrTitle:e=>{const v=e.target.value;this.upWs(w.id,()=>({pr:v}))},commitMsg:w.commit,onCommit:e=>{const v=e.target.value;this.upWs(w.id,()=>({commit:v}))},
+      stream,agentEmpty:stream.length===0,agentBusy:w.busy,agentDoneLine:!w.busy&&stream.length>0&&!w.plan,stopAgent:()=>{clearInterval(this.at);this.upWs(w.id,()=>({busy:false}));this.say('Agent stopped')},goCode:()=>this.goStep('code'),goVerify:()=>this.goStep('verify'),
+      suggestions:[['Add keyboard navigation to the invoice table','backlog'],['Fix: focus escapes the billing dialog on Tab','issue #377'],['Write tests for src/billing/ledger.ts','coverage gap']].map(([t,src])=>({t,src,use:()=>this.setState({compose:t})})),
+      compose:S.compose,onCompose:e=>this.setState({compose:e.target.value}),onComposeKey:e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();this.runAgent(S.compose)}},runAgent:()=>this.runAgent(S.compose),runBg:S.compose.trim()&&!w.busy?K.ink:'rgba(216,208,197,.3)',runC:'#0b0a09',
+      modelLabel:['sonnet','opus','haiku'][S.model]+' · high',cycleModel:()=>this.setState(s=>({model:(s.model+1)%3})),togglePlanFirst:()=>this.setState(s=>({planFirst:!s.planFirst})),pfB:S.planFirst?K.ink:K.line,pfC:S.planFirst?K.ink:K.i66,pfMark:S.planFirst?'●':'○',
+      termLines:S.term,termIn:S.termIn,onTermIn:e=>this.setState({termIn:e.target.value}),onTermKey:e=>{if(e.key==='Enter')this.termRun(S.termIn)},
+      ask:S.ask,onAsk:e=>this.setState({ask:e.target.value}),sendAsk:()=>{if(!S.ask.trim())return;const t=S.ask+(S.active?' (in '+S.active+')':'');this.setState({ask:''});this.goStep('agent');setTimeout(()=>this.runAgent(t),60)},onAskKey:e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();if(S.ask.trim()){const t=S.ask;this.setState({ask:''});this.goStep('agent');setTimeout(()=>this.runAgent(t),60)}}},
+      rq:S.rq,onRq:e=>this.setState({rq:e.target.value}),onRqKey:e=>{if(e.key==='Enter'&&S.rq.trim())this.setState({rAns:'Pointers only for “'+S.rq.trim()+'”. Start with the sources below; haro won’t write the code.',rq:''})},rAnswer:S.rAns,
+      research:[['Stripe docs','open ↗','Handle duplicate events',1],['Prisma · offline','read','createMany({ skipDuplicates })',2],['Your repo','jump','git blame · a41c9e2 (#388)',-1]].map(([src,how,t,di])=>({src,how,t,go:()=>{if(di>=0)this.setState({rtab:'docs',docI:di});else{this.openFile('src/billing/webhooks.ts',true,20);this.say('Jumped to webhooks.ts:20')}}})),
+      docList:DOCS.map((d,i)=>({n:d[0],m:d[1],bg:S.docI===i?'#1b1915':'transparent',c:S.docI===i?K.ink:K.i66,pick:()=>this.setState({docI:i})})),docT:DOCS[S.docI][2],docB:DOCS[S.docI][3],docS:DOCS[S.docI][4],
+      fontSize:S.fs+'px',lineH:Math.round(S.fs*1.7)+'px',minimap:S.mm,miniW:S.mm?'92px':'0px',rowH:S.dn==='compact'?'22px':'26px',
+      modes:[['edit','Edit'],['diff','Diff']].map(([k,l])=>({l,bg:S.cmode===k?'#1b1915':'transparent',c:S.cmode===k?K.ink:K.i40,pick:()=>{this.setState({cmode:k});if(k==='diff'&&!man&&!w.reviewed){this.upWs(w.id,()=>({reviewed:true}));this.award(15,'reviewed the diff yourself')}}})),
+      modeOpts:[['agent','AGENT','The agent writes, you review'],['manual','MANUAL','You write; AI only plans and researches']].map(([k,l,t])=>({l,t,bg:w.mode===k?K.ink:'transparent',c:w.mode===k?'#0b0a09':K.i66,pick:()=>this.setMode(k)})),
+      isAgent:!man,isManual:man,
+      saveTxt:dirtyA?'unsaved':'saved',saveC:dirtyA?K.ink:K.i40,
+      palOpen:S.pal,palQ:S.palQ,onPalQ:e=>this.setState({palQ:e.target.value,palI:0}),palItems,onPalKey:e=>{if(e.key==='ArrowDown'){e.preventDefault();this.setState({palI:Math.min(runnable.length-1,S.palI+1)})}else if(e.key==='ArrowUp'){e.preventDefault();this.setState({palI:Math.max(0,S.palI-1)})}else if(e.key==='Enter'&&runnable[S.palI]){runnable[S.palI].run()}},
+      closeAll:()=>this.closeAll(),
+      nwOpen:!!S.nw,nwTask:nw.task,onNwTask:e=>{const v=e.target.value;this.setState(s=>({nw:{...s.nw,task:v}}))},nwBranch:(nw.who==='manual'?'fix/':'feat/')+(slugify(nw.task)||'task-name'),
+      nwWho:[['agent','Agent'],['manual','Me, by hand']].map(([k,l])=>({l,bg:nw.who===k?K.ink:'transparent',c:nw.who===k?'#0b0a09':K.i66,pick:()=>this.setState(s=>({nw:{...s.nw,who:k}}))})),
+      nwHint:nw.who==='manual'?'No agent. haro’s AI only plans and researches. Manual rewards count double.':'The agent starts on the task right away. Review its diff yourself for bonus XP.',nwCta:nw.who==='manual'?'Create & start writing':'Create & run agent',
+      onNwKey:e=>{if(e.key==='Enter')this.createWs()},createWs:()=>this.createWs(),
+      setOpen:S.settings,setTabs:[['editor','Editor'],['gate','Gate'],['agent','Agent'],['manual','Manual & XP']].map(([k,l])=>({l,bg:S.setTab===k?'#1b1915':'transparent',c:S.setTab===k?K.ink:K.i66,pick:()=>this.setState({setTab:k})})),setTitle,setRows,
+      scOpen:S.sc,shortcuts:[['Command palette','⌘K'],['New workspace','⌘N'],['Go to step 1–4','⌘1–4'],['Save and run the gate','⌘S'],['Go to file','⌘P'],['Toggle file panel','⌘B'],['Toggle terminal','⌃`'],['Focus the editor','⌘⇧↵'],['Settings','⌘,'],['Run agent','⌘↵'],['Shortcuts','?'],['Close / exit','Esc']].map(([l,k])=>({l,k})),
+      blOpen:S.bl,backlog:[['#412','Customers credited twice when Stripe retries invoice.paid','bug · P1'],['#398','Replace moment with date-fns in reports/','chore'],['todo','Paginate /api/invoices over 500 rows','perf'],['#401','Dark receipt email template','feature']].map(([n,t,tag])=>({n,t,tag,start:()=>this.setState({bl:false,nw:{task:t,who:w.mode}})})),
+      showXpFooter:S.showXp
+    };
+  }
+  setMode(k){const w=this.ws();if(w.mode===k)return;this.upWs(w.id,x=>({mode:k,step:k==='manual'&&x.step==='agent'?'code':x.step}));this.setState({mode:k});this.say(k==='manual'?'Manual: the agent is off for this workspace':'Agent: your hand-written lines stay marked as yours')}
+  createWs(){const nw=this.state.nw;if(!nw)return;const task=nw.task.trim()||'Untitled task';const id='w'+Date.now();const slug=slugify(task)||'task';
+    const ws={id,n:slug.replace(/-/g,' ').slice(0,26),p:'tessera-api',br:(nw.who==='manual'?'fix/':'feat/')+slug,title:task,step:nw.who==='manual'?'code':'agent',gate:{st:'idle',done:0},total:412,files:'no changes yet',pr:task,commit:'',stream:[],eyes:[],eyesDone:{},busy:false,merged:false,reviewed:false,fixed:false,mode:nw.who};
+    this.setState(s=>({wsMap:{...s.wsMap,[id]:ws},wsId:id,screen:'ws',mode:nw.who,nw:null,focus:false}));this.say('Workspace created · '+ws.br);if(nw.who==='agent'&&nw.task.trim())setTimeout(()=>this.runAgent(task),120)}
+  pane(p,idx,S){const F=FILES[p];const code=this.codeFor(p);const hand=(S.hand&&S.hand[p])||{};const ed=S.edit&&S.edit.p===p?S.edit.k:-1;const cur=(S.cur[p]||[1,1])[0];const active=idx===0;
+    const lines=code.map((l,k)=>{const c=F&&F.chg&&F.chg[k];const ind=(l.match(/^ */)||[''])[0].length;const isCur=k+1===cur;
+      const hd=!!hand[k];return {n:k+1,raw:l,editing:k===ed,notEditing:k!==ed,onEdit:ev=>this.editLine(p,k,ev.target.value),onKey:ev=>this.lineKey(p,k,ev),toks:toks(l),chg:hd?K.ink:c?(c==='a'?K.green:K.ink):'transparent',mark:hd?'●':(S.cmode==='edit'&&c==='a'&&F.proof==='ran')?'●':'',mc:hd?((this.ws().gate.st==='green'&&!(S.dirty&&S.dirty[p]))?K.green:K.ink):K.green,nc:isCur?K.ink:'rgba(216,208,197,.28)',
+        bg:S.cmode==='diff'&&c==='a'?'rgba(65,209,131,.07)':isCur?'rgba(216,208,197,.045)':'transparent',caret:isCur&&active&&!S.quick&&k!==ed,
+        guides:Array.from({length:Math.floor(ind/2)},(_,g)=>({x:(g*2)+'ch'})).filter((_,g)=>g>0||ind>2).slice(0,6),
+        click:()=>this.setState(s=>({cur:{...s.cur,[p]:[k+1,l.length+1]},active:p,edit:{p,k}}))}});
+    const mini=code.map((l,k)=>{const ind=(l.match(/^ */)||[''])[0].length;const c=F&&F.chg&&F.chg[k];return {w:Math.min(64,Math.max(2,(l.trim().length)*0.9))+'px',ml:Math.min(20,ind*1.2)+'px',c:c==='a'?'rgba(65,209,131,.6)':'rgba(216,208,197,.22)'}});
+    const parts=p.split('/');const crumbs=parts.map((t,k)=>({t,sep:k<parts.length-1||(F&&F.sym)?'›':'',c:k===parts.length-1?K.ink:K.i40})).concat(F&&F.sym?[{t:F.sym,sep:'',c:K.i66}]:[]);
+    return {lines,mini,crumbs,viewH:Math.min(100,Math.round(34/Math.max(code.length,34)*100))+'%',closable:idx===1,close:()=>this.setState({split:null}),bl:idx===1?'rgba(216,208,197,.12)':'transparent'}}
+  renderVals(){const base=this.baseVals();return {...base,...this.extraVals(base)}}
+  baseVals(){
+    const S0=this.state,S=(S0.mode==='agent'||S0.mode==='manual')?S0:{...S0,mode:'agent',cmode:S0.cmode||'edit'},scale=Math.min(1,S.w/1440);const list=this.rowsList();const dense=this.props.density==='compact';
+    const changedUnder=p=>Object.keys(FILES).filter(f=>f.startsWith(p+'/'));
+    const rows=list.map(r=>{const F=FILES[r.path];const sel=S.sel===r.path;const act=S.active===r.path;const ch=r.dir&&!r.group?changedUnder(r.path):[];const openD=r.dir&&(S.open.has(r.path)||!!S.filter||r.group);
+      return {name:r.group?'':r.name,dir:r.group?r.name+'/':'',pad:(8+r.depth*14)+'px',chev:r.group?'':r.dir?(openD?'▾':'▸'):'',
+        icon:r.group?IC.folder(true):r.dir?IC.folder(openD):IC.file(),ic:r.dir?K.i66:F?K.ink:K.i40,
+        nc:r.group?K.i66:F?K.ink:r.dir?K.i86:K.i66,add:F&&S.view==='changes'?F.add:'',
+        git:F?F.git:(r.dir&&!r.group&&ch.length?'•':''),gitC:F?(F.git==='A'?K.green:K.ink):K.ink,
+        bg:sel?'#1b1915':act?'#131210':'transparent',bar:act?K.ink:'transparent',
+        click:e=>{if(r.group)return;if(r.dir)this.toggleDir(r.path);else this.openFile(r.path,e.detail>=2)},
+        menu:e=>{e.preventDefault();if(r.group)return;const rc=this.frameRef.current.getBoundingClientRect();this.setState({menu:{x:(e.clientX-rc.left)/scale,y:(e.clientY-rc.top)/scale,path:r.path,dir:r.dir},sel:r.path})}}});
+    const onTreeKey=e=>{if(S.side!=='files')return;const idx=list.findIndex(r=>r.path===S.sel);const cur=list[idx];
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const d=e.key==='ArrowDown'?1:-1;let j=idx+d;while(list[j]&&list[j].group)j+=d;if(list[j])this.setState({sel:list[j].path})}
+      else if(e.key==='ArrowRight'&&cur){e.preventDefault();if(cur.dir)this.toggleDir(cur.path,true)}
+      else if(e.key==='ArrowLeft'&&cur){e.preventDefault();if(cur.dir&&S.open.has(cur.path))this.toggleDir(cur.path,false);else{const d=dirOf(cur.path);if(d)this.setState({sel:d})}}
+      else if(e.key==='Enter'&&cur){e.preventDefault();cur.dir?this.toggleDir(cur.path):this.openFile(cur.path,true)}};
+    const A=S.active;const panes=[A,S.split].filter(Boolean).map((p,i)=>this.pane(p,i,S));
+    const tabs=S.tabs.map(p=>{const F=FILES[p];const on=p===A;return {dirty:S.dirty&&S.dirty[p]?'●':'',n:p.split('/').pop(),git:F?F.git:'',gitC:F&&F.git==='A'?K.green:K.i66,bg:on?'#131210':'transparent',top:on?K.ink:'transparent',c:on?K.ink:K.i66,fs:S.preview===p?'italic':'normal',go:()=>this.setState({active:p,sel:p}),pin:()=>this.setState({preview:null}),close:e=>{e.stopPropagation();this.setState(s=>{const tabs=s.tabs.filter(t=>t!==p);return {tabs,active:s.active===p?(tabs[tabs.length-1]||null):s.active,preview:s.preview===p?null:s.preview}})}}});
+    const views=[['all','All files',ALL.length],['changes','Changes',Object.keys(FILES).length]].map(([k,l,n])=>({l,n,bg:S.view===k?K.ink:'transparent',c:S.view===k?'#0b0a09':K.i66,pick:()=>this.setState({view:k})}));
+    const q=S.qq.toLowerCase();const qAll=Object.keys(FILES).concat(ALL.filter(p=>!FILES[p]));const qList=qAll.filter(p=>!q||fuzzy(p.toLowerCase(),q)).slice(0,9);
+    const qResults=qList.map((p,k)=>({name:p.split('/').pop(),dir:dirOf(p),ext:EXT(p.split('/').pop()),git:FILES[p]?FILES[p].git:'',gitC:FILES[p]&&FILES[p].git==='A'?K.green:K.ink,bg:k===S.qi?'#1b1915':'transparent',run:()=>{this.openFile(p,true);this.setState({quick:false});this.reveal(p)}}));
+    const onQqKey=e=>{if(e.key==='ArrowDown'){e.preventDefault();this.setState(s=>({qi:Math.min(qList.length-1,s.qi+1)}))}else if(e.key==='ArrowUp'){e.preventDefault();this.setState(s=>({qi:Math.max(0,s.qi-1)}))}else if(e.key==='Enter'&&qList[S.qi]){const p=qList[S.qi];this.openFile(p,true);this.setState({quick:false});this.reveal(p)}};
+    const sq=S.sq.trim();const sResults=[];let hitsN=0;if(sq.length>1){Object.keys(FILES).concat(Object.keys(STUBS)).forEach(p=>{const hits=[];codeOf(p).forEach((l,k)=>{const ix=l.indexOf(sq);if(ix>=0)hits.push({ln:k+1,pre:l.slice(Math.max(0,ix-14),ix).trimStart(),m:sq,post:l.slice(ix+sq.length,ix+sq.length+30),go:()=>{this.openFile(p,true,k+1)}})});if(hits.length){hitsN+=hits.length;sResults.push({name:p.split('/').pop(),dir:dirOf(p),n:hits.length,hits})}})}
+    const chRows=Object.keys(FILES).map(p=>({name:p.split('/').pop(),dir:dirOf(p),add:FILES[p].add,git:FILES[p].git,gitC:FILES[p].git==='A'?K.green:K.ink,bg:p===A?'#131210':'transparent',go:()=>this.openFile(p,true)}));
+    const M=S.menu;const mItems=M?(M.dir?[['New file here','⌘N'],['New folder',''],['sep'],['Rename','F2'],['Copy path','⌥⌘C'],['Reveal in file manager',''],['sep'],['Open folder in Zed','']]:[['Open','↵'],['Open to the side','⌘↵'],['sep'],['Rename','F2'],['Copy path','⌥⌘C'],['Copy relative path','⇧⌥⌘C'],['sep'],['Show diff',''],['Also open in Zed',''],['sep'],['Delete','⌫']]):[];
+    const menuItems=mItems.map(([l,k])=>l==='sep'?{sep:true,item:false}:{sep:false,item:true,l,k,c:l==='Delete'?K.red:K.ink,run:()=>{const p=M.path;this.setState({menu:null});if(l==='Open')this.openFile(p,true);else if(l==='Open to the side')this.setState({split:p});else if(l==='Show diff'){this.openFile(p,true);this.setState({cmode:'diff'})}else this.say(l+' · '+p.split('/').pop())}});
+    const sideDefs=[['files','files','Files'],['search','search','Search'],['changes','changes','Changes'],['gate','gate','Gate']];
+    const acts=sideDefs.map(([k,kj,t])=>{const on=k==='gate'?(S.panel&&S.ptab==='gate'):S.side===k;return {icon:IC[kj](),t,c:on?K.ink:K.i40,bg:on?'#131210':'transparent',bar:on?K.ink:'transparent',hasBadge:k==='changes',badge:Object.keys(FILES).length,pick:()=>{if(k==='gate')this.setState(s=>({panel:!(s.panel&&s.ptab==='gate'),ptab:'gate'}));else this.setState(s=>({side:s.side===k?null:k}))}}});
+    const cur=S.cur[A]||[1,1];const AF=FILES[A];
+    const titles={files:'FILES · TESSERA-API',search:'SEARCH',changes:'CHANGES · 6'};
+    return {
+      wrapRef:this.wrapRef,frameRef:this.frameRef,scale,wrapH:Math.round(860*scale)+'px',
+      chrome:!S.focus,focus:S.focus,navOpen:S.nav&&!S.focus,navMini:!S.nav&&!S.focus,navW:S.focus?'0px':S.nav?'220px':'52px',
+      navFlat:[['stop double credits',K.green,1,1],['invoice pdf locale',K.green,1],['rate-limit login',K.ink,0],['onboarding emails',K.ink,0],['billing page skeletons',K.ink,0,0,1],['a11y: focus traps',K.i40,0],['merge train',K.red,1,0,1]].map(([t,c,f,on,gap])=>({t,c,fill:f?c:'transparent',bg:on?'#1b1915':'transparent',mt:gap?'8px':'0'})),navIcon:IC.menu(),toggleNav:()=>this.setState(s=>({nav:!s.nav})),
+      navProjects:[{name:'tessera-api',items:[['stop double credits','GREEN',K.green,1,1],['invoice pdf locale','GREEN',K.green,1],['rate-limit login','AGENT',K.ink,0],['onboarding emails','PLAN',K.ink,0]]},{name:'tessera-web',items:[['billing page skeletons','GATE',K.ink,0],['a11y: focus traps','IDLE',K.i40,0]]},{name:'haro',items:[['merge train','RED',K.red,1]]}].map(p=>({name:p.name,items:p.items.map(([n,s,c,f,on])=>({n,s,c,fill:f?c:'transparent',bg:on?'#1b1915':'transparent'}))})),toggleFocus:()=>this.setState(s=>({focus:!s.focus})),focusIcon:S.focus?'⤡':'⤢',focusC:S.focus?K.ink:K.i66,focusB:S.focus?'rgba(216,208,197,.35)':'transparent',
+      steps:(S.mode==='manual'?[['code','41 lines by you · 6 files',K.ink],['verify','green · 412 / 412',K.green],['ship','ready for review',K.ink]]:[['agent','done · 4m',K.i40],['code','6 files · 58 lines',K.ink],['verify','green · 412 / 412',K.green],['ship','ready for review',K.ink]]).map(([name,sub,dot],k)=>{const on=name==='code';return {n:'0'+(k+1),name,sub,dot,top:on?K.ink:'transparent',bg:on?'#131210':'transparent',nc:on?K.ink:K.i66,sc:dot===K.green?K.green:on?K.ink:K.i40}}),
+      stepN:S.mode==='manual'?3:4,
+      modeOpts:[['agent','AGENT','The agent writes, you review'],['manual','MANUAL','You write; AI only plans and researches']].map(([k,l,t])=>({l,t,bg:S.mode===k?K.ink:'transparent',c:S.mode===k?'#0b0a09':K.i66,pick:()=>{if(S.mode!==k){this.setState({mode:k});this.say(k==='manual'?'Manual: the agent is off for this workspace':'Agent: your hand-written lines stay marked as yours')}}})),
+      isAgent:S.mode==='agent',isManual:S.mode==='manual',
+      xpOpen:S.xp,toggleXp:()=>this.setState(s=>({xp:!s.xp})),xpLeft:S.nav?'10px':'60px',
+      xpLast:S.mode==='manual'?'+40':'+15',xpLastWhy:S.mode==='manual'?'killed a surviving mutant · ×2 manual':'reviewed the diff yourself',
+      xpRules:[{h:'EVERY WORKSPACE',tag:'',hc:K.i66,rows:[{t:'Merge on a green gate',v:'+10'},{t:'Resolve a “needs your eyes” item',v:'+5'}]},{h:'AGENT MODE',tag:'review bonus',hc:K.i66,rows:[{t:'Review the whole diff yourself before shipping',v:'+15'},{t:'Fix or add a test by hand',v:'+10'}]},{h:'MANUAL MODE',tag:'× 2 on everything',hc:K.ink,rows:[{t:'Red to green, written by you',v:'+120'},{t:'Kill a surviving mutant',v:'+40'},{t:'Start from a failing test',v:'+30'}]}],streak:Array.from({length:14},(_,k)=>({c:k===13?'transparent':[3,8].includes(k)?K.line:'rgba(216,208,197,.55)'})),miniMode:S.mode==='manual'?'MANUAL':'AGENT',miniModeT:S.mode==='manual'?'Manual mode':'Agent mode',
+      railOpen:S.rail&&!S.focus,railMini:!S.rail&&!S.focus,railW:S.focus?'0px':S.rail?'290px':'44px',toggleRail:()=>this.setState(s=>({rail:!s.rail})),railIcon:IC.panel(),railC:S.rail?K.ink:K.i40,
+      rtabs:[['plan','Plan','6/6'],['search','Search',''],['docs','Docs','5']].map(([k,l,b])=>({l,b,c:S.rtab===k?K.ink:K.i66,u:S.rtab===k?K.ink:'transparent',pick:()=>this.setState({rtab:k})})),
+      rPlan:S.rtab==='plan',rSearch:S.rtab==='search',rDocs:S.rtab==='docs',
+      planItems:['Reproduce #412 with a replay test','Find why Stripe retries','Add a processed_events table','Dedupe inside the transaction','Move the receipt off the hot path','Teach the shared Prisma mock the new table'].map(t=>({t})),
+      research:[['Stripe docs','open ↗','Handle duplicate events'],['Prisma · offline','read','createMany({ skipDuplicates })'],['Your repo','jump','git blame · a41c9e2 (#388)']].map(([src,how,t])=>({src,how,t})),
+      docList:[['plan-412.md','yours',0],['Stripe API','web · pinned',0],['Prisma 5.x','offline',1],['PostgreSQL 16','offline',0],['man pages','offline',0]].map(([n,m,on])=>({n,m,bg:on?'#1b1915':'transparent',c:on?K.ink:K.i66})),
+      appDot:S.app?K.green:K.line,appLabel:S.app?'running':'stopped',appBtn:S.app?'Stop':'Run',toggleApp:()=>this.setState(s=>({app:!s.app})),openBrowser:()=>this.say('Opening localhost:3000 in your browser'),
+      termLabel:S.panel?'Hide terminal':'Terminal',
+      acts,sideOpen:!!S.side,sideW:S.side?S.sideW+'px':'0px',sideTitle:titles[S.side]||'',vFiles:S.side==='files',vSearch:S.side==='search',vChanges:S.side==='changes',
+      rows,rowH:dense?'22px':'26px',noRows:S.side==='files'&&rows.length===0,onTreeKey,views,
+      filter:S.filter,onFilter:e=>this.setState({filter:e.target.value}),sq:S.sq,onSq:e=>this.setState({sq:e.target.value}),sResults,sCount:sq.length>1?hitsN+' results in '+sResults.length+' files':'Type to search',chRows,
+      newFile:()=>this.say('New file in '+(dirOf(S.sel)||'root')),collapseAll:()=>this.setState({open:new Set()}),revealActive:()=>{if(A)this.reveal(A)},
+      startResize:e=>{e.preventDefault();const x0=e.clientX,w0=S.sideW;const mv=ev=>this.setState({sideW:Math.max(220,Math.min(460,w0+(ev.clientX-x0)/scale))});const up=()=>{window.removeEventListener('mousemove',mv);window.removeEventListener('mouseup',up)};window.addEventListener('mousemove',mv);window.addEventListener('mouseup',up)},
+      tabs,panes,paneCols:S.split?'minmax(0,1fr) minmax(0,1fr)':'minmax(0,1fr)',toggleSplit:()=>this.setState(s=>({split:s.split?null:(s.tabs.find(t=>t!==s.active)||s.active)})),splitC:S.split?K.ink:K.i66,
+      minimap:this.props.minimap!==false,miniW:this.props.minimap!==false?'92px':'0px',fontSize:(this.props.fontSize||13)+'px',lineH:Math.round((this.props.fontSize||13)*1.7)+'px',
+      modes:[['edit','Edit'],['diff','Diff']].map(([k,l])=>({l,bg:S.cmode===k?'#1b1915':'transparent',c:S.cmode===k?K.ink:K.i40,pick:()=>this.setState({cmode:k})})),
+      panelOpen:S.panel,panelH:S.panel?'210px':'0px',togglePanel:()=>this.setState(s=>({panel:!s.panel})),
+      ptabs:[['term','TERMINAL'],['gate','GATE'],['prob','PROBLEMS']].map(([k,l])=>({l,c:S.ptab===k?K.ink:K.i40,u:S.ptab===k?K.ink:'transparent',pick:()=>this.setState({ptab:k})})),
+      ptTerm:S.ptab==='term',ptGate:S.ptab==='gate',ptProb:S.ptab==='prob',
+      fileProof:AF?(AF.proof==='ran'?'every added line ran in the green suite':'not executable, no proof needed'):'unchanged',
+      ln:cur[0],col:cur[1],lang:LANG(A),
+      menuOpen:!!M,menuX:M?Math.min(M.x,1440-250)+'px':'0',menuY:M?Math.min(M.y,860-340)+'px':'0',menuPath:M?M.path:'',menuItems,closeMenu:e=>{if(e&&e.preventDefault)e.preventDefault();this.setState({menu:null})},stop:e=>e.stopPropagation(),
+      extOpen:S.ext,toggleExt:()=>this.setState(s=>({ext:!s.ext})),editors:[['Zed','zed'],['VS Code','code'],['Cursor','cursor'],['Neovim · in terminal','nvim'],['File manager','xdg-open']].map(([l,k])=>({l,k})),
+      quickOpen:S.quick,closeQuick:()=>this.setState({quick:false}),qq:S.qq,onQq:e=>this.setState({qq:e.target.value,qi:0}),onQqKey,qResults,
+      toast:S.toast,hasToast:!!S.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
