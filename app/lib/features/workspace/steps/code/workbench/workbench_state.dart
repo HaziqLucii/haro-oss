@@ -1,0 +1,203 @@
+import '../../../../../shell/shell_layout.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../diff_model.dart' show dirnameOf;
+
+/// Which side panel the activity bar shows. The Gate icon is not a view: it opens the bottom
+/// panel.
+enum WorkbenchView { files, search, changes }
+
+/// The explorer's two lists: the whole tree, or only the files this branch changed.
+enum ExplorerScope { all, changes }
+
+class WorkbenchState {
+  const WorkbenchState({
+    this.view = WorkbenchView.files,
+    this.sideOpen = true,
+    this.minimalSide = false,
+    this.sideWidth = defaultSideWidth,
+    this.scope = ExplorerScope.all,
+    this.filter = '',
+    this.expanded = const {},
+    this.cursor,
+    this.query = '',
+  });
+
+  static const double defaultSideWidth = 250;
+  static const double minSideWidth = 220;
+  static const double maxSideWidth = 460;
+
+  final WorkbenchView view;
+  final bool sideOpen;
+
+  /// Whether the side panel is open while Minimal UI is on. Its own flag, session only, so the
+  /// panel the user left open comes back (and is the one saved) when Minimal UI ends.
+  final bool minimalSide;
+  final double sideWidth;
+  final ExplorerScope scope;
+  final String filter;
+
+  /// Directory paths open in the All files tree.
+  final Set<String> expanded;
+
+  /// The keyboard row of the explorer (the open file is tracked by the editor tabs).
+  final String? cursor;
+
+  /// The Search panel's query.
+  final String query;
+
+  /// The panel as drawn: [minimalSide] under Minimal UI, [sideOpen] otherwise.
+  bool shown({required bool minimal}) => minimal ? minimalSide : sideOpen;
+
+  WorkbenchState copyWith({
+    WorkbenchView? view,
+    bool? sideOpen,
+    bool? minimalSide,
+    double? sideWidth,
+    ExplorerScope? scope,
+    String? filter,
+    Set<String>? expanded,
+    Object? cursor = _keep,
+    String? query,
+  }) => WorkbenchState(
+    view: view ?? this.view,
+    sideOpen: sideOpen ?? this.sideOpen,
+    minimalSide: minimalSide ?? this.minimalSide,
+    sideWidth: sideWidth ?? this.sideWidth,
+    scope: scope ?? this.scope,
+    filter: filter ?? this.filter,
+    expanded: expanded ?? this.expanded,
+    cursor: identical(cursor, _keep) ? this.cursor : cursor as String?,
+    query: query ?? this.query,
+  );
+}
+
+const Object _keep = Object();
+
+double clampSideWidth(double w) =>
+    w.clamp(WorkbenchState.minSideWidth, WorkbenchState.maxSideWidth);
+
+/// The side panel's drawn width: the dragged one, unless that would squeeze the editor below
+/// [minEditor] (then down to [minPanel]). [available] is the step's width minus the activity bar.
+double fitSideWidth(
+  double wanted,
+  double available, {
+  double minEditor = 260,
+  double minPanel = 140,
+}) {
+  final room = available - minEditor;
+  return wanted < room ? wanted : (room > minPanel ? room : minPanel);
+}
+
+/// Every directory above [path], outermost first: `a/b/c.ts` gives `a`, `a/b`.
+List<String> ancestorsOf(String path) {
+  final out = <String>[];
+  var dir = dirnameOf(path);
+  while (dir.isNotEmpty) {
+    out.insert(0, dir);
+    dir = dirnameOf(dir);
+  }
+  return out;
+}
+
+class WorkbenchNotifier extends Notifier<WorkbenchState> {
+  WorkbenchNotifier(this.workspaceId);
+
+  final String workspaceId;
+
+  @override
+  WorkbenchState build() => const WorkbenchState();
+
+  /// An activity-bar click: another icon switches the panel, the active one closes it.
+  void pick(WorkbenchView view) {
+    final open = state.shown(minimal: _minimal);
+    final closing = open && state.view == view;
+    state = _setOpen(
+      state.copyWith(view: closing ? state.view : view),
+      !closing,
+    );
+  }
+
+  /// Minimal UI starts with the side panel closed, whatever the last minimal session left.
+  void closeMinimalSide() => state = state.copyWith(minimalSide: false);
+
+  bool get _minimal => ref.read(shellLayoutProvider).minimal;
+
+  WorkbenchState _setOpen(WorkbenchState s, bool open) =>
+      _minimal ? s.copyWith(minimalSide: open) : s.copyWith(sideOpen: open);
+
+  /// Puts back the side panel a previous session left (sticky editor state). Only the four
+  /// fields that survive a restart; the filter, query and expanded folders start fresh.
+  void restore({
+    required WorkbenchView view,
+    required bool sideOpen,
+    required double sideWidth,
+    required ExplorerScope scope,
+  }) => state = state.copyWith(
+    view: view,
+    sideOpen: sideOpen,
+    sideWidth: clampSideWidth(sideWidth),
+    scope: scope,
+  );
+
+  void toggleSide() => state = _setOpen(state, !state.shown(minimal: _minimal));
+
+  void showSearch() =>
+      state = _setOpen(state.copyWith(view: WorkbenchView.search), true);
+
+  void setWidth(double w) =>
+      state = state.copyWith(sideWidth: clampSideWidth(w));
+
+  void setScope(ExplorerScope scope) => state = state.copyWith(scope: scope);
+
+  void setFilter(String filter) => state = state.copyWith(filter: filter);
+
+  void setQuery(String query) => state = state.copyWith(query: query);
+
+  void setCursor(String? path) => state = state.copyWith(cursor: path);
+
+  /// Opens or closes [path]; [force] pins the direction (Right expands, Left collapses).
+  void toggleDir(String path, {bool? force}) {
+    final open = {...state.expanded};
+    final want = force ?? !open.contains(path);
+    want ? open.add(path) : open.remove(path);
+    state = state.copyWith(expanded: open, cursor: path);
+  }
+
+  /// Forgets expanded folders that are no longer in [existing] (deleted or renamed on disk), so
+  /// the set does not grow stale and a folder recreated later does not reopen by itself.
+  void pruneExpanded(Set<String> existing) {
+    final keep = {
+      for (final d in state.expanded)
+        if (existing.contains(d)) d,
+    };
+    if (keep.length == state.expanded.length) return;
+    state = state.copyWith(expanded: keep);
+  }
+
+  void collapseAll() => state = state.copyWith(expanded: const {});
+
+  /// Expands the folders above [path], puts the cursor on it and shows the plain tree.
+  void reveal(String path) => state = state.copyWith(
+    view: WorkbenchView.files,
+    sideOpen: true,
+    scope: ExplorerScope.all,
+    filter: '',
+    expanded: {...state.expanded, ...ancestorsOf(path)},
+    cursor: path,
+  );
+
+  /// Opens the folders above [path] without moving the view or the cursor: the file the step
+  /// opened by itself should be visible in a tree that is otherwise collapsed.
+  void expandTo(String path) {
+    final need = ancestorsOf(path).where((d) => !state.expanded.contains(d));
+    if (need.isEmpty) return;
+    state = state.copyWith(expanded: {...state.expanded, ...need});
+  }
+}
+
+final workbenchProvider =
+    NotifierProvider.family<WorkbenchNotifier, WorkbenchState, String>(
+      WorkbenchNotifier.new,
+    );

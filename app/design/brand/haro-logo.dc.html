@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Regular.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Space Mono';src:url(fonts/SpaceMono-Bold.woff2) format('woff2');font-weight:700}
+@font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk-Variable.woff2) format('woff2');font-weight:300 700}
+@font-face{font-family:'Fraunces';src:url(fonts/Fraunces-Variable.woff2) format('woff2');font-weight:100 900}
+html,body{margin:0;background:#0b0a09;color:#d8d0c5;font-family:'Space Grotesk',sans-serif}
+a{color:#d8d0c5}a:hover{color:#fff}
+</style>
+</helmet>
+<section style="padding:56px 56px 80px;display:flex;flex-direction:column;gap:28px">
+  <div>
+    <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(216,208,197,.42)">Turn 1 · app logo</div>
+    <div style="font-size:30px;font-weight:500;letter-spacing:-.02em;margin-top:10px">Four marks for haro.</div>
+    <div style="font-size:15px;color:rgba(216,208,197,.66);margin-top:6px;max-width:640px;line-height:1.5">All four are bone on near-black, with one green square standing for the gate. That's the only colour, used as it is in the app. Each is shown at app-icon, dock and favicon sizes.</div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+    <sc-for list="{{ options }}" as="o" hint-placeholder-count="4">
+      <div id="{{ o.id }}" style="width:340px;background:#131210;border:1px solid rgba(216,208,197,.14);border-radius:2px;padding:24px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'Space Mono',monospace;font-size:11px;font-weight:700;padding:3px 7px;background:#d8d0c5;color:#0b0a09;border-radius:2px">{{ o.id }}</span>
+          <span style="font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(216,208,197,.42)">{{ o.name }}</span>
+        </div>
+        <div style="display:flex;justify-content:center;padding:10px 0">{{ o.big }}</div>
+        <div style="display:flex;align-items:flex-end;justify-content:center;gap:22px;padding-bottom:6px;border-bottom:1px solid rgba(216,208,197,.08)">
+          {{ o.m64 }}{{ o.m32 }}{{ o.m16 }}
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;justify-content:center">
+          {{ o.lock }}<span style="font-family:'Fraunces',serif;font-size:34px;font-weight:500;letter-spacing:-.01em">haro.</span>
+        </div>
+        <div style="font-size:13.5px;line-height:1.5;color:rgba(216,208,197,.66);text-wrap:pretty">{{ o.why }}</div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const B='#d8d0c5',G='#41d183',D='rgba(216,208,197,.35)';
+const OPTS=[
+ {id:'1a',name:'H. gate period',why:'Takes your existing H. favicon and turns the period into a green square: the gate passed. It stays readable at 16px, and it echoes the wordmark "haro." directly.',
+  s:[[22,24,11,52,B],[53,24,11,52,B],[22,44.5,42,11,B],[70,65,11,11,G]]},
+ {id:'1b',name:'Torii',why:'A torii is a Japanese gate. The two posts and the lintel frame a green square standing in the opening, which reads as "passing the gate". It matches the Japanese restraint you describe and names the product\'s core idea.',
+  s:[[16,22,68,7,B],[26,35,48,4,B],[29,22,7,56,B],[64,22,7,56,B],[45,58,10,10,G]]},
+ {id:'1c',name:'Parallel agents',why:'Four worktrees run in parallel and stop at the gate line. Only one passes through, in green. It tells the whole product story, many agents and one gate, and it works well as a dock icon.',
+  s:[[27,22,4,26,D],[39,22,4,26,D],[51,22,4,26,D],[63,22,4,26,B],[20,50,60,4,B],[63,56,4,22,G]]},
+ {id:'1d',name:'Stack, refined',why:'A cleaner take on your stacked mark: tests queued as dots, then running as a checker, then a solid merged bar ending in green. It keeps the heritage of your current mark in fewer, bolder pieces so it survives small sizes.',
+  s:[[22,26,6,6,B],[34,26,6,6,B],[46,26,6,6,B],[58,26,6,6,B],[70,26,6,6,B],[22,42,9,9,B],[40,42,9,9,B],[58,42,9,9,B],[31,51,9,9,B],[49,51,9,9,B],[67,51,9,9,B],[22,66,11,11,G],[36,66,42,11,B]]}];
+function icon(shapes,size,rx){const e=React.createElement;return e('svg',{viewBox:'0 0 100 100',width:size,height:size,style:{display:'block',flex:'none'}},e('rect',{width:100,height:100,rx:rx,fill:'#0b0a09',stroke:'rgba(216,208,197,.18)',strokeWidth:size<40?0:1}),...shapes.map(([x,y,w,h,c],i)=>e('rect',{key:i,x,y,width:w,height:h,fill:c})))}
+class Component extends DCLogic {
+  renderVals(){
+    return {options:OPTS.map(o=>({...o,big:icon(o.s,200,22),m64:icon(o.s,64,22),m32:icon(o.s,32,20),m16:icon(o.s,16,16),lock:icon(o.s,44,20)}))};
+  }
+}
+</script>
+</body>
+</html>
