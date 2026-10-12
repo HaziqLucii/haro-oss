@@ -1,0 +1,23 @@
+# haro project config — managed by the in-app scripts editor.
+# settings.toml is committed (shared with the team); settings.local.toml is personal (gitignored).
+
+[scripts]
+login_shell = true
+
+[ports]
+range = [4500, 4599]
+
+[gate]
+runner = "pytest"
+dir = "backend"
+
+[agent]
+adapter = "local"
+local_model = "qwen3.5:9b"
+
+[roles]
+plan = "opus:high"
+build = "sonnet:high"
+review = "opus:high"
+scout = "haiku"
+enabled = true
