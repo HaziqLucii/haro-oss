@@ -1,0 +1,5 @@
+{
+  "name": "haro-gate",
+  "description": "Runs haro's merge gate on Stop/SubagentStop, blocking until the suite is green.",
+  "version": "0.9.0"
+}

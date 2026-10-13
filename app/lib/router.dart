@@ -1,0 +1,113 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import 'features/first_run/first_run_page.dart';
+import 'features/backlog/backlog_page.dart';
+import 'features/triage/triage_page.dart';
+import 'features/workspace/workspace_page.dart';
+import 'shell/shell_host.dart';
+import 'theme/haro_theme.dart';
+import 'theme/tokens.dart';
+
+@visibleForTesting
+CustomTransitionPage<void> fadePage(GoRouterState state, Widget child) =>
+    CustomTransitionPage<void>(
+      key: state.pageKey,
+      // Every route has an invisible, non-dismissible ModalBarrier under its page, and a click that
+      // falls through empty space on the page lands on it: Flutter then asks the OS for its alert
+      // sound, which on macOS is the system beep. The pages are transparent over the shell, so
+      // their gutters and margins are empty layout (the Dashboard happens to fill its area with a
+      // scroll view; the Backlog does not). An opaque listener makes the whole page area take the
+      // hit instead, with no effect on anything inside it.
+      child: Listener(behavior: HitTestBehavior.opaque, child: child),
+      transitionDuration: HaroTokens.fade,
+      reverseTransitionDuration: Duration.zero,
+      transitionsBuilder: (context, animation, secondary, child) =>
+          // Pages are transparent over the shell, so a page left visible under the one fading
+          // in shows its text through it. Hide it the moment it is covered: only ink arrives.
+          AnimatedBuilder(
+            animation: secondary,
+            builder: (context, child) => Visibility(
+              visible: secondary.value == 0,
+              maintainState: true,
+              maintainAnimation: true,
+              child: child!,
+            ),
+            child: FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: HaroTokens.curve,
+              ),
+              child: child,
+            ),
+          ),
+    );
+
+GoRouter buildRouter({String initialLocation = '/'}) => GoRouter(
+  initialLocation: initialLocation,
+  routes: [
+    ShellRoute(
+      builder: (context, state, child) => ShellHost(state: state, child: child),
+      routes: [
+        GoRoute(
+          path: '/',
+          pageBuilder: (context, state) => fadePage(state, const TriagePage()),
+        ),
+        GoRoute(
+          path: '/backlog',
+          pageBuilder: (context, state) {
+            final project = state.uri.queryParameters['project'];
+            return fadePage(
+              state,
+              BacklogPage(
+                key: ValueKey('backlog-$project'),
+                projectId: project,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/first-run',
+          pageBuilder: (context, state) => fadePage(
+            state,
+            FirstRunPage(
+              key: ValueKey(
+                'first-run-${state.uri.queryParameters['project']}',
+              ),
+              projectId: state.uri.queryParameters['project'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/w/:id/:step',
+          pageBuilder: (context, state) => fadePage(
+            state,
+            WorkspacePage(
+              // go_router keys pages by route pattern, so without this a sidebar switch
+              // reuses A's page state (armed Archive, half-typed rename, dev log) for B.
+              key: ValueKey('workspace-${state.pathParameters['id']}'),
+              workspaceId: state.pathParameters['id']!,
+              step: state.pathParameters['step'],
+            ),
+          ),
+        ),
+      ],
+    ),
+  ],
+);
+
+class PlaceholderPage extends StatelessWidget {
+  const PlaceholderPage(this.label, {super.key});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Text(
+      label.toUpperCase(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: HaroText.mono(color: HaroTokens.ink42),
+    ),
+  );
+}
